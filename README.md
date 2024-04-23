@@ -122,6 +122,35 @@ LED | GPIO 25
 
 Olimex RP2040-PICO30-16 also exposes GPIO 23-25, 29 by sacrificing four GROUND pins.
 
+## External contacts
+
+### Buttons and status LED
+
+* 4x Buttons (Switch)
+* 4x Button LEDs (Telltale)
+* 2x Status LED (Data IN+OUT)
+* 1x 3V3
+* 1x GND
+=> [12 pin](https://www.ebay.co.uk/itm/174775342997).
+
+### Fingerprint scanner
+
+* 1x WAKEUP
+* 2x Data (TX+RX)
+* 1x GND
+* 1x 3V3 (power)
+* 1x 3V3 (touch induction power)
+=> [6 pin](https://www.ebay.co.uk/itm/174775342997)
+
+### EIS Relay
+
+* 1x Control #1 (ignition switch)
+* 1x Control #2 (steering lock)
+* 1x Control #3 (start signal)
+* 1x 5V
+* 1x GND
+=> [5 pin](https://www.ebay.co.uk/itm/174775342997)
+
 # Parts
 
 ## Actuation
@@ -130,7 +159,9 @@ Olimex RP2040-PICO30-16 also exposes GPIO 23-25, 29 by sacrificing four GROUND p
 | :--- | :---  |
 | [Actuator w/ feedback (potentiometer)](https://www.progressiveautomations.com/products/linear-actuator-with-potentiometer?variant=18277322424387) | £115 ($145) |
 | [Aston Martin drive select buttons](https://www.ebay.co.uk/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=hillsmotors&store_name=hillsmotors&_oac=1&_nkw=gear%20select%20switch) | £35	(*4 = £140) |
-
+| [GX20 Aviation Plug  5-pin Male+Female Panel Mount](https://www.ebay.co.uk/itm/174775342997?var=473951323020) | £4 |
+| [GX20 Aviation Plug  6-pin Male+Female Panel Mount](https://www.ebay.co.uk/itm/174775342997?var=473951323021) | £4 |
+| [GX20 Aviation Plug 12-pin Male+Female Panel Mount](https://www.ebay.co.uk/itm/174775342997?var=473951323026) | £5 |
 
 ## Controller
 
@@ -159,6 +190,7 @@ Olimex RP2040-PICO30-16 also exposes GPIO 23-25, 29 by sacrificing four GROUND p
 | [Breakout for 6-pin JST SH-Style Connector - Side Entry](https://thepihut.com/products/breakout-for-6-pin-jst-sh-style-connector-side-entry?variant=42438253871299) | £1 |
 | [Extra-long break-away 0.1" 16-pin strip male header (5 pieces)](https://thepihut.com/products/extra-long-break-away-0-1-16-pin-strip-male-header-5-pieces?variant=27740420881) | £3 |
 | [220V Power Supply Adapter (12V/10A)](https://www.ebay.co.uk/itm/234147120198?var=533767190848) | £21 |
+| [DB9 Breakout Board PCB – Male](https://thepihut.com/products/db9-breakout-board-pcb-male?variant=41727856148675) | £2 |
 
 ## Other
 
