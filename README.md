@@ -124,14 +124,20 @@ Olimex RP2040-PICO30-16 also exposes GPIO 23-25, 29 by sacrificing four GROUND p
 
 ## External contacts
 
-### Buttons and status LED
+### Buttons and their LEDs
 
 * 4x Buttons (Switch)
 * 4x Button LEDs (Telltale)
+* 1x GND
+=> [ 9 pin](https://www.ebay.co.uk/itm/325261653847)
+
+### Status LED
+
 * 2x Status LED (Data IN+OUT)
 * 1x 3V3
-* 1x GND
-=> [12 pin](https://www.ebay.co.uk/itm/174775342997).
+=> [3 pin](https://www.ebay.co.uk/itm/174775342997).
+
+Or those two combined, [buttons and their LEDs and the status LED](https://www.ebay.co.uk/itm/174775342997).
 
 ### Fingerprint scanner
 
@@ -151,6 +157,24 @@ Olimex RP2040-PICO30-16 also exposes GPIO 23-25, 29 by sacrificing four GROUND p
 * 1x GND
 => [5 pin](https://www.ebay.co.uk/itm/174775342997)
 
+### Actuator
+
+* 1x Actuator (Potentiometer Brush)
+* 1x Actuator (Motor Relay +)
+* 1x 5V
+* 1x GND
+=> [4 pin](https://www.ebay.co.uk/itm/174775342997)
+
+### CAN bus #0 and #1
+
+* 2x CAN-L
+* 2x CAN-H
+=> [4 pin](https://www.ebay.co.uk/itm/174775342997)
+
+### Total
+
+31 pins out from system.
+
 # Parts
 
 ## Actuation
@@ -159,6 +183,7 @@ Olimex RP2040-PICO30-16 also exposes GPIO 23-25, 29 by sacrificing four GROUND p
 | :--- | :---  |
 | [Actuator w/ feedback (potentiometer)](https://www.progressiveautomations.com/products/linear-actuator-with-potentiometer?variant=18277322424387) | £115 ($145) |
 | [Aston Martin drive select buttons](https://www.ebay.co.uk/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=hillsmotors&store_name=hillsmotors&_oac=1&_nkw=gear%20select%20switch) | £35	(*4 = £140) |
+| [GX20 Aviation Plug  4-pin Male+Female Panel Mount](https://www.ebay.co.uk/itm/174775342997?var=473951323019) | £4 |
 | [GX20 Aviation Plug  5-pin Male+Female Panel Mount](https://www.ebay.co.uk/itm/174775342997?var=473951323020) | £4 |
 | [GX20 Aviation Plug  6-pin Male+Female Panel Mount](https://www.ebay.co.uk/itm/174775342997?var=473951323021) | £4 |
 | [GX20 Aviation Plug 12-pin Male+Female Panel Mount](https://www.ebay.co.uk/itm/174775342997?var=473951323026) | £5 |
