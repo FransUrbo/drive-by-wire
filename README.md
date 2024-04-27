@@ -103,12 +103,12 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 |   4 | GPIO  2 | Button (Switch - P)        |-| 37  | 3V3_EN  |                                  |
 |   5 | GPIO  3 | Button (Switch - R)        |-| 36  | 3V3_OUT |                                  |
 |   6 | GPIO  4 | Button (Switch - N)        |-| 35  | VDC_REF |                                  |
-|   7 | GPIO  5 | Button (Switch - D)        |-| 34  | GPIO 28 | EIS Relay (#3 - start)           |
+|   7 | GPIO  5 | Button (Switch - D)        |-| 34  | GPIO 28 | Fingerprint Scanner (WAKEUP)     |
 |   8 | GND     |                            |-| 33  | GND     |                                  |
 |   9 | GPIO  6 | Button (Telltale - P)      |-| 32  | GPIO 27 | Fingerprint Scanner (RX)         |
 |  10 | GPIO  7 | Button (Telltale - R)      |-| 31  | GPIO 26 | Fingerprint Scanner (TX)         |
 |  11 | GPIO  8 | Button (Telltale - N)      |-| 30  | RUN     |                                  |
-|  12 | GPIO  9 | Button (Telltale - D)      |-| 29  | GPIO 22 | Fingerprint Scanner (WAKEUP)     |
+|  12 | GPIO  9 | Button (Telltale - D)      |-| 29  | GPIO 22 | EIS Relay (#3 - start)           |
 |  13 | GND     |                            |-| 28  | GND     |                                  |
 |  14 | GPIO 10 | CAN #1 (RX)                |-| 27  | GPIO 21 | [I2C0 SCL]                       |
 |  15 | GPIO 11 | CAN #1 (TX)                |-| 26  | GPIO 20 | [I2C0 SDA]                       |
