@@ -95,28 +95,28 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 
 # Pin layout for RaspberryPI 3-5, Raspberry Pi Pico
 
-| Pin | Port    | Use                        |-| Pin | Port    | Use
-| --: | :------ | :------------------------- |-| --: | :------ | :------------------------------- |
-|   1 | GPIO  0 | Debug (RX)                 |-| 40  | VBUS    |                                  |
-|   2 | GPIO  1 | Debug (TX)                 |-| 39  | VSYS    |                                  |
-|   3 | GND     |                            |-| 38  | GND     |                                  |
-|   4 | GPIO  2 | Button (Switch - P)        |-| 37  | 3V3_EN  |                                  |
-|   5 | GPIO  3 | Button (Switch - R)        |-| 36  | 3V3_OUT |                                  |
-|   6 | GPIO  4 | Button (Switch - N)        |-| 35  | VDC_REF |                                  |
-|   7 | GPIO  5 | Button (Switch - D)        |-| 34  | GPIO 28 | Fingerprint Scanner (WAKEUP)     |
-|   8 | GND     |                            |-| 33  | GND     |                                  |
-|   9 | GPIO  6 | Button (Telltale - P)      |-| 32  | GPIO 27 | Fingerprint Scanner (RX)         |
-|  10 | GPIO  7 | Button (Telltale - R)      |-| 31  | GPIO 26 | Fingerprint Scanner (TX)         |
-|  11 | GPIO  8 | Button (Telltale - N)      |-| 30  | RUN     |                                  |
-|  12 | GPIO  9 | Button (Telltale - D)      |-| 29  | GPIO 22 | EIS Relay (#3 - start)           |
-|  13 | GND     |                            |-| 28  | GND     |                                  |
-|  14 | GPIO 10 | CAN #1 (RX)                |-| 27  | GPIO 21 | [I2C0 SCL]                       |
-|  15 | GPIO 11 | CAN #1 (TX)                |-| 26  | GPIO 20 | [I2C0 SDA]                       |
-|  16 | GPIO 12 | CAN #0 (RX)                |-| 25  | GPIO 19 | EIS Relay (#1 - ignition switch) |
-|  17 | GPIO 13 | CAN #0 (TX)                |-| 24  | GPIO 18 | EIS Relay (#2 - steering lock)   |
-|  18 | GND     |                            |-| 23  | GND     |                                  |
-|  19 | GPIO 14 | Status LED (Data OUT)      |-| 22  | GPIO 17 | Actuator - Potentiometer Brush   |
-|  20 | GPIO 15 | Status LED (Data IN)       |-| 21  | GPIO 16 | Actuator - Motor Relay (+)       |
+| Pin | Port    | Use                          |-| Pin | Port    | Use
+| --: | :------ | :--------------------------- |-| --: | :------ | :------------------------------- |
+|   1 | GPIO  0 | Debug (RX)                   |-| 40  | VBUS    |                                  |
+|   2 | GPIO  1 | Debug (TX)                   |-| 39  | VSYS    |                                  |
+|   3 | GND     |                              |-| 38  | GND     |                                  |
+|   4 | GPIO  2 | Button (Switch - P)          |-| 37  | 3V3_EN  |                                  |
+|   5 | GPIO  3 | Button (Switch - R)          |-| 36  | 3V3_OUT |                                  |
+|   6 | GPIO  4 | Button (Switch - N)          |-| 35  | VDC_REF |                                  |
+|   7 | GPIO  5 | Button (Switch - D)          |-| 34  | GPIO 28 |                                  |
+|   8 | GND     |                              |-| 33  | GND     |                                  |
+|   9 | GPIO  6 | Button (Telltale - P)        |-| 32  | GPIO 27 | Actuator - Motor Relay (+)       |
+|  10 | GPIO  7 | Button (Telltale - R)        |-| 31  | GPIO 26 | Actuator - Potentiometer Brush   |
+|  11 | GPIO  8 | Button (Telltale - N)        |-| 30  | RUN     |                                  |
+|  12 | GPIO  9 | Button (Telltale - D)        |-| 29  | GPIO 22 | EIS Relay (#3 - start)           |
+|  13 | GND     |                              |-| 28  | GND     |                                  |
+|  14 | GPIO 10 | CAN #1 (RX)                  |-| 27  | GPIO 21 | CAN #0 (RX)                      |
+|  15 | GPIO 11 | CAN #1 (TX)                  |-| 26  | GPIO 20 | CAN #0 (TX)                      |
+|  16 | GPIO 12 |                              |-| 25  | GPIO 19 | EIS Relay (#1 - ignition switch) |
+|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP) |-| 24  | GPIO 18 | EIS Relay (#2 - steering lock)   |
+|  18 | GND     |                              |-| 23  | GND     |                                  |
+|  19 | GPIO 14 | Status LED (Data OUT)        |-| 22  | GPIO 17 | Fingerprint Scanner (TX)         |
+|  20 | GPIO 15 | Status LED (Data IN)         |-| 21  | GPIO 16 | Fingerprint Scanner (RX)         |
 
 LED | GPIO 25
 
@@ -258,6 +258,21 @@ CAN :(. I'll figure something out..
 Also, I'm missing the headers for the fingerprint scanner and the actuator in the upper right breadboard.
 
 ![Initial wiring on bread boards](./2024-04-20%2021.50.37.jpg)
+
+# Source code
+
+I've barely started on this, but I have the bare-bones of it in these repos:
+
+* How to control the LEDs, including the NeoPixel (multi-colour LED): [pico-rust-test_1-LEDS](https://github.com/FransUrbo/pico-rust-test_1-LEDS)
+* How to read the buttons and control their LEDs: [pico-rust-test_2-BUTTONS-LEDS](https://github.com/FransUrbo/pico-rust-test_2-BUTTONS-LEDS)
+  Yes, those are the genuine Aston Martin drive buttons! :).
+* How to read and write to the fingerprint scanner: [pico-rust-test_3-FP_SCANNER](https://github.com/FransUrbo/pico-rust-test_3-FP_SCANNER)
+* How to control the three MOSFET "relays": [pico-rust-test_4-MOSFET_RELAYS](https://github.com/FransUrbo/pico-rust-test_4-MOSFET_RELAYS)
+* How to setup and trigger the built-in watchdog on the RPi: [pico-rust-test_6-WATCHDOG-LED](https://github.com/FransUrbo/pico-rust-test_6-WATCHDOG-LED)
+
+![Latest wiring on bread boards](./2024-05-01%2015.46.02.jpg)
+
+The actual DriveByWire source code have barely started, but it's in [the code directory](./code).
 
 # Additional information
 
