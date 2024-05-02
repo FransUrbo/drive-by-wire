@@ -250,7 +250,13 @@ not the I2C GPIOs.
 | [Tiny 2040](https://thepihut.com/products/tiny-2040?variant=41359025897667) | £12 |
 | [Waveshare RP2040 Tiny](https://thepihut.com/products/waveshare-rp2040-tiny?variant=42483599507651) | £5 |
 
-# Initial wiring on bread boards
+# Circuit diagram
+
+This is still work in progress, but this looks about right. That's what I've wired on the breadboard.
+
+![Circuit diagram](./Circuit%20Diagram.png)
+
+## Wiring on bread boards
 
 Those CAN bus adaptors I can't apparently used. They're for a high-speed CAN, but the MB I have have a slow-speed
 CAN :(. I'll figure something out..
