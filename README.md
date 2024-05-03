@@ -24,69 +24,69 @@ HOPEFULLY, I can also send the same trigger signal that the EIS would send from 
 > At any point, if there is a fail, sett the RED LED blinking and stop further program execution.
 
 1. Bootup process.
-     * Light status LED (RED).												-> BOOTUP STARTED
-     * Initiate CAN bus connection.											Q: How to test connection?
-         * Send message to IC: "Starting Drive-By-Wire system".
-     * Initiate fingerprint scanner connection.
-         * Send message to IC: "Initializing Fingerprint Scanner".
-         * Login to and unlock the fingerprint scanner.						CodeFunction: `VfyPwd`
-         * Validate talking to the correct fingerprint scanner.
-             * Do handshake.												CodeFunction: `HandShake`.
-             * Check if sensor is normal.									CodeFunction: `CheckSensor`.
-             * Check correct random string in the Notepad buffer.			CodeFunction: `ReadNotepad`.
-             * Light fingerprint scanner LED (PURPLE).						CodeFunction: `AuraLedConfig`.
-         * Send message to IC: "Fingerprint scanner initialized".
-     * Initiate and test actuator connection and control.
-         * Send message to IC: "Initializing actuator".
-         * Get status (current position) of actuator.
-         * LOOP: Check actuator connection and function.
-             * Get speed status from CAN.									Q: How to double-check??
-             * Get break pedal status from CAN.								Q: How to double-check??
-             * If ('not moving' && 'break pedal pressed') OR ('P'selected):
-                 * Move actuator back 1mm.
-                     * Validate correct movement.
-                 * Move actuator forward 1mm.
-                     * Validate correct movement.
-                 * Check that "before test" and "current position" is the same.
-             * else: restart loop.
-         * Send message to IC: "Actuator initialized".
-     * Light current drive button locator LED.
-     * Light status LED (YELLOW).											-> BOOTUP DONE + LOGIN STARTED
+     1. Light status LED (RED).												-> BOOTUP STARTED
+     2. Initiate CAN bus connection.											Q: How to test connection?
+         - Send message to IC: "Starting Drive-By-Wire system".
+     3. Initiate fingerprint scanner connection.
+         1. Send message to IC: "Initializing Fingerprint Scanner".
+         2. Login to and unlock the fingerprint scanner.						CodeFunction: `VfyPwd`
+         3. Validate talking to the correct fingerprint scanner.
+             - Do handshake.												CodeFunction: `HandShake`.
+             - Check if sensor is normal.									CodeFunction: `CheckSensor`.
+             - Check correct random string in the Notepad buffer.			CodeFunction: `ReadNotepad`.
+             - Light fingerprint scanner LED (PURPLE).						CodeFunction: `AuraLedConfig`.
+         4. Send message to IC: "Fingerprint scanner initialized".
+     4. Initiate and test actuator connection and control.
+         1. Send message to IC: "Initializing actuator".
+         2. Get status (current position) of actuator.
+         3. LOOP: Check actuator connection and function.
+             - Get speed status from CAN.									Q: How to double-check??
+             - Get break pedal status from CAN.								Q: How to double-check??
+             - If ('not moving' && 'break pedal pressed') OR ('P'selected):
+                 - Move actuator back 1mm.
+                     - Validate correct movement.
+                 - Move actuator forward 1mm.
+                     - Validate correct movement.
+                 - Check that "before test" and "current position" is the same.
+             - else: restart loop.
+         4. Send message to IC: "Actuator initialized".
+     5. Light current drive button locator LED.
+     6. Light status LED (YELLOW).											-> BOOTUP DONE + LOGIN STARTED
 
 2. Use authorization.
-     * Send message to IC: "Authorizing use".
-     * Check valet mode.
-         * If false:
-             * Light fingerprint scanner LED (BLUE).						CodeFunction: `AuraLedConfig`.
-             * LOOP: Wait for fingerprint.
-                 * Check if fingerprint is in library.
-         * If false:
-             * Light fingerprint scanner LED (RED/FLASH).					CodeFunction: `AuraLedConfig`.
-             * If attempts >= 3: sleep for 5min.
-             * else: restart loop.
-         * else:
-             * Light fingerprint scanner LED (BLUE/GRADUALLY OFF).			CodeFunction: `AuraLedConfig`.
-         * else if: we have four-colour LEDs:
-             * Light status LED (BLUE? WHITE?)
-     * Close EIS relay #1 (ignition switch).								Q: What if power loss??
-     * Close EIS relay #2 (steering lock).									Q: What if power loss??
-     * Send message to IC: "Use authorized, welcome <user|valet>".
-     * Light status LED (GREEN).											-> LOGIN DONE + MAIN LOOP STARTED
-     * Send "start car" voltage signal to SAM.								Q: How do we do that? Three level relay?
+     1. Send message to IC: "Authorizing use".
+     2. Check valet mode.
+         1. If false:
+             - Light fingerprint scanner LED (BLUE).						CodeFunction: `AuraLedConfig`.
+             - LOOP: Wait for fingerprint.
+                 - Check if fingerprint is in library.
+                 - If false:
+                     - Light fingerprint scanner LED (RED/FLASH).					CodeFunction: `AuraLedConfig`.
+                     - If attempts >= 3: sleep for 5min.
+                     - else: restart loop.
+         2. else:
+             - Light fingerprint scanner LED (BLUE/GRADUALLY OFF).			CodeFunction: `AuraLedConfig`.
+         3. else if: we have four-colour LEDs:
+             - Light status LED (BLUE? WHITE?)
+     3. Close EIS relay #1 (ignition switch).								Q: What if power loss??
+     4. Close EIS relay #2 (steering lock).									Q: What if power loss??
+     5. Send message to IC: "Use authorized, welcome <user|valet>".
+     6. Light status LED (GREEN).											-> LOGIN DONE + MAIN LOOP STARTED
+     7. Send "start car" voltage signal to SAM.								Q: How do we do that? Three level relay?
 
 3. LOOP: Wait for drive button press.
-     * If moving:
-         * If true:  ignore button press (restart loop).
-     * If break pedal is pressed:
-         * If false: ignore button press (restart loop).
-     * If NEW button != CURRENT button.
-         * Get current position of actuator.
-         * Blink NEW drive button telltale LED.
-         * Move actuator to new position (synchronous).
-         * Get current position of actuator.
-         * Check that "before change" and "current position" have changed.
-         * Turn off CURRENT drive button telltale LED.
-         * Set NEW drive buttons telltale LED.
+     1. If moving:
+         - If true:  ignore button press (restart loop).
+     2. If break pedal is pressed:
+         - If false: ignore button press (restart loop).
+     3. If NEW button != CURRENT button.
+         1. Get current position of actuator.
+         2. Blink NEW drive button telltale LED.
+         3. Move actuator to new position (synchronous).
+         4. Get current position of actuator.
+         5. Check that "before change" and "current position" have changed.
+         6. Turn off CURRENT drive button telltale LED.
+         7. Set NEW drive buttons telltale LED.
 
 Q: How can the DriveByWire, SmartTOP and SprintBooster all be
    set in valet mode all at the same time?
