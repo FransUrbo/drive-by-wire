@@ -103,7 +103,7 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 |   4 | GPIO  2 | Button (Switch - P)          |-| 37  | 3V3_EN  |                                  |
 |   5 | GPIO  3 | Button (Switch - R)          |-| 36  | 3V3_OUT |                                  |
 |   6 | GPIO  4 | Button (Switch - N)          |-| 35  | VDC_REF |                                  |
-|   7 | GPIO  5 | Button (Switch - D)          |-| 34  | GPIO 28 |                                  |
+|   7 | GPIO  5 | Button (Switch - D)          |-| 34  | GPIO 28 | Actuator - Motor Relay (-)       |
 |   8 | GND     |                              |-| 33  | GND     |                                  |
 |   9 | GPIO  6 | Button (Telltale - P)        |-| 32  | GPIO 27 | Actuator - Motor Relay (+)       |
 |  10 | GPIO  7 | Button (Telltale - R)        |-| 31  | GPIO 26 | Actuator - Potentiometer Brush   |

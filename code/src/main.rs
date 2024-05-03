@@ -1,11 +1,10 @@
 #![no_std]
 #![no_main]
-//#![allow(unused)]
 
 use defmt::{debug, error, info, trace};
 
 use embassy_executor::Spawner;
-use embassy_rp::gpio::{AnyPin, Level, Input, Output, Pin, Pull};
+use embassy_rp::gpio::{AnyPin, Level, Input, Output, Pin, Pull, SlewRate};
 use embassy_time::{with_deadline, Duration, Instant, Timer};
 use embassy_rp::bind_interrupts;
 use embassy_rp::peripherals::{PIO1, UART0};
@@ -24,6 +23,11 @@ use {defmt_rtt as _, panic_probe as _};
 #[derive(Copy, Clone, PartialEq)]
 #[repr(u8)]
 enum Button { P, N, R, D, UNSET }
+
+#[derive(Copy, Clone)]
+#[repr(u8)]
+enum Direction { Forward, Backward }
+
 enum LedStatus { On, Off }
 enum StopWatchdog { Yes }
 
@@ -69,24 +73,87 @@ async fn feed_watchdog(
     }
 }
 
+async fn move_actuator(
+    direction:		&mut Direction,
+    amount:		u16,
+    pin_motor_plus:	&mut Output<'static>,
+    pin_motor_minus:	&mut Output<'static>)
+{
+    match direction {
+	Direction::Forward => {
+	    info!("Moving actuator: direction=FORWARD; amount={}", amount);
+	    pin_motor_minus.set_low(); // Set the MINUS to low.
+	    Timer::after_millis(500).await;
+
+	    // FAKE: Simulate move by toggling the pin HIGH and LOW `amount` times.
+	    for _i in 0..amount {
+		pin_motor_plus.set_high();
+		Timer::after_millis(500).await;
+		pin_motor_plus.set_low();
+		Timer::after_millis(500).await;
+	    }
+	}
+	Direction::Backward => {
+	    info!("Moving actuator: direction=BACKWARD; amount={}", amount);
+	    pin_motor_plus.set_low(); // Set the PLUS to low.
+
+	    // FAKE: Simulate move by toggling the pin HIGH and LOW `amount` times.
+	    for _i in 0..amount {
+		pin_motor_minus.set_high();
+		Timer::after_millis(500).await;
+		pin_motor_minus.set_low();
+		Timer::after_millis(500).await;
+	    }
+	}
+    }
+}
+
 // Talk to the actuator, move it to desired gear position.
 // FAKE: Just output what we *would* do if we actually HAD an actuator! :)
 #[embassy_executor::task]
-async fn actuator_control(receiver: Receiver<'static, ThreadModeRawMutex, Button, 64>) {
+async fn actuator_control(
+    receiver:			Receiver<'static, ThreadModeRawMutex, Button, 64>,
+    mut pin_motor_plus:		Output<'static>,
+    mut pin_motor_minus:	Output<'static>,
+    pin_pot:			Input<'static>)
+{
+    pin_motor_plus.set_slew_rate(SlewRate::Fast);
+    pin_motor_minus.set_slew_rate(SlewRate::Fast);
+
     loop {
+	// TODO: Figure out what gear is in from this.
+	let _actuator_position = pin_pot.get_level();
+
+	// TODO: How do we move the actuator back and forth? There's only HIGH and LOW.. ??
 	match receiver.receive().await { // Block waiting for data.
 	    Button::UNSET => (), // Should be impossible, but just to make the compiler happy.
 	    Button::P  => {
 		info!("Moving actuator to (P)ark");
+
+		// FAKE: Simulate moving the actuator forward and backward five steps.
+		move_actuator(&mut Direction::Forward,  5, &mut pin_motor_plus, &mut pin_motor_minus).await;
+		move_actuator(&mut Direction::Backward, 5, &mut pin_motor_plus, &mut pin_motor_minus).await;
 	    }
 	    Button::N  => {
 		info!("Moving actuator to (N)eutral");
+
+		// FAKE: Simulate moving the actuator forward and backward five steps.
+		move_actuator(&mut Direction::Forward,  5, &mut pin_motor_plus, &mut pin_motor_minus).await;
+		move_actuator(&mut Direction::Backward, 5, &mut pin_motor_plus, &mut pin_motor_minus).await;
 	    }
 	    Button::R  => {
 		info!("Moving actuator to (R)everse");
+
+		// FAKE: Simulate moving the actuator forward and backward five steps.
+		move_actuator(&mut Direction::Forward,  5, &mut pin_motor_plus, &mut pin_motor_minus).await;
+		move_actuator(&mut Direction::Backward, 5, &mut pin_motor_plus, &mut pin_motor_minus).await;
 	    }
 	    Button::D  => {
 		info!("Moving actuator to (D)rive");
+
+		// FAKE: Simulate moving the actuator forward and backward five steps.
+		move_actuator(&mut Direction::Forward,  5, &mut pin_motor_plus, &mut pin_motor_minus).await;
+		move_actuator(&mut Direction::Backward, 5, &mut pin_motor_plus, &mut pin_motor_minus).await;
 	    }
 	}
     }
@@ -289,8 +356,15 @@ async fn main(spawner: Spawner) {
     info!("Initialized the MOSFET relays");
 
     // =====
-    // TODO: Initialize the actuator.
-    spawner.spawn(actuator_control(CHANNEL_ACTUATOR.receiver())).unwrap();
+    let actuator_motor_plus    = Output::new(p.PIN_27, Level::Low);	// Actuator/Motor Relay (+)
+    let actuator_motor_minus   = Output::new(p.PIN_28, Level::Low);	// Actuator/Motor Relay (-)
+    let actuator_potentiometer = Input::new(p.PIN_26, Pull::None);	// Actuator/Potentiometer Brush
+    spawner.spawn(actuator_control(
+	CHANNEL_ACTUATOR.receiver(),
+	actuator_motor_plus,
+	actuator_motor_minus,
+	actuator_potentiometer)
+    ).unwrap();
     info!("Initialized the actuator");
 
     // TODO: Test actuator control.
