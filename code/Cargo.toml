@@ -16,9 +16,9 @@ cortex-m = { version = "0.7.6", features = ["inline-asm"] }
 cortex-m-rt = "0.7.0"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 
-[dependencies.ws2312]
-git = "https://github.com/FransUrbo/rust-libs-ws2312.git"
-rev = "45cef0f"
+[dependencies.ws2812]
+git = "https://github.com/FransUrbo/rust-libs-ws2812.git"
+rev = "712ed6e"
 
 [dependencies.r503]
 git = "https://github.com/FransUrbo/rust-libs-r503.git"
@@ -29,15 +29,35 @@ git = "https://github.com/FransUrbo/rust-libs-debounce.git"
 rev = "c7a6f80"
 version = "0.1.0"
 
+# They haven't released the `embassy_time::with_deadline` yet, so need to use the GIT version.
+[dependencies.embassy-embedded-hal]
+git = "https://github.com/embassy-rs/embassy.git"
+rev = "511bee7"
+features = ["defmt"]
+
 [dependencies.embassy-executor]
 git = "https://github.com/embassy-rs/embassy.git"
 rev = "511bee7"
 features = ["task-arena-size-32768", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers"]
 
+[dependencies.embassy-time-driver]
+git = "https://github.com/embassy-rs/embassy.git"
+rev = "511bee7"
+
 [dependencies.embassy-time]
 git = "https://github.com/embassy-rs/embassy.git"
 rev = "511bee7"
 features = ["defmt", "defmt-timestamp-uptime"]
+
+[dependencies.embassy-rp]
+git = "https://github.com/embassy-rs/embassy.git"
+rev = "511bee7"
+features = ["defmt", "unstable-pac", "time-driver", "critical-section-impl"]
+
+[dependencies.embassy-sync]
+git = "https://github.com/embassy-rs/embassy.git"
+rev = "511bee7"
+features = ["defmt"]
 
 # cargo build/run
 [profile.dev]
