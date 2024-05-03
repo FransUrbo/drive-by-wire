@@ -22,7 +22,7 @@ rev = "712ed6e"
 
 [dependencies.r503]
 git = "https://github.com/FransUrbo/rust-libs-r503.git"
-rev = "ba1d874"
+rev = "1bbbe8c"
 
 [dependencies.debounce]
 git = "https://github.com/FransUrbo/rust-libs-debounce.git"

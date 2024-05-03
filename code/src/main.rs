@@ -1,8 +1,6 @@
 #![no_std]
 #![no_main]
-#![allow(unused)]
-
-// !! Fingerprint scanner is on PIO0, and the NeoPixel is on PIO1 !!
+//#![allow(unused)]
 
 use defmt::{debug, error, info, trace};
 
@@ -10,8 +8,9 @@ use embassy_executor::Spawner;
 use embassy_rp::gpio::{AnyPin, Level, Input, Output, Pin, Pull};
 use embassy_time::{with_deadline, Duration, Instant, Timer};
 use embassy_rp::bind_interrupts;
-use embassy_rp::peripherals::PIO1;
-use embassy_rp::pio::{InterruptHandler, Pio};
+use embassy_rp::peripherals::{PIO1, UART0};
+use embassy_rp::uart::InterruptHandler as UARTInterruptHandler;
+use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
 use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
 use embassy_rp::watchdog::*;
@@ -26,26 +25,28 @@ use {defmt_rtt as _, panic_probe as _};
 #[repr(u8)]
 enum Button { P, N, R, D, UNSET }
 enum LedStatus { On, Off }
-enum StopState { Yes }
+enum StopWatchdog { Yes }
 
-static CHANNEL_P:        Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
-static CHANNEL_N:        Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
-static CHANNEL_R:        Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
-static CHANNEL_D:        Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
-static CHANNEL_WATCHDOG: Channel<ThreadModeRawMutex, StopState, 64> = Channel::new();
-static CHANNEL_ACTUATOR: Channel<ThreadModeRawMutex, Button,    64> = Channel::new();
+static CHANNEL_P:        Channel<ThreadModeRawMutex, LedStatus, 64>	= Channel::new();
+static CHANNEL_N:        Channel<ThreadModeRawMutex, LedStatus, 64>	= Channel::new();
+static CHANNEL_R:        Channel<ThreadModeRawMutex, LedStatus, 64>	= Channel::new();
+static CHANNEL_D:        Channel<ThreadModeRawMutex, LedStatus, 64>	= Channel::new();
+static CHANNEL_WATCHDOG: Channel<ThreadModeRawMutex, StopWatchdog, 64>	= Channel::new();
+static CHANNEL_ACTUATOR: Channel<ThreadModeRawMutex, Button,    64>	= Channel::new();
 
+// Start with the button UNSET, then change it when we know what gear the car is in.
 static mut BUTTON_ENABLED: Button = Button::UNSET;
 
 bind_interrupts!(struct Irqs {
-    PIO1_IRQ_0 => InterruptHandler<PIO1>; // NeoPixel
+    PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
+    UART0_IRQ  => UARTInterruptHandler<UART0>;	// Fingerprint scanner
 });
 
 // ================================================================================
 
 #[embassy_executor::task]
 async fn feed_watchdog(
-    control: Receiver<'static, ThreadModeRawMutex, StopState, 64>,
+    control: Receiver<'static, ThreadModeRawMutex, StopWatchdog, 64>,
     mut wd: embassy_rp::watchdog::Watchdog)
 {
     // Feed the watchdog every 3/4 second to avoid reset.
@@ -56,8 +57,8 @@ async fn feed_watchdog(
 
 	trace!("Trying to receive");
 	match control.try_receive() { // Only *if* there's data, receive and deal with it.
-	    Ok(StopState::Yes) => {
-		info!("StopState = Yes received");
+	    Ok(StopWatchdog::Yes) => {
+		info!("StopWatchdog = Yes received");
 		break
 	    },
 	    Err(_) => {
@@ -74,6 +75,7 @@ async fn feed_watchdog(
 async fn actuator_control(receiver: Receiver<'static, ThreadModeRawMutex, Button, 64>) {
     loop {
 	match receiver.receive().await { // Block waiting for data.
+	    Button::UNSET => (), // Should be impossible, but just to make the compiler happy.
 	    Button::P  => {
 		info!("Moving actuator to (P)ark");
 	    }
@@ -86,7 +88,6 @@ async fn actuator_control(receiver: Receiver<'static, ThreadModeRawMutex, Button
 	    Button::D  => {
 		info!("Moving actuator to (D)rive");
 	    }
-	    _ => ()
 	}
     }
 }
@@ -94,17 +95,17 @@ async fn actuator_control(receiver: Receiver<'static, ThreadModeRawMutex, Button
 // Control the drive button LEDs - four buttons, four LEDs.
 #[embassy_executor::task(pool_size = 4)]
 async fn set_led(receiver: Receiver<'static, ThreadModeRawMutex, LedStatus, 64>, led_pin: AnyPin) {
-    let mut led = Output::new(led_pin, Level::Low);
+    let mut led = Output::new(led_pin, Level::Low); // Always start with the LED off.
 
     loop {
 	match receiver.receive().await { // Block waiting for data.
 	    LedStatus::On  => led.set_high(),
-	    LedStatus::Off => led.set_low(),
+	    LedStatus::Off => led.set_low()
 	}
     }
 }
 
-// Listen for button button presses - four buttons.
+// Listen for button presses - four buttons, one task each.
 #[embassy_executor::task(pool_size = 4)]
 async fn read_button(
     spawner: Spawner,
@@ -115,9 +116,8 @@ async fn read_button(
     let mut btn = debounce::Debouncer::new(Input::new(btn_pin, Pull::Up), Duration::from_millis(20));
 
     // Spawn off a LED driver for this button.
-    let receiver: Receiver<'static, ThreadModeRawMutex, LedStatus, 64>;
     match button {
-	Button::UNSET => (),
+	Button::UNSET => (), // Should be impossible, but just to make the compiler happy.
 	Button::P     => spawner.spawn(set_led(CHANNEL_P.receiver(), led_pin)).unwrap(),
 	Button::N     => spawner.spawn(set_led(CHANNEL_N.receiver(), led_pin)).unwrap(),
 	Button::R     => spawner.spawn(set_led(CHANNEL_R.receiver(), led_pin)).unwrap(),
@@ -144,7 +144,7 @@ async fn read_button(
 		    Button::P  => {
 			if unsafe { button == BUTTON_ENABLED } {
 			    // Already enabled => blink the LED three times.
-			    for i in 0..3 {
+			    for _i in 0..3 {
 				CHANNEL_P.send(LedStatus::Off).await;
 				Timer::after_millis(500).await;
 				CHANNEL_P.send(LedStatus::On).await;
@@ -168,7 +168,7 @@ async fn read_button(
 		    Button::N  => {
 			if unsafe { button == BUTTON_ENABLED } {
 			    // Already enabled => blink the LED three times.
-			    for i in 0..3 {
+			    for _i in 0..3 {
 				CHANNEL_N.send(LedStatus::Off).await;
 				Timer::after_millis(500).await;
 				CHANNEL_N.send(LedStatus::On).await;
@@ -191,7 +191,7 @@ async fn read_button(
 		    Button::R  => {
 			if unsafe { button == BUTTON_ENABLED } {
 			    // Already enabled => blink the LED three times.
-			    for i in 0..3 {
+			    for _i in 0..3 {
 				CHANNEL_R.send(LedStatus::Off).await;
 				Timer::after_millis(500).await;
 				CHANNEL_R.send(LedStatus::On).await;
@@ -215,7 +215,7 @@ async fn read_button(
 		    Button::D  => {
 			if unsafe { button == BUTTON_ENABLED } {
 			    // Already enabled => blink the LED three times.
-			    for i in 0..3 {
+			    for _i in 0..3 {
 				CHANNEL_D.send(LedStatus::Off).await;
 				Timer::after_millis(500).await;
 				CHANNEL_D.send(LedStatus::On).await;
@@ -254,7 +254,8 @@ async fn read_button(
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
-    let mut valet: bool = false;
+    #[allow(unused_mut)] // TODO: Remove this line when we got the valet mode checking done.
+    let mut valet_mode: bool = false;
 
     info!("Start");
 
@@ -263,9 +264,9 @@ async fn main(spawner: Spawner) {
     // =====
     // Initialize the NeoPixel LED. Do this first, so we can turn on the LED.
     let Pio { mut common, sm0, .. } = Pio::new(p.PIO1, Irqs);
-    let mut ws2812 = ws2812::Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
+    let mut neopixel = ws2812::Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
     info!("Initialized the NeoPixel LED");
-    ws2812.write(&[(130,255,0).into()]).await; // ORANGE -> starting
+    neopixel.write(&[(130,255,0).into()]).await; // ORANGE -> starting
 
     // =====
     // Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
@@ -282,9 +283,9 @@ async fn main(spawner: Spawner) {
 
     // =====
     // Initialize the MOSFET relays.
-    let mut gpio1 = Output::new(p.PIN_18, Level::Low); // EIS/steering lock
-    let mut gpio2 = Output::new(p.PIN_19, Level::Low); // EIS/ignition switch
-    let mut gpio3 = Output::new(p.PIN_22, Level::Low); // EIS/start
+    let mut eis_steering_lock = Output::new(p.PIN_18, Level::Low);	// EIS/steering lock
+    let mut eis_ignition_switch = Output::new(p.PIN_19, Level::Low);	// EIS/ignition switch
+    let mut eis_start = Output::new(p.PIN_22, Level::Low);		// EIS/start
     info!("Initialized the MOSFET relays");
 
     // =====
@@ -296,7 +297,7 @@ async fn main(spawner: Spawner) {
 
     // =====
     // Initialize the fingerprint scanner.
-    let mut r503 = r503::R503::new(p.UART0, p.PIN_16, p.DMA_CH0, p.PIN_17, p.DMA_CH1, p.PIN_13.into());
+    let mut fp_scanner = r503::R503::new(p.UART0, Irqs, p.PIN_16, p.DMA_CH0, p.PIN_17, p.DMA_CH1, p.PIN_13.into());
     info!("Initialized the fingerprint scanner");
 
     // TODO: Send message to IC: "Authorizing use".
@@ -304,31 +305,31 @@ async fn main(spawner: Spawner) {
     // TODO: Check valet mode.
     // FAKE: Enable valet mode, I know the fingerprint scanner etc work, so don't
     //       need to do that while testing and developing.
-    //valet = true;
+    //valet_mode = true;
 
     // ================================================================================
 
     // Verify fingerprint.
-    if ! valet {
-	if r503.Wrapper_Verify_Fingerprint().await {
+    if valet_mode {
+	info!("Valet mode, won't check fingerprint");
+    } else {
+	if fp_scanner.Wrapper_Verify_Fingerprint().await {
 	    error!("Can't match fingerprint");
 
 	    debug!("NeoPixel RED");
-	    ws2812.write(&[(0,255,0).into()]).await; // RED
+	    neopixel.write(&[(0,255,0).into()]).await; // RED
 
 	    // Give it five seconds before we reset.
 	    Timer::after_secs(5).await;
 
 	    // Stop feeding the watchdog, resulting in a reset.
-	    CHANNEL_WATCHDOG.send(StopState::Yes).await;
+	    CHANNEL_WATCHDOG.send(StopWatchdog::Yes).await;
 	} else {
 	    info!("Fingerprint matches, use authorized");
 	}
-    } else {
-	info!("Valet mode, won't check fingerprint");
     }
-    ws2812.write(&[(255,0,0).into()]).await; // GREEN
-    r503.Wrapper_AuraSet_Off().await; // Turn off the aura.
+    neopixel.write(&[(255,0,0).into()]).await; // GREEN
+    fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
 
     // TODO: Send message to IC: "Use authorized, welcome <user|valet>".
 
@@ -352,22 +353,22 @@ async fn main(spawner: Spawner) {
     unsafe { BUTTON_ENABLED = Button::P };
 
     // Turn on the steering lock, allowing the key to be inserted.
-    gpio1.set_high();
+    eis_steering_lock.set_high();
 
     // Turn on the ignition switch.
-    gpio2.set_high();
+    eis_ignition_switch.set_high();
 
     // =====
     // Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
-    if !valet {
+    if !valet_mode {
 	// Sleep here three seconds to allow the car to "catch up".
 	// Sometime, it takes a while for the car to "wake up". Not sure why..
 	debug!("Waiting 3s to wakeup the car");
 	Timer::after_secs(3).await;
 
-	gpio3.set_high();
+	eis_start.set_high();
 	Timer::after_secs(1).await;
-	gpio3.set_low();
+	eis_start.set_low();
     }
 
     // =====
