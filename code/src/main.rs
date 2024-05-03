@@ -41,6 +41,9 @@ static CHANNEL_ACTUATOR: Channel<ThreadModeRawMutex, Button,    64>	= Channel::n
 // Start with the button UNSET, then change it when we know what gear the car is in.
 static mut BUTTON_ENABLED: Button = Button::UNSET;
 
+// When the actuator is moving, we need to set this to `true` to block input.
+static mut BUTTONS_BLOCKED: bool = false;
+
 bind_interrupts!(struct Irqs {
     PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
     UART0_IRQ  => UARTInterruptHandler<UART0>;	// Fingerprint scanner
@@ -156,6 +159,9 @@ async fn actuator_control(
 		move_actuator(&mut Direction::Backward, 5, &mut pin_motor_plus, &mut pin_motor_minus).await;
 	    }
 	}
+
+	// Now that we're done moving the actuator, Enable reading buttons again.
+	unsafe { BUTTONS_BLOCKED = false };
     }
 }
 
@@ -192,10 +198,20 @@ async fn read_button(
     }
 
     loop {
-        // button pressed
-        btn.debounce().await;
+        btn.debounce().await; // Button pressed
+
+	if unsafe { BUTTONS_BLOCKED == true } {
+	    debug!("Buttons blocked == {}", unsafe { BUTTONS_BLOCKED as u8 });
+	    while unsafe { BUTTONS_BLOCKED == true } {
+		// Block here while we wait for it to be unblocked.
+		debug!("Waiting for unblock (button task: {})", button as u8);
+		Timer::after_secs(1).await;
+	    }
+	    continue;
+	}
+
         let start = Instant::now();
-        info!("Button press detected");
+        info!("Button press detected (button task: {})", button as u8);
 
 	// Don't really care how long a button have been pressed as,
 	// the `debounce()` will detect when it's been RELEASED.
@@ -218,6 +234,9 @@ async fn read_button(
 				Timer::after_millis(500).await;
 			    }
 			} else {
+			    // Disable reading buttons
+			    unsafe { BUTTONS_BLOCKED = true };
+
 			    CHANNEL_P.send(LedStatus::On).await;
 			    CHANNEL_N.send(LedStatus::Off).await;
 			    CHANNEL_R.send(LedStatus::Off).await;
@@ -242,6 +261,9 @@ async fn read_button(
 				Timer::after_millis(500).await;
 			    }
 			} else {
+			    // Disable reading buttons
+			    unsafe { BUTTONS_BLOCKED = true };
+
 			    CHANNEL_P.send(LedStatus::Off).await;
 			    CHANNEL_N.send(LedStatus::On).await;
 			    CHANNEL_R.send(LedStatus::Off).await;
@@ -265,6 +287,9 @@ async fn read_button(
 				Timer::after_millis(500).await;
 			    }
 			} else {
+			    // Disable reading buttons
+			    unsafe { BUTTONS_BLOCKED = true };
+
 			    CHANNEL_P.send(LedStatus::Off).await;
 			    CHANNEL_N.send(LedStatus::Off).await;
 			    CHANNEL_R.send(LedStatus::On).await;
@@ -289,6 +314,9 @@ async fn read_button(
 				Timer::after_millis(500).await;
 			    }
 			} else {
+			    // Disable reading buttons
+			    unsafe { BUTTONS_BLOCKED = true };
+
 			    CHANNEL_P.send(LedStatus::Off).await;
 			    CHANNEL_N.send(LedStatus::Off).await;
 			    CHANNEL_R.send(LedStatus::Off).await;
@@ -440,6 +468,7 @@ async fn main(spawner: Spawner) {
 	debug!("Waiting 3s to wakeup the car");
 	Timer::after_secs(3).await;
 
+	info!("Sending start signal to car");
 	eis_start.set_high();
 	Timer::after_secs(1).await;
 	eis_start.set_low();
