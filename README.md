@@ -280,6 +280,29 @@ I've barely started on this, but I have the bare-bones of it in these repos:
 
 The actual DriveByWire source code have barely started, but it's in [the code directory](./code).
 
+This is a [recording of the screen](https://www.dropbox.com/scl/fi/bi3qf4g1nu1k6bnatyuem/Screen-Recording-2024-05-03-at-20.10.48.mov?rlkey=vi5vw7pl20p2h9n0wq28tuy4a&st=hylgbs2c&dl=0) while it was running.
+And this is what it [looked like in action](https://www.dropbox.com/scl/fi/nsdj958atposke2wdfzk9/2024-05-03-20.12.23.mov?rlkey=e7vu1sx3g0xffbefloeaspzul&st=kw81bt22&dl=0).
+They where to big for GitHub, so had to put them on my Dropbox account.
+
+The yellow LED is "start the car". I *THINK* it is enough to send +12V to the ECU on the "start position"
+pin. We'll see, have to do some experimentation. In this car, I only have to trigger it for the ECU to take
+over and start the car. So I'm only turning on the MOSFET "relay" for a second. Should be more than enough.
+
+The steady orange (well, it's not very orange, is it!?? :) and then green LED in the top middle is orange =>
+"starting up" (the module) and when it turns green, it means "all is well". Had the fingerprint not matched,
+it and the aura around the fingerprint scanner turned red.
+
+The two blinking LEDs, the red and green to the right of the multi-colour status LED, is the simulation of
+moving the actuator. Green is "move forward" and red is "move backwards". It blinks five times in either
+direction, because that's what I told it to :).
+
+Eventually, when I get the actuator, I'll be able to read the position of the actuator on GPIO26, which is
+set as an Input. Then I can from there calculate how much to move the actuator in either direction to select
+the desired gear.
+
+If I press the same, already selected, drive button, its LED will just blink three times and not do anything
+other than that.
+
 # Additional information
 
 * [RND-ASH Mercedes hacking docs](https://github.com/rnd-ash/mercedes-hacking-docs)
