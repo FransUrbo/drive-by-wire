@@ -5,14 +5,15 @@ use defmt::{debug, error, info, trace};
 
 use embassy_executor::Spawner;
 use embassy_rp::gpio::{AnyPin, Level, Input, Output, Pin, Pull, SlewRate};
-use embassy_time::{with_deadline, Duration, Instant, Timer};
 use embassy_rp::bind_interrupts;
-use embassy_rp::peripherals::{PIO1, UART0};
+use embassy_rp::peripherals::{PIO1, UART0, FLASH};
 use embassy_rp::uart::InterruptHandler as UARTInterruptHandler;
 use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
+use embassy_rp::watchdog::*;
+use embassy_rp::flash::{Async, ERASE_SIZE};
 use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
-use embassy_rp::watchdog::*;
+use embassy_time::{with_deadline, Duration, Instant, Timer};
 
 use ws2812;
 use debounce;
@@ -41,6 +42,11 @@ static mut BUTTON_ENABLED: Button = Button::UNSET;
 
 // When the actuator is moving, we need to set this to `true` to block input.
 static mut BUTTONS_BLOCKED: bool = false;
+
+// ??
+// https://github.com/embassy-rs/embassy/blob/45a2abc392df91ce6963ac0956f48f22bfa1489b/examples/rp/src/bin/flash.rs
+const ADDR_OFFSET: u32 = 0x100000;
+const FLASH_SIZE: usize = 2 * 1024 * 1024; // 2MB flash in the Pico.
 
 bind_interrupts!(struct Irqs {
     PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
@@ -73,6 +79,17 @@ async fn feed_watchdog(
 	    }
 	}
     }
+}
+
+async fn read_flash(flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH_SIZE>) -> u8{
+    let mut buf: [u8; 1] = [0; 1];
+    match flash.blocking_read(ADDR_OFFSET + ERASE_SIZE as u32, &mut buf) {
+	Ok(_) => debug!("Read successful"),
+	Err(e) => info!("Read failed: {}", e)
+    }
+    info!("Flash content: {:?}", buf[..]);
+
+    return buf[0];
 }
 
 // Actually move the actuator.
@@ -119,6 +136,7 @@ async fn move_actuator(
 #[embassy_executor::task]
 async fn actuator_control(
     receiver:			Receiver<'static, ThreadModeRawMutex, Button, 64>,
+    mut flash:			embassy_rp::flash::Flash<'static, FLASH, Async, FLASH_SIZE>,
     mut pin_motor_plus:		Output<'static>,
     mut pin_motor_minus:	Output<'static>,
     _pin_pot:			Input<'static>)
@@ -152,6 +170,23 @@ async fn actuator_control(
 
 	// .. and update the button enabled.
 	unsafe { BUTTON_ENABLED = button };
+
+	// .. and write it to flash.
+	match flash.blocking_erase(
+	    ADDR_OFFSET + ERASE_SIZE as u32,
+	    ADDR_OFFSET + ERASE_SIZE as u32 + ERASE_SIZE as u32)
+	{
+	    Ok(_) => debug!("Erase successful"),
+	    Err(e) => info!("Erase failed: {}", e)
+	}
+	match flash.blocking_write(ADDR_OFFSET + ERASE_SIZE as u32, &[button as u8]) {
+	    Ok(_) => debug!("Write successful"),
+	    Err(e) => info!("Write failed: {}", e)
+	}
+	//defmt::unwrap!(flash.blocking_write(ADDR_OFFSET + ERASE_SIZE as u32 + 1, &[0x00]));
+	//defmt::unwrap!(flash.blocking_write(ADDR_OFFSET + ERASE_SIZE as u32 + 2, &[0x00]));
+	//defmt::unwrap!(flash.blocking_write(ADDR_OFFSET + ERASE_SIZE as u32 + 3, &[0x00]));
+	read_flash(&mut flash).await;
     }
 }
 
@@ -330,11 +365,19 @@ async fn read_button(
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
+    let p = embassy_rp::init(Default::default());
     let valet_mode: bool = false;
 
     info!("Start");
 
-    let p = embassy_rp::init(Default::default());
+    // =====
+    // Initialize the built-in LED and turn it on. Just for completness.
+    let _builtin_led = Output::new(p.PIN_25, Level::High);
+
+    // =====
+    // Initialize the flash drive where we stor "currently selected drive mode".
+    let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH4);
+    let stored_button = read_flash(&mut flash).await; // Read the stored button from the flash.
 
     // =====
     // Initialize the NeoPixel LED. Do this first, so we can turn on the LED.
@@ -369,6 +412,7 @@ async fn main(spawner: Spawner) {
     let actuator_potentiometer = Input::new(p.PIN_26, Pull::None);	// Actuator/Potentiometer Brush
     spawner.spawn(actuator_control(
 	CHANNEL_ACTUATOR.receiver(),
+	flash,
 	actuator_motor_plus,
 	actuator_motor_minus,
 	actuator_potentiometer)
@@ -427,12 +471,46 @@ async fn main(spawner: Spawner) {
     // TODO: Find out what gear the car is in.
     // NOTE: Need to do this *after* we've verified that the actuator works. It will tell us what position it
     //       is in, and from there we can extrapolate the gear.
-    // FAKE: Current gear => (P)ark. Turn off all the others.
-    CHANNEL_P.send(LedStatus::On).await;
-    CHANNEL_N.send(LedStatus::Off).await;
-    CHANNEL_R.send(LedStatus::Off).await;
-    CHANNEL_D.send(LedStatus::Off).await;
-    unsafe { BUTTON_ENABLED = Button::P };
+    // FAKE: Read what button (gear) was enabled when last it changed from the flash.
+    match stored_button {
+	0 => {
+	    debug!("Setting enabled button to P");
+	    CHANNEL_P.send(LedStatus::On).await;
+	    CHANNEL_R.send(LedStatus::Off).await;
+	    CHANNEL_N.send(LedStatus::Off).await;
+	    CHANNEL_D.send(LedStatus::Off).await;
+
+	    unsafe { BUTTON_ENABLED = Button::P };
+	}
+	1 => {
+	    debug!("Setting enabled button to R");
+	    CHANNEL_P.send(LedStatus::Off).await;
+	    CHANNEL_R.send(LedStatus::On).await;
+	    CHANNEL_N.send(LedStatus::Off).await;
+	    CHANNEL_D.send(LedStatus::Off).await;
+
+	    unsafe { BUTTON_ENABLED = Button::R };
+	}
+	2 => {
+	    debug!("Setting enabled button to N");
+	    CHANNEL_P.send(LedStatus::Off).await;
+	    CHANNEL_R.send(LedStatus::Off).await;
+	    CHANNEL_N.send(LedStatus::On).await;
+	    CHANNEL_D.send(LedStatus::Off).await;
+
+	    unsafe { BUTTON_ENABLED = Button::N };
+	}
+	3 => {
+	    debug!("Setting enabled button to D");
+	    CHANNEL_P.send(LedStatus::Off).await;
+	    CHANNEL_R.send(LedStatus::Off).await;
+	    CHANNEL_N.send(LedStatus::Off).await;
+	    CHANNEL_D.send(LedStatus::On).await;
+
+	    unsafe { BUTTON_ENABLED = Button::D };
+	}
+	_ => ()
+    }
 
     // Turn on the steering lock, allowing the key to be inserted.
     eis_steering_lock.set_high();

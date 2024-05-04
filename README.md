@@ -313,6 +313,13 @@ the desired gear.
 In the meantime, this is now simulated by knowing what button is enabled and substracting the button selected.
 From there, we get a positive or negative value, and we use that to simulate the move of the actuator.
 
+Latest code now stores the button (mode) selected after the actuator have finished moving in the flash memory
+that's available in the Pico. There's only 2MB flash, but I only need one byte :D. There might be more that
+I can store there as well in the future.
+
+This flash value is then read on bootup and the correct (latest, before reboot/shutdown/reset) button/mode
+is then selected automatically.
+
 If I press the same, already selected, drive button, its LED will just blink three times and not do anything
 other than that.
 
