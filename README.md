@@ -282,15 +282,21 @@ I've barely started on this, but I have the bare-bones of it in these repos:
 * How to control the three MOSFET "relays": [pico-rust-test_4-MOSFET_RELAYS](https://github.com/FransUrbo/pico-rust-test_4-MOSFET_RELAYS)
 * How to setup and trigger the built-in watchdog on the RPi: [pico-rust-test_6-WATCHDOG-LED](https://github.com/FransUrbo/pico-rust-test_6-WATCHDOG-LED)
 
-The actual DriveByWire source code have barely started, but it's in [the code directory](./code).
+The actual DriveByWire source code is getting underway, but it's in [the code directory](./code).
+I verify fingerprint, read buttons, turn on LEDs correctly and I simulate actuator movement with two
+LEDs - RED and GREEN.
 
-This is a [recording of the screen](https://www.dropbox.com/scl/fi/bi3qf4g1nu1k6bnatyuem/Screen-Recording-2024-05-03-at-20.10.48.mov?rlkey=vi5vw7pl20p2h9n0wq28tuy4a&st=hylgbs2c&dl=0) while it was running.
+This was a [recording of the screen](https://www.dropbox.com/scl/fi/bi3qf4g1nu1k6bnatyuem/Screen-Recording-2024-05-03-at-20.10.48.mov?rlkey=vi5vw7pl20p2h9n0wq28tuy4a&st=hylgbs2c&dl=0) while it was running.
+It's a day old, and I've done some modifications to the code since them, but this demostrates it fairly
+well.
+
 And this is what it [looked like in action](https://www.dropbox.com/scl/fi/nsdj958atposke2wdfzk9/2024-05-03-20.12.23.mov?rlkey=e7vu1sx3g0xffbefloeaspzul&st=kw81bt22&dl=0).
 They where to big for GitHub, so had to put them on my Dropbox account.
 
-The yellow LED is "start the car". I *THINK* it is enough to send +12V to the ECU on the "start position"
-pin. We'll see, have to do some experimentation. In this car, I only have to trigger it for the ECU to take
-over and start the car. So I'm only turning on the MOSFET "relay" for a second. Should be more than enough.
+The yellow LED in the upper left corner of the box, that's connected to the MOSFET "relay", is "start the car".
+I *THINK* it is enough to send +12V to the ECU on the "start position" pin. We'll see, have to do some
+experimentation. In this car, I only have to trigger it for the ECU to take over and start the car. So
+I'm only turning on the MOSFET "relay" for a second. Should be more than enough.
 
 The steady orange (well, it's not very orange, is it!?? :) and then green LED in the top middle is orange =>
 "starting up" (the module) and when it turns green, it means "all is well". Had the fingerprint not matched,
@@ -303,6 +309,9 @@ direction, because that's what I told it to :).
 Eventually, when I get the actuator, I'll be able to read the position of the actuator on GPIO26, which is
 set as an Input. Then I can from there calculate how much to move the actuator in either direction to select
 the desired gear.
+
+In the meantime, this is now simulated by knowing what button is enabled and substracting the button selected.
+From there, we get a positive or negative value, and we use that to simulate the move of the actuator.
 
 If I press the same, already selected, drive button, its LED will just blink three times and not do anything
 other than that.
