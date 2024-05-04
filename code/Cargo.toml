@@ -8,6 +8,8 @@ authors = ["Turbo Fredriksson <turbo@bayour.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+# =====
+
 [dependencies]
 defmt = "0.3"
 defmt-rtt = "0.4"
@@ -59,24 +61,42 @@ git = "https://github.com/embassy-rs/embassy.git"
 rev = "511bee7"
 features = ["defmt"]
 
-# cargo build/run
+
+# =====
+# https://doc.rust-lang.org/cargo/reference/profiles.html
+
+# ----- Root profiles.
+
+# => `target/thumbv6m-none-eabi/debug/drive-by-wire`
 [profile.dev]
 codegen-units = 1
-debug = 2
+debug = "full"
 debug-assertions = true
 incremental = false
 opt-level = 3
 overflow-checks = true
 
 # cargo build/run --release
+# Strips EVERYTHING, resulting in absolute minimum size binary.
+# => `target/thumbv6m-none-eabi/release/drive-by-wire`
 [profile.release]
 codegen-units = 1
-debug = 2
+debug = false
 debug-assertions = false
 incremental = false
 lto = 'fat'
 opt-level = 3
 overflow-checks = false
+strip = true
+
+# ----- Custom profiles.
+
+# Same as `release` but leave the debug and info etc macros intact.
+# Results in a slightly larger binary.
+# => `target/thumbv6m-none-eabi/release-dev/drive-by-wire`
+[profile.release-dev]
+inherits = "release"
+strip = "debuginfo"
 
 # do not optimize proc-macro crates = faster builds from scratch
 [profile.dev.build-override]
