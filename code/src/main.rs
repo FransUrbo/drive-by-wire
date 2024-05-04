@@ -22,11 +22,7 @@ use {defmt_rtt as _, panic_probe as _};
 
 #[derive(Copy, Clone, PartialEq)]
 #[repr(u8)]
-enum Button { P, N, R, D, UNSET }
-
-#[derive(Copy, Clone)]
-#[repr(u8)]
-enum Direction { Forward, Backward }
+enum Button { P, R, N, D, UNSET }
 
 enum LedStatus { On, Off }
 enum StopWatchdog { Yes }
@@ -76,92 +72,73 @@ async fn feed_watchdog(
     }
 }
 
+// Actually move the actuator.
 async fn move_actuator(
-    direction:		&mut Direction,
-    amount:		u16,
+    amount:		i8,
     pin_motor_plus:	&mut Output<'static>,
     pin_motor_minus:	&mut Output<'static>)
 {
-    match direction {
-	Direction::Forward => {
-	    info!("Moving actuator: direction=FORWARD; amount={}", amount);
-	    pin_motor_minus.set_low(); // Set the MINUS to low.
+    if amount < 0 {
+	info!("Moving actuator: direction=FORWARD; amount={}", amount);
+	pin_motor_minus.set_low(); // Set the MINUS to low.
+	Timer::after_millis(500).await;
+
+	// FAKE: Simulate move by toggling the pin HIGH and LOW `amount` times.
+	for _i in amount..0 {
+	    pin_motor_plus.set_high();
 	    Timer::after_millis(500).await;
-
-	    // FAKE: Simulate move by toggling the pin HIGH and LOW `amount` times.
-	    for _i in 0..amount {
-		pin_motor_plus.set_high();
-		Timer::after_millis(500).await;
-		pin_motor_plus.set_low();
-		Timer::after_millis(500).await;
-	    }
+	    pin_motor_plus.set_low();
+	    Timer::after_millis(500).await;
 	}
-	Direction::Backward => {
-	    info!("Moving actuator: direction=BACKWARD; amount={}", amount);
-	    pin_motor_plus.set_low(); // Set the PLUS to low.
+    } else {
+	info!("Moving actuator: direction=BACKWARD; amount={}", amount);
+	pin_motor_plus.set_low(); // Set the PLUS to low.
 
-	    // FAKE: Simulate move by toggling the pin HIGH and LOW `amount` times.
-	    for _i in 0..amount {
-		pin_motor_minus.set_high();
-		Timer::after_millis(500).await;
-		pin_motor_minus.set_low();
-		Timer::after_millis(500).await;
-	    }
+	// FAKE: Simulate move by toggling the pin HIGH and LOW `amount` times.
+	for _i in 0..amount {
+	    pin_motor_minus.set_high();
+	    Timer::after_millis(500).await;
+	    pin_motor_minus.set_low();
+	    Timer::after_millis(500).await;
 	}
     }
 }
 
-// Talk to the actuator, move it to desired gear position.
-// FAKE: Just output what we *would* do if we actually HAD an actuator! :)
+// Control the actuator. Calculate in what direction and how much to move it to get to
+// the desired drive mode position.
 #[embassy_executor::task]
 async fn actuator_control(
     receiver:			Receiver<'static, ThreadModeRawMutex, Button, 64>,
     mut pin_motor_plus:		Output<'static>,
     mut pin_motor_minus:	Output<'static>,
-    pin_pot:			Input<'static>)
+    _pin_pot:			Input<'static>)
 {
     pin_motor_plus.set_slew_rate(SlewRate::Fast);
     pin_motor_minus.set_slew_rate(SlewRate::Fast);
 
     loop {
+	let button = receiver.receive().await; // Block waiting for data.
+
 	// TODO: Figure out what gear is in from this.
-	let _actuator_position = pin_pot.get_level();
+	//let _actuator_position = pin_pot.get_level();
 
-	// TODO: How do we move the actuator back and forth? There's only HIGH and LOW.. ??
-	match receiver.receive().await { // Block waiting for data.
-	    Button::UNSET => (), // Should be impossible, but just to make the compiler happy.
-	    Button::P  => {
-		info!("Moving actuator to (P)ark");
+	// FAKE: Use the current button selected to calculate the direction and amount to move the actuator
+	let _actuator_position = unsafe { BUTTON_ENABLED as u8 };
 
-		// FAKE: Simulate moving the actuator forward and backward five steps.
-		move_actuator(&mut Direction::Forward,  5, &mut pin_motor_plus, &mut pin_motor_minus).await;
-		move_actuator(&mut Direction::Backward, 5, &mut pin_motor_plus, &mut pin_motor_minus).await;
-	    }
-	    Button::N  => {
-		info!("Moving actuator to (N)eutral");
+	// Calculate the direction to move, based on current position and where we want to go.
+	// - => Higher gear - BACKWARDS
+	// + => Lower gear  - FORWARD
+	let amount: i8 = _actuator_position as i8 - button as i8;
+	debug!("Move direction and amount => '{} - {} = {}'", _actuator_position, button as i8, amount);
 
-		// FAKE: Simulate moving the actuator forward and backward five steps.
-		move_actuator(&mut Direction::Forward,  5, &mut pin_motor_plus, &mut pin_motor_minus).await;
-		move_actuator(&mut Direction::Backward, 5, &mut pin_motor_plus, &mut pin_motor_minus).await;
-	    }
-	    Button::R  => {
-		info!("Moving actuator to (R)everse");
-
-		// FAKE: Simulate moving the actuator forward and backward five steps.
-		move_actuator(&mut Direction::Forward,  5, &mut pin_motor_plus, &mut pin_motor_minus).await;
-		move_actuator(&mut Direction::Backward, 5, &mut pin_motor_plus, &mut pin_motor_minus).await;
-	    }
-	    Button::D  => {
-		info!("Moving actuator to (D)rive");
-
-		// FAKE: Simulate moving the actuator forward and backward five steps.
-		move_actuator(&mut Direction::Forward,  5, &mut pin_motor_plus, &mut pin_motor_minus).await;
-		move_actuator(&mut Direction::Backward, 5, &mut pin_motor_plus, &mut pin_motor_minus).await;
-	    }
-	}
+	// Move the actuator.
+	move_actuator(amount, &mut pin_motor_plus, &mut pin_motor_minus).await;
 
 	// Now that we're done moving the actuator, Enable reading buttons again.
 	unsafe { BUTTONS_BLOCKED = false };
+
+	// .. and update the button enabled.
+	unsafe { BUTTON_ENABLED = button };
     }
 }
 
@@ -218,7 +195,7 @@ async fn read_button(
 	match with_deadline(start + Duration::from_secs(1), btn.debounce()).await {
             Ok(_) => {
 		trace!("Button pressed for: {}ms", start.elapsed().as_millis());
-		debug!("Button pressed: {}; Button enabled: {}", button as u8, unsafe { BUTTON_ENABLED as u8 });
+		debug!("Button enabled: {}; Button pressed: {}", unsafe { BUTTON_ENABLED as u8 }, button as u8);
 
 		// We know who WE are, so turn ON our own LED and turn off all the other LEDs.
 		// Turn on our OWN LED.
@@ -244,9 +221,6 @@ async fn read_button(
 
 			    // Trigger the actuator to switch to (P)ark.
 			    CHANNEL_ACTUATOR.send(Button::P).await;
-
-			    // Update the button enabled.
-			    unsafe { BUTTON_ENABLED = Button::P };
 			}
 
 			continue;
@@ -271,9 +245,6 @@ async fn read_button(
 
 			    // Trigger the actuator to switch to (N)eutral.
 			    CHANNEL_ACTUATOR.send(Button::N).await;
-
-			    // Update the button enabled.
-			    unsafe { BUTTON_ENABLED = Button::N };
 			}
 			continue;
 		    }
@@ -297,9 +268,6 @@ async fn read_button(
 
 			    // Trigger the actuator to switch to (R)everse.
 			    CHANNEL_ACTUATOR.send(Button::R).await;
-
-			    // Update the button enabled.
-			    unsafe { BUTTON_ENABLED = Button::R };
 			}
 
 			continue;
@@ -324,9 +292,6 @@ async fn read_button(
 
 			    // Trigger the actuator to switch to (D)rive.
 			    CHANNEL_ACTUATOR.send(Button::D).await;
-
-			    // Update the button enabled.
-			    unsafe { BUTTON_ENABLED = Button::D };
 			}
 
 			continue;
@@ -349,8 +314,7 @@ async fn read_button(
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
-    #[allow(unused_mut)] // TODO: Remove this line when we got the valet mode checking done.
-    let mut valet_mode: bool = false;
+    let valet_mode: bool = false;
 
     info!("Start");
 
@@ -361,7 +325,7 @@ async fn main(spawner: Spawner) {
     let Pio { mut common, sm0, .. } = Pio::new(p.PIO1, Irqs);
     let mut neopixel = ws2812::Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
     info!("Initialized the NeoPixel LED");
-    neopixel.write(&[(255,130,0).into()]).await; // ORANGE -> starting
+    neopixel.write(&[(255,100,0).into()]).await; // ORANGE -> starting
 
     // =====
     // Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
@@ -378,14 +342,14 @@ async fn main(spawner: Spawner) {
 
     // =====
     // Initialize the MOSFET relays.
-    let mut eis_steering_lock = Output::new(p.PIN_18, Level::Low);	// EIS/steering lock
+    let mut eis_steering_lock   = Output::new(p.PIN_18, Level::Low);	// EIS/steering lock
     let mut eis_ignition_switch = Output::new(p.PIN_19, Level::Low);	// EIS/ignition switch
-    let mut eis_start = Output::new(p.PIN_22, Level::Low);		// EIS/start
+    let mut eis_start           = Output::new(p.PIN_22, Level::Low);	// EIS/start
     info!("Initialized the MOSFET relays");
 
     // =====
-    let actuator_motor_plus    = Output::new(p.PIN_27, Level::Low);	// Actuator/Motor Relay (+)
-    let actuator_motor_minus   = Output::new(p.PIN_28, Level::Low);	// Actuator/Motor Relay (-)
+    let actuator_motor_plus    = Output::new(p.PIN_27, Level::Low);	// Actuator/Motor Relay (-)
+    let actuator_motor_minus   = Output::new(p.PIN_28, Level::Low);	// Actuator/Motor Relay (+)
     let actuator_potentiometer = Input::new(p.PIN_26, Pull::None);	// Actuator/Potentiometer Brush
     spawner.spawn(actuator_control(
 	CHANNEL_ACTUATOR.receiver(),
@@ -439,8 +403,8 @@ async fn main(spawner: Spawner) {
     // Spawn off one button reader per button. They will then spawn off a LED controller each so that
     // each button can control their "own" LED.
     spawner.spawn(read_button(spawner, Button::P, p.PIN_2.degrade(), p.PIN_6.degrade())).unwrap(); // button/P
-    spawner.spawn(read_button(spawner, Button::N, p.PIN_3.degrade(), p.PIN_7.degrade())).unwrap(); // button/N
-    spawner.spawn(read_button(spawner, Button::R, p.PIN_4.degrade(), p.PIN_8.degrade())).unwrap(); // button/R
+    spawner.spawn(read_button(spawner, Button::R, p.PIN_3.degrade(), p.PIN_7.degrade())).unwrap(); // button/R
+    spawner.spawn(read_button(spawner, Button::N, p.PIN_4.degrade(), p.PIN_8.degrade())).unwrap(); // button/N
     spawner.spawn(read_button(spawner, Button::D, p.PIN_5.degrade(), p.PIN_9.degrade())).unwrap(); // button/D
     info!("Initialized the drive buttons");
 
