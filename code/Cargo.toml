@@ -18,7 +18,7 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 
 [dependencies.ws2812]
 git = "https://github.com/FransUrbo/rust-libs-ws2812.git"
-rev = "712ed6e"
+rev = "9744502"
 
 [dependencies.r503]
 git = "https://github.com/FransUrbo/rust-libs-r503.git"

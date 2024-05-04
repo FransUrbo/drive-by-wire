@@ -361,7 +361,7 @@ async fn main(spawner: Spawner) {
     let Pio { mut common, sm0, .. } = Pio::new(p.PIO1, Irqs);
     let mut neopixel = ws2812::Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
     info!("Initialized the NeoPixel LED");
-    neopixel.write(&[(130,255,0).into()]).await; // ORANGE -> starting
+    neopixel.write(&[(255,130,0).into()]).await; // ORANGE -> starting
 
     // =====
     // Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
@@ -419,7 +419,7 @@ async fn main(spawner: Spawner) {
 	    error!("Can't match fingerprint");
 
 	    debug!("NeoPixel RED");
-	    neopixel.write(&[(0,255,0).into()]).await; // RED
+	    neopixel.write(&[(255,0,0).into()]).await; // RED
 
 	    // Give it five seconds before we reset.
 	    Timer::after_secs(5).await;
@@ -430,7 +430,7 @@ async fn main(spawner: Spawner) {
 	    info!("Fingerprint matches, use authorized");
 	}
     }
-    neopixel.write(&[(255,0,0).into()]).await; // GREEN
+    neopixel.write(&[(0,255,0).into()]).await; // GREEN
     fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
 
     // TODO: Send message to IC: "Use authorized, welcome <user|valet>".
