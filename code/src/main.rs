@@ -20,13 +20,15 @@ use r503;
 
 use {defmt_rtt as _, panic_probe as _};
 
+// ================================================================================
+
 #[derive(Copy, Clone, PartialEq)]
 #[repr(u8)]
 enum Button { P, R, N, D, UNSET }
-
 enum LedStatus { On, Off }
 enum StopWatchdog { Yes }
 
+// Setup the communication channels between the tasks.
 static CHANNEL_P:        Channel<ThreadModeRawMutex, LedStatus, 64>	= Channel::new();
 static CHANNEL_N:        Channel<ThreadModeRawMutex, LedStatus, 64>	= Channel::new();
 static CHANNEL_R:        Channel<ThreadModeRawMutex, LedStatus, 64>	= Channel::new();
@@ -47,6 +49,7 @@ bind_interrupts!(struct Irqs {
 
 // ================================================================================
 
+// Doggy is hungry, needs to be feed every three quarter second, otherwise it gets cranky! :)
 #[embassy_executor::task]
 async fn feed_watchdog(
     control: Receiver<'static, ThreadModeRawMutex, StopWatchdog, 64>,
@@ -73,6 +76,8 @@ async fn feed_watchdog(
 }
 
 // Actually move the actuator.
+// TODO: How do we actually move it? Is it enough to send it +3V3 or +5V on the
+//       motor relay, or does it need more power? If so, we need two more MOSFETs.
 async fn move_actuator(
     amount:		i8,
     pin_motor_plus:	&mut Output<'static>,
@@ -80,7 +85,7 @@ async fn move_actuator(
 {
     if amount < 0 {
 	info!("Moving actuator: direction=FORWARD; amount={}", amount);
-	pin_motor_minus.set_low(); // Set the MINUS to low.
+	pin_motor_minus.set_low(); // Set the other pin to low. There can be only one!
 	Timer::after_millis(500).await;
 
 	// FAKE: Simulate move by toggling the pin HIGH and LOW `amount` times.
@@ -92,7 +97,7 @@ async fn move_actuator(
 	}
     } else {
 	info!("Moving actuator: direction=BACKWARD; amount={}", amount);
-	pin_motor_plus.set_low(); // Set the PLUS to low.
+	pin_motor_plus.set_low(); // Set the other pin to low. There can be only one!
 
 	// FAKE: Simulate move by toggling the pin HIGH and LOW `amount` times.
 	for _i in 0..amount {
@@ -102,6 +107,11 @@ async fn move_actuator(
 	    Timer::after_millis(500).await;
 	}
     }
+
+    // TODO: Verify with the potentiometer on the actuator that we've actually moved
+    //       it to the right position.
+    //       Documentation say "Actual resistance value may vary within the 0-10kΩ
+    //       range based on stroke length".
 }
 
 // Control the actuator. Calculate in what direction and how much to move it to get to
@@ -120,6 +130,9 @@ async fn actuator_control(
 	let button = receiver.receive().await; // Block waiting for data.
 
 	// TODO: Figure out what gear is in from this.
+	// NOTE: This might not be possible, the `get_level()` only gets the
+	//       level (HIGH/LOW) of the pin, not the actual value from the
+	//       potentiometer.
 	//let _actuator_position = pin_pot.get_level();
 
 	// FAKE: Use the current button selected to calculate the direction and amount to move the actuator
@@ -175,6 +188,12 @@ async fn read_button(
     }
 
     loop {
+	// NOTE: We need to wait for a button to be pressed, BEFORE we can check if we're
+	//       blocked. If we don't, we've checked if we're blocked, we're not and we
+	//       start listening to a button. But if someone else have got the press,
+	//       then "this" will still wait for a press!
+	//       If we ARE blocked, then sleep until we're not, then restart the loop from
+	//       the beginning, listening for a button press again.
         btn.debounce().await; // Button pressed
 
 	if unsafe { BUTTONS_BLOCKED == true } {
@@ -187,6 +206,7 @@ async fn read_button(
 	    continue;
 	}
 
+	// Got a valid button press. Process it..
         let start = Instant::now();
         info!("Button press detected (button task: {})", button as u8);
 
@@ -198,12 +218,11 @@ async fn read_button(
 		debug!("Button enabled: {}; Button pressed: {}", unsafe { BUTTON_ENABLED as u8 }, button as u8);
 
 		// We know who WE are, so turn ON our own LED and turn off all the other LEDs.
-		// Turn on our OWN LED.
 		match button {
 		    Button::UNSET => (),
 		    Button::P  => {
 			if unsafe { button == BUTTON_ENABLED } {
-			    // Already enabled => blink the LED three times.
+			    // Already enabled => blink *our* LED three times.
 			    for _i in 0..3 {
 				CHANNEL_P.send(LedStatus::Off).await;
 				Timer::after_millis(500).await;
@@ -211,7 +230,7 @@ async fn read_button(
 				Timer::after_millis(500).await;
 			    }
 			} else {
-			    // Disable reading buttons
+			    // Disable reading buttons while we deal with this one.
 			    unsafe { BUTTONS_BLOCKED = true };
 
 			    CHANNEL_P.send(LedStatus::On).await;
@@ -227,7 +246,7 @@ async fn read_button(
 		    }
 		    Button::N  => {
 			if unsafe { button == BUTTON_ENABLED } {
-			    // Already enabled => blink the LED three times.
+			    // Already enabled => blink *our* LED three times.
 			    for _i in 0..3 {
 				CHANNEL_N.send(LedStatus::Off).await;
 				Timer::after_millis(500).await;
@@ -235,7 +254,7 @@ async fn read_button(
 				Timer::after_millis(500).await;
 			    }
 			} else {
-			    // Disable reading buttons
+			    // Disable reading buttons while we deal with this one.
 			    unsafe { BUTTONS_BLOCKED = true };
 
 			    CHANNEL_P.send(LedStatus::Off).await;
@@ -250,7 +269,7 @@ async fn read_button(
 		    }
 		    Button::R  => {
 			if unsafe { button == BUTTON_ENABLED } {
-			    // Already enabled => blink the LED three times.
+			    // Already enabled => blink *our* LED three times.
 			    for _i in 0..3 {
 				CHANNEL_R.send(LedStatus::Off).await;
 				Timer::after_millis(500).await;
@@ -258,7 +277,7 @@ async fn read_button(
 				Timer::after_millis(500).await;
 			    }
 			} else {
-			    // Disable reading buttons
+			    // Disable reading buttons while we deal with this one.
 			    unsafe { BUTTONS_BLOCKED = true };
 
 			    CHANNEL_P.send(LedStatus::Off).await;
@@ -274,7 +293,7 @@ async fn read_button(
 		    }
 		    Button::D  => {
 			if unsafe { button == BUTTON_ENABLED } {
-			    // Already enabled => blink the LED three times.
+			    // Already enabled => blink *our* LED three times.
 			    for _i in 0..3 {
 				CHANNEL_D.send(LedStatus::Off).await;
 				Timer::after_millis(500).await;
@@ -282,7 +301,7 @@ async fn read_button(
 				Timer::after_millis(500).await;
 			    }
 			} else {
-			    // Disable reading buttons
+			    // Disable reading buttons while we deal with this one.
 			    unsafe { BUTTONS_BLOCKED = true };
 
 			    CHANNEL_P.send(LedStatus::Off).await;
@@ -300,13 +319,10 @@ async fn read_button(
             }
 
 	    // Don't allow another button for quarter second.
-	    // TODO: This probably needs to be longer, need to wait for the actuator.
-	    //       Don't know how long that takes to move, but we can't allow another
-	    //       gear change until it's done + 1s (?).
 	    _ => Timer::after_millis(250).await
 	}
 
-	// wait for button release before handling another press
+	// Wait for button release before handling another press.
 	btn.debounce().await;
 	trace!("Button pressed for: {}ms", start.elapsed().as_millis());
     }

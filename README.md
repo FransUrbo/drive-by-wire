@@ -282,7 +282,7 @@ I've barely started on this, but I have the bare-bones of it in these repos:
 * How to control the three MOSFET "relays": [pico-rust-test_4-MOSFET_RELAYS](https://github.com/FransUrbo/pico-rust-test_4-MOSFET_RELAYS)
 * How to setup and trigger the built-in watchdog on the RPi: [pico-rust-test_6-WATCHDOG-LED](https://github.com/FransUrbo/pico-rust-test_6-WATCHDOG-LED)
 
-The actual DriveByWire source code is getting underway, but it's in [the code directory](./code).
+The actual DriveByWire source code is getting underway, it's in [the code directory](./code).
 I verify fingerprint, read buttons, turn on LEDs correctly and I simulate actuator movement with two
 LEDs - RED and GREEN.
 
@@ -315,6 +315,9 @@ From there, we get a positive or negative value, and we use that to simulate the
 
 If I press the same, already selected, drive button, its LED will just blink three times and not do anything
 other than that.
+
+It will block all button presses while the actuator is moving, to make sure we don't do something ..
+bad.
 
 # Additional information
 
