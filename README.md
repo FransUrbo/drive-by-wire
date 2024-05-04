@@ -109,18 +109,18 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 |  10 | GPIO  7 | Button (Telltale - R)        |-| 31  | GPIO 26 | Actuator - Potentiometer Brush   |
 |  11 | GPIO  8 | Button (Telltale - N)        |-| 30  | RUN     |                                  |
 |  12 | GPIO  9 | Button (Telltale - D)        |-| 29  | GPIO 22 | EIS Relay (#3 - start)           |
-|  13 | GND     |                              |-| 28  | GND     |                                  |
+|  13 | GND     | [GPIO 29]                    |-| 28  | GND     | [GPIO 23]                        |
 |  14 | GPIO 10 | CAN #1 (RX)                  |-| 27  | GPIO 21 | CAN #0 (RX)                      |
 |  15 | GPIO 11 | CAN #1 (TX)                  |-| 26  | GPIO 20 | CAN #0 (TX)                      |
 |  16 | GPIO 12 |                              |-| 25  | GPIO 19 | EIS Relay (#1 - ignition switch) |
 |  17 | GPIO 13 | Fingerprint Scanner (WAKEUP) |-| 24  | GPIO 18 | EIS Relay (#2 - steering lock)   |
-|  18 | GND     |                              |-| 23  | GND     |                                  |
+|  18 | GND     | [GPIO 25]                    |-| 23  | GND     | [GPIO 24]                        |
 |  19 | GPIO 14 | Status LED (Data OUT)        |-| 22  | GPIO 17 | Fingerprint Scanner (TX)         |
 |  20 | GPIO 15 | Status LED (Data IN)         |-| 21  | GPIO 16 | Fingerprint Scanner (RX)         |
 
 LED | GPIO 25
 
-Olimex RP2040-PICO30-16 also exposes GPIO 23-25, 29 by sacrificing four GROUND pins.
+[Olimex RP2040-PICO30-16](https://thepihut.com/products/olimex-rp2040-pico30-16) also exposes GPIO 23-25, 29 by sacrificing four GROUND pins.
 
 ## External contacts
 
