@@ -265,6 +265,12 @@ Also, I'm missing the headers for the fingerprint scanner and the actuator in th
 
 ![Initial wiring on bread boards](./2024-04-20%2021.50.37.jpg)
 
+### Latest wiring on bread boards
+
+This what it looks like now. I built a box :D :D.
+
+![Latest wiring on bread boards](./2024-05-04%2011.09.21.jpg)
+
 # Source code
 
 I've barely started on this, but I have the bare-bones of it in these repos:
@@ -275,8 +281,6 @@ I've barely started on this, but I have the bare-bones of it in these repos:
 * How to read and write to the fingerprint scanner: [pico-rust-test_3-FP_SCANNER](https://github.com/FransUrbo/pico-rust-test_3-FP_SCANNER)
 * How to control the three MOSFET "relays": [pico-rust-test_4-MOSFET_RELAYS](https://github.com/FransUrbo/pico-rust-test_4-MOSFET_RELAYS)
 * How to setup and trigger the built-in watchdog on the RPi: [pico-rust-test_6-WATCHDOG-LED](https://github.com/FransUrbo/pico-rust-test_6-WATCHDOG-LED)
-
-![Latest wiring on bread boards](./2024-05-01%2015.46.02.jpg)
 
 The actual DriveByWire source code have barely started, but it's in [the code directory](./code).
 
