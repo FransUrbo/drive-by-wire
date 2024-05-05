@@ -61,7 +61,6 @@ git = "https://github.com/embassy-rs/embassy.git"
 rev = "511bee7"
 features = ["defmt"]
 
-
 # =====
 # https://doc.rust-lang.org/cargo/reference/profiles.html
 
@@ -130,3 +129,9 @@ debug-assertions = false
 incremental = false
 lto = 'fat'
 opt-level = 3
+
+# =====
+
+[[bin]]
+name = "prepare-flash"
+path = "src/prepare-flash.rs"
