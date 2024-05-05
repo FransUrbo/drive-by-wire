@@ -45,7 +45,10 @@ static mut BUTTON_ENABLED: Button = Button::UNSET;
 // When the actuator is moving, we need to set this to `true` to block input.
 static mut BUTTONS_BLOCKED: bool = false;
 
-// ??
+// Set the distance between the different mode. 70mm is the total throw from begining to end.
+static ACTUATOR_DISTANCE_BETWEEN_POSITIONS: i8 = 70 / 3; // 3 because the start doesn't count :).
+
+// Setup the flash storage size. Gives us four u8 "slots" for long-term storage.
 // https://github.com/embassy-rs/embassy/blob/45a2abc392df91ce6963ac0956f48f22bfa1489b/examples/rp/src/bin/flash.rs
 const ADDR_OFFSET: u32 = 0x100000;
 const FLASH_SIZE: usize = 2 * 1024 * 1024; // 2MB flash in the Pico.
@@ -151,32 +154,63 @@ async fn read_flash(flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH
 // TODO: How do we actually move it? Is it enough to send it +3V3 or +5V on the
 //       motor relay, or does it need more power? If so, we need two more MOSFETs.
 async fn move_actuator(
-    amount:		i8,
+    amount:		i8, // Distance in mm in either direction.
     pin_motor_plus:	&mut Output<'static>,
     pin_motor_minus:	&mut Output<'static>)
 {
     if amount < 0 {
 	info!("Moving actuator: direction=FORWARD; amount={}", amount);
 	pin_motor_minus.set_low(); // Set the other pin to low. There can be only one!
-	Timer::after_millis(500).await;
 
-	// FAKE: Simulate move by toggling the pin HIGH and LOW `amount` times.
-	for _i in amount..0 {
+	// FAKE: Simulate move by toggling the pin HIGH and LOW `amount` (mm) times.
+	let mut pos: i8 = 0; // Make sure to blink BOTH at completion of every position move.
+	for i in amount..=0 {
+	    // FAKE: For every position, turn BOTH led on for a bit, to indicate position.
+	    trace!("pos={}; i={}", pos, i);
+	    if i % ACTUATOR_DISTANCE_BETWEEN_POSITIONS == 0 {
+		if pos != 0 {
+		    trace!("i % {}", ACTUATOR_DISTANCE_BETWEEN_POSITIONS);
+		    pin_motor_minus.set_high();
+		    pin_motor_plus.set_high();
+		    Timer::after_millis(100).await;
+		    pin_motor_minus.set_low();
+		    pin_motor_plus.set_low();
+		}
+
+		pos = pos + 1;
+	    }
+
 	    pin_motor_plus.set_high();
-	    Timer::after_millis(500).await;
+	    Timer::after_millis(50).await;
 	    pin_motor_plus.set_low();
-	    Timer::after_millis(500).await;
+	    Timer::after_millis(50).await;
 	}
     } else {
 	info!("Moving actuator: direction=BACKWARD; amount={}", amount);
 	pin_motor_plus.set_low(); // Set the other pin to low. There can be only one!
 
-	// FAKE: Simulate move by toggling the pin HIGH and LOW `amount` times.
-	for _i in 0..amount {
+	// FAKE: Simulate move by toggling the pin HIGH and LOW `amount` (mm) times.
+	let mut pos: i8 = 0; // Make sure to blink BOTH at completion of every position move.
+	for i in 0..=amount {
+	    // FAKE: For every position, turn BOTH led on for a bit, to indicate position.
+	    trace!("pos={}; i={}", pos, i);
+	    if i % ACTUATOR_DISTANCE_BETWEEN_POSITIONS == 0 {
+		if pos != 0 {
+		    trace!("i % {}", ACTUATOR_DISTANCE_BETWEEN_POSITIONS);
+		    pin_motor_minus.set_high();
+		    pin_motor_plus.set_high();
+		    Timer::after_millis(100).await;
+		    pin_motor_minus.set_low();
+		    pin_motor_plus.set_low();
+		}
+
+		pos = pos + 1;
+	    }
+
 	    pin_motor_minus.set_high();
-	    Timer::after_millis(500).await;
+	    Timer::after_millis(50).await;
 	    pin_motor_minus.set_low();
-	    Timer::after_millis(500).await;
+	    Timer::after_millis(50).await;
 	}
     }
 
@@ -216,7 +250,7 @@ async fn actuator_control(
 	// Calculate the direction to move, based on current position and where we want to go.
 	// - => Higher gear - BACKWARDS
 	// + => Lower gear  - FORWARD
-	let amount: i8 = _actuator_position as i8 - button as i8;
+	let amount: i8 = (_actuator_position as i8 - button as i8) * ACTUATOR_DISTANCE_BETWEEN_POSITIONS;
 	debug!("Move direction and amount => '{} - {} = {}'", _actuator_position, button as i8, amount);
 
 	// Move the actuator.
@@ -233,16 +267,13 @@ async fn actuator_control(
 	    ADDR_OFFSET + ERASE_SIZE as u32,
 	    ADDR_OFFSET + ERASE_SIZE as u32 + ERASE_SIZE as u32)
 	{
-	    Ok(_) => debug!("Erase successful"),
-	    Err(e) => info!("Erase failed: {}", e)
+	    Ok(_)  => debug!("Flash erase successful"),
+	    Err(e) => info!("Flash erase failed: {}", e)
 	}
 	match flash.blocking_write(ADDR_OFFSET + ERASE_SIZE as u32, &[button as u8]) {
-	    Ok(_) => debug!("Write successful"),
-	    Err(e) => info!("Write failed: {}", e)
+	    Ok(_)  => debug!("Flash write successful"),
+	    Err(e) => info!("Flash write failed: {}", e)
 	}
-	//defmt::unwrap!(flash.blocking_write(ADDR_OFFSET + ERASE_SIZE as u32 + 1, &[0x00]));
-	//defmt::unwrap!(flash.blocking_write(ADDR_OFFSET + ERASE_SIZE as u32 + 2, &[0x00]));
-	//defmt::unwrap!(flash.blocking_write(ADDR_OFFSET + ERASE_SIZE as u32 + 3, &[0x00]));
 	read_flash(&mut flash).await;
     }
 }
@@ -427,7 +458,10 @@ async fn read_button(
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
-    let valet_mode: bool = false;
+
+    // FAKE: Enable valet mode, I know the fingerprint scanner etc work,
+    //       so don't need to do every time while testing and developing.
+    let valet_mode: bool = true;
 
     info!("Start");
 
@@ -472,9 +506,18 @@ async fn main(spawner: Spawner) {
 
     // =====
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
-    let actuator_motor_plus    = Output::new(p.PIN_27, Level::Low);	// Actuator/Motor Relay (-)
-    let actuator_motor_minus   = Output::new(p.PIN_28, Level::Low);	// Actuator/Motor Relay (+)
-    let actuator_potentiometer = Input::new(p.PIN_26, Pull::None);	// Actuator/Potentiometer Brush
+    let mut actuator_motor_plus  = Output::new(p.PIN_27, Level::Low);	// Actuator/Motor Relay (-)
+    let mut actuator_motor_minus = Output::new(p.PIN_28, Level::Low);	// Actuator/Motor Relay (+)
+    let actuator_potentiometer   = Input::new(p.PIN_26, Pull::None);	// Actuator/Potentiometer Brush
+
+    // Test actuator control. Move it backward 1mm, then forward 1mm.
+    // TODO: How do we know this worked?
+    info!("Testing actuator control");
+    move_actuator(-1, &mut actuator_motor_plus, &mut actuator_motor_minus).await;
+    Timer::after_millis(100).await;
+    move_actuator(1, &mut actuator_motor_plus, &mut actuator_motor_minus).await;
+
+    // Actuator works. Spawn off the actuator control task.
     spawner.spawn(actuator_control(
 	CHANNEL_ACTUATOR.receiver(),
 	flash,
@@ -483,8 +526,6 @@ async fn main(spawner: Spawner) {
 	actuator_potentiometer)
     ).unwrap();
     info!("Initialized the actuator");
-
-    // TODO: Test actuator control.
     CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
 
     // =====
@@ -495,9 +536,6 @@ async fn main(spawner: Spawner) {
     CHANNEL_CANWRITE.send(CANMessage::FPInitialized).await;
 
     // TODO: Check valet mode.
-    // FAKE: Enable valet mode, I know the fingerprint scanner etc work, so don't
-    //       need to do that while testing and developing.
-    //valet_mode = true;
 
     // ================================================================================
 

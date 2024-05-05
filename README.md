@@ -413,8 +413,9 @@ is then selected automatically.
 
 ### Update Sun 5 May 2024
 
-Add the bare-bones of CAN-bus read and write. Doesn't actually *do* anything yet (since I don't have a CAN-bus
-adapter :), it just logs debug output on what it *would* do.
+* Add the bare-bones of CAN-bus read and write. Doesn't actually *do* anything yet (since I don't have a CAN-bus
+  adapter :), it just logs debug output on what it *would* do.
+* Implement bare-bones actuator test by "moving" (i.e. blink LEDs :) the actuator 1mm backward then forward 1mm.
 
 # Additional information
 
