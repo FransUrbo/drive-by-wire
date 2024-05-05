@@ -139,9 +139,24 @@ async fn read_can() {
     }
 }
 
-async fn read_flash(flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH_SIZE>) -> u8{
+async fn write_flash(flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH_SIZE>, offset: u32, buf: u8) -> u8 {
+    match flash.blocking_erase(
+	ADDR_OFFSET + offset + ERASE_SIZE as u32,
+	ADDR_OFFSET + offset + ERASE_SIZE as u32 + ERASE_SIZE as u32)
+    {
+	Ok(_)  => debug!("Flash erase successful"),
+	Err(e) => info!("Flash erase failed: {}", e)
+    }
+    match flash.blocking_write(ADDR_OFFSET + offset + ERASE_SIZE as u32, &[buf]) {
+	Ok(_)  => debug!("Flash write successful"),
+	Err(e) => info!("Flash write failed: {}", e)
+    }
+    read_flash(flash, 0x00).await
+}
+
+async fn read_flash(flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH_SIZE>, offset: u32) -> u8 {
     let mut buf: [u8; 1] = [0; 1];
-    match flash.blocking_read(ADDR_OFFSET + ERASE_SIZE as u32, &mut buf) {
+    match flash.blocking_read(ADDR_OFFSET + offset + ERASE_SIZE as u32, &mut buf) {
 	Ok(_) => debug!("Read successful"),
 	Err(e) => info!("Read failed: {}", e)
     }
@@ -151,8 +166,9 @@ async fn read_flash(flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH
 }
 
 // Actually move the actuator.
-// TODO: How do we actually move it? Is it enough to send it +3V3 or +5V on the
-//       motor relay, or does it need more power? If so, we need two more MOSFETs.
+// TODO: How do we actually move the actuator?
+//       Is it enough to send it +3V3 or +5V on the motor relay, or does it need more power? If so,
+//       we need two more MOSFETs.
 async fn move_actuator(
     amount:		i8, // Distance in mm in either direction.
     pin_motor_plus:	&mut Output<'static>,
@@ -214,10 +230,8 @@ async fn move_actuator(
 	}
     }
 
-    // TODO: Verify with the potentiometer on the actuator that we've actually moved
-    //       it to the right position.
-    //       Documentation say "Actual resistance value may vary within the 0-10kΩ
-    //       range based on stroke length".
+    // TODO: Verify with the potentiometer on the actuator that we've actually moved it to the right position.
+    //       Documentation say "Actual resistance value may vary within the 0-10kΩ range based on stroke length".
 }
 
 // Control the actuator. Calculate in what direction and how much to move it to get to
@@ -238,10 +252,9 @@ async fn actuator_control(
     loop {
 	let button = receiver.receive().await; // Block waiting for data.
 
-	// TODO: Figure out what gear is in from this.
-	// NOTE: This might not be possible, the `get_level()` only gets the
-	//       level (HIGH/LOW) of the pin, not the actual value from the
-	//       potentiometer.
+	// TODO: Figure out what gear is in by reading the actuator potentiometer.
+	// NOTE: This might not be possible, the `get_level()` only gets the level (HIGH/LOW) of the pin,
+	//       not the actual value from the potentiometer.
 	//let _actuator_position = pin_pot.get_level();
 
 	// FAKE: Use the current button selected to calculate the direction and amount to move the actuator
@@ -263,18 +276,7 @@ async fn actuator_control(
 	unsafe { BUTTON_ENABLED = button };
 
 	// .. and write it to flash.
-	match flash.blocking_erase(
-	    ADDR_OFFSET + ERASE_SIZE as u32,
-	    ADDR_OFFSET + ERASE_SIZE as u32 + ERASE_SIZE as u32)
-	{
-	    Ok(_)  => debug!("Flash erase successful"),
-	    Err(e) => info!("Flash erase failed: {}", e)
-	}
-	match flash.blocking_write(ADDR_OFFSET + ERASE_SIZE as u32, &[button as u8]) {
-	    Ok(_)  => debug!("Flash write successful"),
-	    Err(e) => info!("Flash write failed: {}", e)
-	}
-	read_flash(&mut flash).await;
+	write_flash(&mut flash, 0x00, button as u8).await;
     }
 }
 
@@ -459,10 +461,6 @@ async fn read_button(
 async fn main(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
 
-    // FAKE: Enable valet mode, I know the fingerprint scanner etc work,
-    //       so don't need to do every time while testing and developing.
-    let valet_mode: bool = true;
-
     info!("Start");
 
     // =====
@@ -502,7 +500,13 @@ async fn main(spawner: Spawner) {
     // =====
     // Initialize the flash drive where we stor "currently selected drive mode".
     let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH4);
-    let stored_button = read_flash(&mut flash).await; // Read the stored button from the flash.
+    let stored_button = read_flash(&mut flash, 0x00).await; // Read the stored button from the flash.
+
+    // =====
+    // Check valet mode.
+    // NOTE: How do we actually do that?? How do we SET it to valet mode??
+    let valet_mode = read_flash(&mut flash, (ERASE_SIZE * 2) as u32).await; // Read the stored button from the flash.
+    debug!("Valet mode: {}", valet_mode);
 
     // =====
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
@@ -511,7 +515,7 @@ async fn main(spawner: Spawner) {
     let actuator_potentiometer   = Input::new(p.PIN_26, Pull::None);	// Actuator/Potentiometer Brush
 
     // Test actuator control. Move it backward 1mm, then forward 1mm.
-    // TODO: How do we know this worked?
+    // TODO: How do we know the actuator test worked?
     info!("Testing actuator control");
     move_actuator(-1, &mut actuator_motor_plus, &mut actuator_motor_minus).await;
     Timer::after_millis(100).await;
@@ -535,15 +539,13 @@ async fn main(spawner: Spawner) {
     info!("Initialized the fingerprint scanner");
     CHANNEL_CANWRITE.send(CANMessage::FPInitialized).await;
 
-    // TODO: Check valet mode.
-
     // ================================================================================
 
     // Send message to IC: "Authorizing use".
     CHANNEL_CANWRITE.send(CANMessage::Authorizing).await;
 
     // Verify fingerprint.
-    if valet_mode {
+    if valet_mode != 0 {
 	info!("Valet mode, won't check fingerprint");
     } else {
 	if fp_scanner.Wrapper_Verify_Fingerprint().await {
@@ -628,7 +630,10 @@ async fn main(spawner: Spawner) {
 
     // =====
     // Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
-    if !valet_mode {
+    if valet_mode != 0 {
+	// Set the status LED to BLUE to indicate valet mode.
+	neopixel.write(&[(0,0,255).into()]).await;
+    } else {
 	// Sleep here three seconds to allow the car to "catch up".
 	// Sometime, it takes a while for the car to "wake up". Not sure why..
 	debug!("Waiting 3s to wakeup the car");

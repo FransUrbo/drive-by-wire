@@ -11,33 +11,33 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
 3. [Pin layout](#pin-layout-for-raspberrypi-3-5-and-pico)
    1. [External contacts](#external-contacts)
       - [Buttons and their LEDs](#buttons-and-their-leds)
-	  - [Status LED](#status-led)
-	  - [Fingerprint scanner](#fingerprint-scanner)
-	  - [EIS Relay](#eis-relays)
-	  - [Actuator](#actuator)
-	  - [CAN busses](#can-bus-0-and-1)
-	  - [Total](#total)
+      - [Status LED](#status-led)
+      - [Fingerprint scanner](#fingerprint-scanner)
+      - [EIS Relay](#eis-relays)
+      - [Actuator](#actuator)
+      - [CAN busses](#can-bus-0-and-1)
+      - [Total](#total)
    2. [Parts](#parts)
       - [Actuation](#actuation)
-	  - [Controller](#controller)
-	  - [For development](#for-development)
-	  - [Other](#other)
-	  - [Small footprint controllers](#small-footprint-controllers)
-	    - [Notes about the small footprint controllers](#notes-about-the-small-footprint-controllers)
+      - [Controller](#controller)
+      - [For development](#for-development)
+      - [Other](#other)
+      - [Small footprint controllers](#small-footprint-controllers)
+        - [Notes about the small footprint controllers](#notes-about-the-small-footprint-controllers)
    3. [Circuit diagram](#circuit-diagram)
       - [Wiring on bread boards](#wiring-on-bread-boards)
-	  - [Latest wiring on bread boards](#latest-wiring-on-bread-boards)
-   4. [Source code](#source-code)
-      - [Code testing and setup](#code-testing-and-setup)
-	  - [DriveByWire code](#drivebywire-code)
-	    - [Relays](#relays)
-		- [Status LED](#status-led)
-	  - [Simulations](#simulations)
-	    - [Update Sun 2 May 2024](#update-sun-2-may-2024)
-	    - [Update Sun 3 May 2024](#update-sun-3-may-2024)
-	    - [Update Sun 4 May 2024](#update-sun-4-may-2024)
-	    - [Update Sun 5 May 2024](#update-sun-5-may-2024)
-   5. [Additional information](#additional-information)
+      - [Latest wiring on bread boards](#latest-wiring-on-bread-boards)
+4. [Source code](#source-code)
+   - [Code testing and setup](#code-testing-and-setup)
+   - [DriveByWire code](#drivebywire-code)
+     - [Relays](#relays)
+     - [Status LED](#status-led)
+   - [Simulations](#simulations)
+     - [Update Sun 2 May 2024](#update-sun-2-may-2024)
+     - [Update Sun 3 May 2024](#update-sun-3-may-2024)
+     - [Update Sun 4 May 2024](#update-sun-4-may-2024)
+     - [Update Sun 5 May 2024](#update-sun-5-may-2024)
+5. [Additional information](#additional-information)
 
 ## Fingerprint scanner instead of Start button
 
@@ -60,11 +60,11 @@ HOPEFULLY, I can also send the same trigger signal that the EIS would send from 
 
 1. Bootup process.
      1. Light status LED (RED).												-> BOOTUP STARTED
-     2. Initiate CAN bus connection.											Q: How to test connection?
+     2. Initiate CAN bus connection.										Q: How to test connection?
          - Send message to IC: "Starting Drive-By-Wire system".
      3. Initiate fingerprint scanner connection.
          1. Send message to IC: "Initializing Fingerprint Scanner".
-         2. Login to and unlock the fingerprint scanner.						CodeFunction: `VfyPwd`
+         2. Login to and unlock the fingerprint scanner.					CodeFunction: `VfyPwd`
          3. Validate talking to the correct fingerprint scanner.
              - Do handshake.												CodeFunction: `HandShake`.
              - Check if sensor is normal.									CodeFunction: `CheckSensor`.
@@ -88,26 +88,25 @@ HOPEFULLY, I can also send the same trigger signal that the EIS would send from 
      5. Light current drive button locator LED.
      6. Light status LED (YELLOW).											-> BOOTUP DONE + LOGIN STARTED
 
-2. Use authorization.
+2. Check authorization.
      1. Send message to IC: "Authorizing use".
      2. Check valet mode.
          1. If false:
-             - Light fingerprint scanner LED (BLUE).						CodeFunction: `AuraLedConfig`.
-             - LOOP: Wait for fingerprint.
-                 - Check if fingerprint is in library.
-                 - If false:
-                     - Light fingerprint scanner LED (RED/FLASH).					CodeFunction: `AuraLedConfig`.
+             - Verify fingerprint
+                 - If not verified:
+                     - Light status LED (RED).								-> FAILED LOGIN
+                     - Light fingerprint scanner LED (RED/FLASH).			CodeFunction: `AuraLedConfig`.
                      - If attempts >= 3: sleep for 5min.
                      - else: restart loop.
+                 - else:
+                     - Turn off fingerprint scanner LED.					CodeFunction: `AuraLedConfig`.
+                     - Light status LED (GREEN).							-> LOGIN DONE + MAIN LOOP STARTED
          2. else:
-             - Light fingerprint scanner LED (BLUE/GRADUALLY OFF).			CodeFunction: `AuraLedConfig`.
-         3. else if: we have four-colour LEDs:
-             - Light status LED (BLUE? WHITE?)
+             - Light status LED (BLUE).										-> LOGIN DONE + MAIN LOOP STARTED
      3. Close EIS relay #1 (ignition switch).								Q: What if power loss??
      4. Close EIS relay #2 (steering lock).									Q: What if power loss??
      5. Send message to IC: "Use authorized, welcome <user|valet>".
-     6. Light status LED (GREEN).											-> LOGIN DONE + MAIN LOOP STARTED
-     7. Send "start car" voltage signal to SAM.								Q: How do we do that? Three level relay?
+     6. Send "start car" voltage signal to SAM.
 
 3. LOOP: Wait for drive button press.
      1. If moving:
@@ -416,6 +415,7 @@ is then selected automatically.
 * Add the bare-bones of CAN-bus read and write. Doesn't actually *do* anything yet (since I don't have a CAN-bus
   adapter :), it just logs debug output on what it *would* do.
 * Implement bare-bones actuator test by "moving" (i.e. blink LEDs :) the actuator 1mm backward then forward 1mm.
+* Implement checking valet mode. This is now stored in the flash.
 
 # Additional information
 

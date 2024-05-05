@@ -135,3 +135,11 @@ opt-level = 3
 [[bin]]
 name = "prepare-flash"
 path = "src/prepare-flash.rs"
+
+[[bin]]
+name = "set-valet-mode"
+path = "src/set-valet-mode.rs"
+
+[[bin]]
+name = "unset-valet-mode"
+path = "src/unset-valet-mode.rs"
