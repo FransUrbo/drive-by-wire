@@ -36,6 +36,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
 	    - [Update Sun 2 May 2024](#update-sun-2-may-2024)
 	    - [Update Sun 3 May 2024](#update-sun-3-may-2024)
 	    - [Update Sun 4 May 2024](#update-sun-4-may-2024)
+	    - [Update Sun 5 May 2024](#update-sun-5-may-2024)
    5. [Additional information](#additional-information)
 
 ## Fingerprint scanner instead of Start button
@@ -409,6 +410,11 @@ I can store there as well in the future.
 
 This flash value is then read on bootup and the correct (latest, before reboot/shutdown/reset) button/mode
 is then selected automatically.
+
+### Update Sun 5 May 2024
+
+Add the bare-bones of CAN-bus read and write. Doesn't actually *do* anything yet (since I don't have a CAN-bus
+adapter :), it just logs debug output on what it *would* do.
 
 # Additional information
 

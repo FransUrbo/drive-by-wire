@@ -28,14 +28,16 @@ use {defmt_rtt as _, panic_probe as _};
 enum Button { P, R, N, D, UNSET }
 enum LedStatus { On, Off }
 enum StopWatchdog { Yes }
+enum CANMessage { Starting, InitFP, FPInitialized, InitActuator, ActuatorInitialized, Authorizing, Authorized }
 
 // Setup the communication channels between the tasks.
-static CHANNEL_P:        Channel<ThreadModeRawMutex, LedStatus, 64>	= Channel::new();
-static CHANNEL_N:        Channel<ThreadModeRawMutex, LedStatus, 64>	= Channel::new();
-static CHANNEL_R:        Channel<ThreadModeRawMutex, LedStatus, 64>	= Channel::new();
-static CHANNEL_D:        Channel<ThreadModeRawMutex, LedStatus, 64>	= Channel::new();
+static CHANNEL_P:        Channel<ThreadModeRawMutex, LedStatus,    64>	= Channel::new();
+static CHANNEL_N:        Channel<ThreadModeRawMutex, LedStatus,    64>	= Channel::new();
+static CHANNEL_R:        Channel<ThreadModeRawMutex, LedStatus,    64>	= Channel::new();
+static CHANNEL_D:        Channel<ThreadModeRawMutex, LedStatus,    64>	= Channel::new();
 static CHANNEL_WATCHDOG: Channel<ThreadModeRawMutex, StopWatchdog, 64>	= Channel::new();
-static CHANNEL_ACTUATOR: Channel<ThreadModeRawMutex, Button,    64>	= Channel::new();
+static CHANNEL_ACTUATOR: Channel<ThreadModeRawMutex, Button,       64>	= Channel::new();
+static CHANNEL_CANWRITE: Channel<ThreadModeRawMutex, CANMessage,   64>	= Channel::new();
 
 // Start with the button UNSET, then change it when we know what gear the car is in.
 static mut BUTTON_ENABLED: Button = Button::UNSET;
@@ -61,6 +63,8 @@ async fn feed_watchdog(
     control: Receiver<'static, ThreadModeRawMutex, StopWatchdog, 64>,
     mut wd: embassy_rp::watchdog::Watchdog)
 {
+    debug!("Started watchdog feeder task");
+
     // Feed the watchdog every 3/4 second to avoid reset.
     loop {
 	wd.feed();
@@ -78,6 +82,57 @@ async fn feed_watchdog(
 		continue
 	    }
 	}
+    }
+}
+
+// Write messages to CAN-bus.
+#[embassy_executor::task]
+async fn write_can(receiver: Receiver<'static, ThreadModeRawMutex, CANMessage, 64>) {
+    debug!("Started CAN write task");
+
+    loop {
+	let message = receiver.receive().await; // Block waiting for data.
+	match message {
+	    CANMessage::Starting		=> {
+		debug!("Sending message to IC: 'Starting Drive-By-Wire system'");
+	    }
+	    CANMessage::InitFP			=> {
+		debug!("Sending message to IC: 'Initializing Fingerprint Scanner'");
+	    }
+	    CANMessage::FPInitialized		=> {
+		debug!("Sending message to IC: 'Fingerprint scanner initialized'");
+	    }
+	    CANMessage::InitActuator		=> {
+		debug!("Sending message to IC: 'Initializing actuator'");
+	    }
+	    CANMessage::ActuatorInitialized	=> {
+		debug!("Sending message to IC: 'Actuator initialized'");
+	    }
+	    CANMessage::Authorizing		=> {
+		debug!("Sending message to IC: 'Authorizing use'");
+	    }
+	    CANMessage::Authorized		=> {
+		debug!("Sending message to IC: 'Use authorized'");
+	    }
+	}
+    }
+}
+
+// Read CAN-bus messages.
+#[embassy_executor::task]
+async fn read_can() {
+    debug!("Started CAN read task");
+
+    loop {
+	// TODO: Read CAN-bus messages (blocking).
+
+	// TODO: If we're moving, disable buttons.
+
+	// TODO: If we're NOT moving, and brake pedal is NOT depressed, disable buttons.
+
+	// TODO: If we're NOT moving, and brake pedal is depressed, enable buttons.
+
+	Timer::after_secs(600).await; // TODO: Nothing to do yet, just sleep as long as we can, but 10 minutes should do it.
     }
 }
 
@@ -141,6 +196,8 @@ async fn actuator_control(
     mut pin_motor_minus:	Output<'static>,
     _pin_pot:			Input<'static>)
 {
+    debug!("Started actuator control task");
+
     pin_motor_plus.set_slew_rate(SlewRate::Fast);
     pin_motor_minus.set_slew_rate(SlewRate::Fast);
 
@@ -193,6 +250,8 @@ async fn actuator_control(
 // Control the drive button LEDs - four buttons, four LEDs.
 #[embassy_executor::task(pool_size = 4)]
 async fn set_led(receiver: Receiver<'static, ThreadModeRawMutex, LedStatus, 64>, led_pin: AnyPin) {
+    debug!("Started button LED control task");
+
     let mut led = Output::new(led_pin, Level::Low); // Always start with the LED off.
 
     loop {
@@ -211,6 +270,8 @@ async fn read_button(
     btn_pin: AnyPin,
     led_pin: AnyPin)
 {
+    debug!("Started button control task");
+
     let mut btn = debounce::Debouncer::new(Input::new(btn_pin, Pull::Up), Duration::from_millis(20));
 
     // Spawn off a LED driver for this button.
@@ -375,12 +436,7 @@ async fn main(spawner: Spawner) {
     let _builtin_led = Output::new(p.PIN_25, Level::High);
 
     // =====
-    // Initialize the flash drive where we stor "currently selected drive mode".
-    let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH4);
-    let stored_button = read_flash(&mut flash).await; // Read the stored button from the flash.
-
-    // =====
-    // Initialize the NeoPixel LED. Do this first, so we can turn on the LED.
+    // Initialize the NeoPixel LED. Do this first, so we can turn on the status LED.
     let Pio { mut common, sm0, .. } = Pio::new(p.PIO1, Irqs);
     let mut neopixel = ws2812::Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
     info!("Initialized the NeoPixel LED");
@@ -395,9 +451,12 @@ async fn main(spawner: Spawner) {
 
     // =====
     // TODO: Initialize the CAN bus. Needs to come third, so we can talk to the IC.
+    spawner.spawn(read_can()).unwrap();
+    spawner.spawn(write_can(CHANNEL_CANWRITE.receiver())).unwrap();
     info!("Initialized the CAN bus");
 
-    // TODO: Send message to IC: "Starting Drive-By-Wire system".
+    // Send message to IC: "Starting Drive-By-Wire system".
+    CHANNEL_CANWRITE.send(CANMessage::Starting).await;
 
     // =====
     // Initialize the MOSFET relays.
@@ -407,6 +466,12 @@ async fn main(spawner: Spawner) {
     info!("Initialized the MOSFET relays");
 
     // =====
+    // Initialize the flash drive where we stor "currently selected drive mode".
+    let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH4);
+    let stored_button = read_flash(&mut flash).await; // Read the stored button from the flash.
+
+    // =====
+    CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
     let actuator_motor_plus    = Output::new(p.PIN_27, Level::Low);	// Actuator/Motor Relay (-)
     let actuator_motor_minus   = Output::new(p.PIN_28, Level::Low);	// Actuator/Motor Relay (+)
     let actuator_potentiometer = Input::new(p.PIN_26, Pull::None);	// Actuator/Potentiometer Brush
@@ -420,13 +485,14 @@ async fn main(spawner: Spawner) {
     info!("Initialized the actuator");
 
     // TODO: Test actuator control.
+    CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
 
     // =====
     // Initialize the fingerprint scanner.
+    CHANNEL_CANWRITE.send(CANMessage::InitFP).await;
     let mut fp_scanner = r503::R503::new(p.UART0, Irqs, p.PIN_16, p.DMA_CH0, p.PIN_17, p.DMA_CH1, p.PIN_13.into());
     info!("Initialized the fingerprint scanner");
-
-    // TODO: Send message to IC: "Authorizing use".
+    CHANNEL_CANWRITE.send(CANMessage::FPInitialized).await;
 
     // TODO: Check valet mode.
     // FAKE: Enable valet mode, I know the fingerprint scanner etc work, so don't
@@ -434,6 +500,9 @@ async fn main(spawner: Spawner) {
     //valet_mode = true;
 
     // ================================================================================
+
+    // Send message to IC: "Authorizing use".
+    CHANNEL_CANWRITE.send(CANMessage::Authorizing).await;
 
     // Verify fingerprint.
     if valet_mode {
@@ -457,7 +526,8 @@ async fn main(spawner: Spawner) {
     neopixel.write(&[(0,255,0).into()]).await; // GREEN
     fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
 
-    // TODO: Send message to IC: "Use authorized, welcome <user|valet>".
+    // Send message to IC: "Use authorized".
+    CHANNEL_CANWRITE.send(CANMessage::Authorized).await;
 
     // =====
     // Spawn off one button reader per button. They will then spawn off a LED controller each so that
@@ -534,8 +604,8 @@ async fn main(spawner: Spawner) {
 
     // =====
     // TODO: Not sure how we avoid stopping the program here, the button presses are done in separate tasks!
+    info!("Main function complete, control handed over to subtasks.");
     loop {
-	debug!("Main loop waiting..");
-	Timer::after_secs(10).await;
+	Timer::after_secs(600).await; // Nothing to do, just sleep as long as we can, but 10 minutes should do it.
     }
 }
