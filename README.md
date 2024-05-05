@@ -4,6 +4,40 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
 
 ![drive-by-wire buttons](./AstonMartin%20Drive%20Buttons.jpg)
 
+## Page index
+
+1. [Fingerprint scanner instead of Start button](#fingerprint-scanner-instead-of-start-button)
+2. [Software function](#software-function)
+3. [Pin layout](#pin-layout-for-raspberrypi-3-5-and-pico)
+   1. [External contacts](#external-contacts)
+      - [Buttons and their LEDs](#buttons-and-their-leds)
+	  - [Status LED](#status-led)
+	  - [Fingerprint scanner](#fingerprint-scanner)
+	  - [EIS Relay](#eis-relays)
+	  - [Actuator](#actuator)
+	  - [CAN busses](#can-bus-0-and-1)
+	  - [Total](#total)
+   2. [Parts](#parts)
+      - [Actuation](#actuation)
+	  - [Controller](#controller)
+	  - [For development](#for-development)
+	  - [Other](#other)
+	  - [Small footprint controllers](#small-footprint-controllers)
+	    - [Notes about the small footprint controllers](#notes-about-the-small-footprint-controllers)
+   3. [Circuit diagram](#circuit-diagram)
+      - [Wiring on bread boards](#wiring-on-bread-boards)
+	  - [Latest wiring on bread boards](#latest-wiring-on-bread-boards)
+   4. [Source code](#source-code)
+      - [Code testing and setup](#code-testing-and-setup)
+	  - [DriveByWire code](#drivebywire-code)
+	    - [Relays](#relays)
+		- [Status LED](#status-led)
+	  - [Simulations](#simulations)
+	    - [Update Sun 2 May 2024](#update-sun-2-may-2024)
+	    - [Update Sun 3 May 2024](#update-sun-3-may-2024)
+	    - [Update Sun 4 May 2024](#update-sun-4-may-2024)
+   5. [Additional information](#additional-information)
+
 ## Fingerprint scanner instead of Start button
 
 Instead of the start button (which would be *really* cool, but isn't feasable due to the way the EIS - Electronic Ignition
@@ -93,7 +127,7 @@ Q: How can the DriveByWire, SmartTOP and SprintBooster all be
 Q: Can DriveByWire check CAN for certain buttons around the car
    to be pressed in sequence just like GhostImmobiliser??
 
-# Pin layout for RaspberryPI 3-5, Raspberry Pi Pico
+# Pin layout for RaspberryPI 3-5, and Pico
 
 | Pin | Port    | Use                          |-| Pin | Port    | Use
 | --: | :------ | :--------------------------- |-| --: | :------ | :------------------------------- |
@@ -109,12 +143,12 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 |  10 | GPIO  7 | Button (Telltale - R)        |-| 31  | GPIO 26 | Actuator - Potentiometer Brush   |
 |  11 | GPIO  8 | Button (Telltale - N)        |-| 30  | RUN     |                                  |
 |  12 | GPIO  9 | Button (Telltale - D)        |-| 29  | GPIO 22 | EIS Relay (#3 - start)           |
-|  13 | GND     | [GPIO 29]                    |-| 28  | GND     | [GPIO 23]                        |
+|  13 | GND     | *[GPIO 29]*                  |-| 28  | GND     | *[GPIO 23]*                      |
 |  14 | GPIO 10 | CAN #1 (RX)                  |-| 27  | GPIO 21 | CAN #0 (RX)                      |
 |  15 | GPIO 11 | CAN #1 (TX)                  |-| 26  | GPIO 20 | CAN #0 (TX)                      |
 |  16 | GPIO 12 |                              |-| 25  | GPIO 19 | EIS Relay (#1 - ignition switch) |
 |  17 | GPIO 13 | Fingerprint Scanner (WAKEUP) |-| 24  | GPIO 18 | EIS Relay (#2 - steering lock)   |
-|  18 | GND     | [GPIO 25]                    |-| 23  | GND     | [GPIO 24]                        |
+|  18 | GND     | *[GPIO 25]*                  |-| 23  | GND     | *[GPIO 24]*                      |
 |  19 | GPIO 14 | Status LED (Data OUT)        |-| 22  | GPIO 17 | Fingerprint Scanner (TX)         |
 |  20 | GPIO 15 | Status LED (Data IN)         |-| 21  | GPIO 16 | Fingerprint Scanner (RX)         |
 
@@ -148,7 +182,7 @@ Or those two combined, [buttons and their LEDs and the status LED](https://www.e
 * 1x 3V3 (touch induction power)
 => [6 pin](https://www.ebay.co.uk/itm/174775342997)
 
-### EIS Relay
+### EIS Relays
 
 * 1x Control #1 (ignition switch)
 * 1x Control #2 (steering lock)
@@ -210,12 +244,18 @@ Or those two combined, [buttons and their LEDs and the status LED](https://www.e
 | [Half-Size Breadboard](https://thepihut.com/products/breadboard-400-point-clear?variant=31986026381374) | £3 (*3 => £9) |
 | [Breadboard for Pico](https://thepihut.com/products/breadboard-for-pico?variant=39819276386499) | £4 |
 | [Short Plug Headers](https://thepihut.com/products/short-plug-headers-for-raspberry-pi-pico-2-x-20-pin-male?variant=42182974505155) | £1 |
-| [10K potentiometer](https://thepihut.com/products/panel-mount-10k-potentiometer-breadboard-friendly?variant=27740444817) | £1 |
+| *[10K potentiometer](https://thepihut.com/products/panel-mount-10k-potentiometer-breadboard-friendly?variant=27740444817)* | £1 |
 | [Tactile Switch Buttons](https://thepihut.com/products/tactile-switch-buttons-6mm-tall-x-10-pack?variant=27739414097) | £3 |
 | [Breakout for 6-pin JST SH-Style Connector - Side Entry](https://thepihut.com/products/breakout-for-6-pin-jst-sh-style-connector-side-entry?variant=42438253871299) | £1 |
 | [Extra-long break-away 0.1" 16-pin strip male header (5 pieces)](https://thepihut.com/products/extra-long-break-away-0-1-16-pin-strip-male-header-5-pieces?variant=27740420881) | £3 |
 | [220V Power Supply Adapter (12V/10A)](https://www.ebay.co.uk/itm/234147120198?var=533767190848) | £21 |
 | [DB9 Breakout Board PCB – Male](https://thepihut.com/products/db9-breakout-board-pcb-male?variant=41727856148675) | £2 |
+| [Breadboard-friendly 2.1mm DC barrel jack](https://thepihut.com/products/breadboard-friendly-2-1mm-dc-barrel-jack?variant=27740417489) | £1 |
+| [In-line power switch for 2.1mm barrel jack](https://thepihut.com/products/in-line-power-switch-for-2-1mm-barrel-jack?variant=27739226065) | £2 |
+| [DB9 Right Angle MALE Connector - PCB Mount D-SUB](https://www.ebay.co.uk/itm/325261653847) | £3 |
+| [Dupont Jump Wire F-F Jumper Breadboard Cable Lead -  6pin](https://www.ebay.co.uk/itm/275827705804?var=577580216871) | £2 |
+| [Dupont Jump Wire F-F Jumper Breadboard Cable Lead - 10pin](https://www.ebay.co.uk/itm/275827705804?var=577580216855) | £2 |
+| [Dupont Jump Wire M-M Jumper Breadboard Cable Lead - 10cm](https://www.ebay.co.uk/itm/275268807202?var=575537821821) | £8 |
 
 ## Other
 
@@ -244,11 +284,22 @@ the actual "production" device. But to get all the GPIO needed, an I2C GPIO expa
 Some of the signals I need will probably be to fast for the I2C bus, so those would have to come in through the board GPIO,
 not the I2C GPIOs.
 
-| Part | Price |
-| :--- | :---  |
-| [Seeed XIAO RP2040](https://thepihut.com/products/seeed-xiao-rp2040) | £6 |
-| [Tiny 2040](https://thepihut.com/products/tiny-2040?variant=41359025897667) | £12 |
-| [Waveshare RP2040 Tiny](https://thepihut.com/products/waveshare-rp2040-tiny?variant=42483599507651) | £5 |
+| Part | Price | Note
+| :--- | :---  | :---
+| [Seeed XIAO RP2040](https://thepihut.com/products/seeed-xiao-rp2040) | £6 | 11 GPIO pins
+| [Tiny 2040](https://thepihut.com/products/tiny-2040?variant=41359025897667) | £12 | 12 GPIO pins
+| [Waveshare RP2040 Tiny](https://thepihut.com/products/waveshare-rp2040-tiny?variant=42483599507651) | £5 | 20 GPIO pins
+
+### Notes about the small footprint controllers
+
+As can be seen from the [pin layout](#pin-layout-for-raspberrypi-3-5-and-pico), I need more than this!
+At the moment, I have ONE GPIO spare of the 26 pins that the RPi's have!
+
+I might even have to go with the [Olimex RP2040-PICO30-16](https://thepihut.com/products/olimex-rp2040-pico30-16) which
+have an additional four GPIO pins by sacrificing four GROUND pins..
+
+But seems like the design have stabilized now. UNLESS the CAN bus adapters I'm going to have to get need more than TX/RX.
+Don't know which ones to get yet, still work in progres.
 
 # Circuit diagram
 
@@ -273,14 +324,18 @@ This what it looks like now. I built a box :D :D.
 
 # Source code
 
+## Code testing and setup
+
 I've barely started on this, but I have the bare-bones of it in these repos:
 
-* How to control the LEDs, including the NeoPixel (multi-colour LED): [pico-rust-test_1-LEDS](https://github.com/FransUrbo/pico-rust-test_1-LEDS)
-* How to read the buttons and control their LEDs: [pico-rust-test_2-BUTTONS-LEDS](https://github.com/FransUrbo/pico-rust-test_2-BUTTONS-LEDS)
+* [How to control the LEDs, including the NeoPixel (multi-colour LED)](https://github.com/FransUrbo/pico-rust-test_1-LEDS)
+* [How to read the buttons and control *their* LEDs](https://github.com/FransUrbo/pico-rust-test_2-BUTTONS-LEDS)
   Yes, those are the genuine Aston Martin drive buttons! :).
-* How to read and write to the fingerprint scanner: [pico-rust-test_3-FP_SCANNER](https://github.com/FransUrbo/pico-rust-test_3-FP_SCANNER)
-* How to control the three MOSFET "relays": [pico-rust-test_4-MOSFET_RELAYS](https://github.com/FransUrbo/pico-rust-test_4-MOSFET_RELAYS)
-* How to setup and trigger the built-in watchdog on the RPi: [pico-rust-test_6-WATCHDOG-LED](https://github.com/FransUrbo/pico-rust-test_6-WATCHDOG-LED)
+* [How to read, write and verify fingerprint with the fingerprint scanner](https://github.com/FransUrbo/pico-rust-test_3-FP_SCANNER)
+* [How to control the three MOSFET "relays"](https://github.com/FransUrbo/pico-rust-test_4-MOSFET_RELAYS)
+* [How to setup and trigger the built-in watchdog on the RPi](https://github.com/FransUrbo/pico-rust-test_6-WATCHDOG-LED)
+
+## DriveByWire code
 
 The actual DriveByWire source code is getting underway, it's in [the code directory](./code).
 I verify fingerprint, read buttons, turn on LEDs correctly and I simulate actuator movement with two
@@ -293,14 +348,37 @@ well.
 And this is what it [looked like in action](https://www.dropbox.com/scl/fi/nsdj958atposke2wdfzk9/2024-05-03-20.12.23.mov?rlkey=e7vu1sx3g0xffbefloeaspzul&st=kw81bt22&dl=0).
 They where to big for GitHub, so had to put them on my Dropbox account.
 
+### Relays
+
 The yellow LED in the upper left corner of the box, that's connected to the MOSFET "relay", is "start the car".
-I *THINK* it is enough to send +12V to the ECU on the "start position" pin. We'll see, have to do some
-experimentation. In this car, I only have to trigger it for the ECU to take over and start the car. So
-I'm only turning on the MOSFET "relay" for a second. Should be more than enough.
+I *THINK* it is enough to send +12V to the ECU (**E**ngine **C**ontrol **U**nit) on the "start position" pin.
+We'll see, have to do some experimentation. In this car, I only have to trigger it for the ECU to take over and
+start the car. So I'm only turning on the MOSFET "relay" for a second. Should be more than enough.
+
+**NOTE**: There might be an issue with the "blue" (the steering lock on/off) and the "green" (ignition switch
+on/off) relays. I'm not sure what happens if (when!?) power is lost to the device, OR if it crashes and the
+watchdog reboots it - for a few seconds those relays will be "off"! What happens if I'm driving and the igntion
+switch is disabled and the steering lock is enabled!?? The former might not be a problem, although the ECU
+might .. get confused. But the latter, the steering lock, if that's enabled,
+as in locks the steering wheel from turning, that will be **BAD**!!!
+
+I've considered using relays that stays in position and need a trigger to switch, but that might also cause
+problems - if they're "on" and I've turned the car off and walked away, then they'll do no good!
+
+### Status LED
 
 The steady orange (well, it's not very orange, is it!?? :) and then green LED in the top middle is orange =>
 "starting up" (the module) and when it turns green, it means "all is well". Had the fingerprint not matched,
 it and the aura around the fingerprint scanner turned red.
+
+## Simulations
+
+Because I don't yet have all the hardware I need, especially the actuator. Because it's going to be in the
+car, which means freezing temperature up to .. quite hot, I had to order a special version of the one I
+listed above in [Actuation](#actuation). It have a lead time for manufacturing of 13 weeks (!!). Then a
+week or so here to the UK. So probably won't be with me until end of summer. But that's ok, this was going
+to be a winter project anyway. I just got a head start by ordering all these super cheap RPi stuff :).
+
 
 The two blinking LEDs, the red and green to the right of the multi-colour status LED, is the simulation of
 moving the actuator. Green is "move forward" and red is "move backwards". It blinks five times in either
@@ -310,8 +388,20 @@ Eventually, when I get the actuator, I'll be able to read the position of the ac
 set as an Input. Then I can from there calculate how much to move the actuator in either direction to select
 the desired gear.
 
+If I press the same, already selected, drive button, its LED will just blink three times and not do anything
+other than that.
+
+### Update Sun 2 May 2024
+
+As of today, the module will block all button presses while the actuator is moving, to make sure we don't do
+something .. nefarious :).
+
+### Update Sun 3 May 2024
+
 In the meantime, this is now simulated by knowing what button is enabled and substracting the button selected.
 From there, we get a positive or negative value, and we use that to simulate the move of the actuator.
+
+### Update Sun 4 May 2024
 
 Latest code now stores the button (mode) selected after the actuator have finished moving in the flash memory
 that's available in the Pico. There's only 2MB flash, but I only need one byte :D. There might be more that
@@ -319,12 +409,6 @@ I can store there as well in the future.
 
 This flash value is then read on bootup and the correct (latest, before reboot/shutdown/reset) button/mode
 is then selected automatically.
-
-If I press the same, already selected, drive button, its LED will just blink three times and not do anything
-other than that.
-
-It will block all button presses while the actuator is moving, to make sure we don't do something ..
-bad.
 
 # Additional information
 
