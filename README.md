@@ -20,6 +20,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
    2. [Parts](#parts)
       - [Actuation](#actuation)
       - [Controller](#controller)
+      - [CAN bus](#can-bus)
       - [For development](#for-development)
       - [Other](#other)
       - [Small footprint controllers](#small-footprint-controllers)
@@ -235,6 +236,14 @@ Or those two combined, [buttons and their LEDs and the status LED](https://www.e
 | [NeoPixel Diffused 5mm LED](https://thepihut.com/products/neopixel-diffused-5mm-through-hole-led-5-pack?variant=27739696529) | £5 |
 | [LED holder 5mm](https://thepihut.com/products/5mm-plastic-flat-led-holder-pack-of-5?variant=27739774353) | £1 |
 
+## CAN bus
+
+| Part | Price |
+| :--- | :---  |
+| [TJA1055T/1J Fault-tolerant CAN chip](https://www.mouser.co.uk/ProductDetail/771-TJA1055T-1J) | £2
+| [MCP2513FDTE/SL CAN Interface IC](https://www.mouser.co.uk/ProductDetail/579-MCP2518FDT-E-SL) | £2
+| [SO14 IC to Breadboard adapter](https://www.mouser.co.uk/ProductDetail/535-LCQT-SOIC14) | £4 * 2
+
 ## For development
 
 | Part | Price |
@@ -310,8 +319,9 @@ This is still work in progress, but this looks about right. That's what I've wir
 
 ## Wiring on bread boards
 
-Those CAN bus adaptors I can't apparently used. They're for a high-speed CAN, but the MB I have have a slow-speed
-CAN :(. I'll figure something out..
+Those CAN bus adaptors I can't apparently used. They're for a high-speed CAN, but the MB I have have a low-frequency,
+fault-tolerant CAN :(. Something using the TJA1055T1 chip for the CAN and a MCP2515 for interfacing with the Pico. I'll
+figure something out..
 
 Also, I'm missing the headers for the fingerprint scanner and the actuator in the upper right breadboard.
 
@@ -428,3 +438,4 @@ is then selected automatically.
 * [RND-ASH deciphering of CAN bus messages](https://github.com/rnd-ash/MBUX-Port/blob/master/203_b.txt)
 * [RND-ASH Open Vehicle Diagnostic project](https://github.com/rnd-ash/OpenVehicleDiag)
 * [Konstantin Weitz home-made roof opening device](https://github.com/konne88/slk)
+* [A Audi TT project to read speed and write to the IC via CAN](https://www.hackster.io/databus100/digital-speedometer-to-car-s-instrument-cluster-via-can-bus-66e273)
