@@ -143,3 +143,11 @@ path = "src/set-valet-mode.rs"
 [[bin]]
 name = "unset-valet-mode"
 path = "src/unset-valet-mode.rs"
+
+[[bin]]
+name = "set-password"
+path = "src/set-password.rs"
+
+[[bin]]
+name = "set-fingerprint"
+path = "src/set-fingerprint.rs"
