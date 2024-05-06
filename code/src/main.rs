@@ -10,7 +10,7 @@ use embassy_rp::peripherals::{PIO1, UART0, FLASH};
 use embassy_rp::uart::InterruptHandler as UARTInterruptHandler;
 use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
 use embassy_rp::watchdog::*;
-use embassy_rp::flash::{Async, ERASE_SIZE};
+use embassy_rp::flash::Async;
 use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
 use embassy_time::{with_deadline, Duration, Instant, Timer};
@@ -18,6 +18,9 @@ use embassy_time::{with_deadline, Duration, Instant, Timer};
 use ws2812;
 use debounce;
 use r503;
+
+pub mod config;
+use crate::config::*;
 
 use {defmt_rtt as _, panic_probe as _};
 
@@ -47,11 +50,6 @@ static mut BUTTONS_BLOCKED: bool = false;
 
 // Set the distance between the different mode. 70mm is the total throw from begining to end.
 static ACTUATOR_DISTANCE_BETWEEN_POSITIONS: i8 = 70 / 3; // 3 because the start doesn't count :).
-
-// Setup the flash storage size. Gives us four u8 "slots" for long-term storage.
-// https://github.com/embassy-rs/embassy/blob/45a2abc392df91ce6963ac0956f48f22bfa1489b/examples/rp/src/bin/flash.rs
-const ADDR_OFFSET: u32 = 0x100000;
-const FLASH_SIZE: usize = 2 * 1024 * 1024; // 2MB flash in the Pico.
 
 bind_interrupts!(struct Irqs {
     PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
@@ -137,32 +135,6 @@ async fn read_can() {
 
 	Timer::after_secs(600).await; // TODO: Nothing to do yet, just sleep as long as we can, but 10 minutes should do it.
     }
-}
-
-async fn write_flash(flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH_SIZE>, offset: u32, buf: u8) -> u8 {
-    match flash.blocking_erase(
-	ADDR_OFFSET + offset + ERASE_SIZE as u32,
-	ADDR_OFFSET + offset + ERASE_SIZE as u32 + ERASE_SIZE as u32)
-    {
-	Ok(_)  => debug!("Flash erase successful"),
-	Err(e) => info!("Flash erase failed: {}", e)
-    }
-    match flash.blocking_write(ADDR_OFFSET + offset + ERASE_SIZE as u32, &[buf]) {
-	Ok(_)  => debug!("Flash write successful"),
-	Err(e) => info!("Flash write failed: {}", e)
-    }
-    read_flash(flash, 0x00).await
-}
-
-async fn read_flash(flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH_SIZE>, offset: u32) -> u8 {
-    let mut buf: [u8; 1] = [0; 1];
-    match flash.blocking_read(ADDR_OFFSET + offset + ERASE_SIZE as u32, &mut buf) {
-	Ok(_) => debug!("Read successful"),
-	Err(e) => info!("Read failed: {}", e)
-    }
-    info!("Flash content: {:?}", buf[..]);
-
-    return buf[0];
 }
 
 // Actually move the actuator.
@@ -276,7 +248,15 @@ async fn actuator_control(
 	unsafe { BUTTON_ENABLED = button };
 
 	// .. and write it to flash.
-	write_flash(&mut flash, 0x00, button as u8).await;
+	let mut config = match DbwConfig::read(&mut flash) { // Read the old/current values.
+	    Ok(config)  => config,
+	    Err(e) => {
+		error!("Failed to read flash: {:?}", e);
+		DbwConfig { active_button: 0, valet_mode: 0 } // Resonable defaults.
+	    }
+	};
+	config.active_button = button as u8; // Set new value.
+	config::write_flash(&mut flash, config).await;
     }
 }
 
@@ -498,15 +478,17 @@ async fn main(spawner: Spawner) {
     info!("Initialized the MOSFET relays");
 
     // =====
-    // Initialize the flash drive where we stor "currently selected drive mode".
+    // Initialize the flash drive where we store some config values across reboots.
     let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH4);
-    let stored_button = read_flash(&mut flash, 0x00).await; // Read the stored button from the flash.
-
-    // =====
-    // Check valet mode.
-    // NOTE: How do we actually do that?? How do we SET it to valet mode??
-    let valet_mode = read_flash(&mut flash, (ERASE_SIZE * 2) as u32).await; // Read the stored button from the flash.
-    debug!("Valet mode: {}", valet_mode);
+    let config = match DbwConfig::read(&mut flash) {
+	Ok(config)  => config,
+	Err(e) => {
+	    error!("Failed to read flash: {:?}", e);
+	    DbwConfig { active_button: 0, valet_mode: 0 }
+	}
+    };
+    let stored_button = config.active_button;
+    let valet_mode    = config.valet_mode;
 
     // =====
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;

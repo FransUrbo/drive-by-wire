@@ -37,6 +37,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Update Sun 3 May 2024](#update-sun-3-may-2024)
      - [Update Sun 4 May 2024](#update-sun-4-may-2024)
      - [Update Sun 5 May 2024](#update-sun-5-may-2024)
+     - [Update Sun 6 May 2024](#update-sun-6-may-2024)
 5. [Additional information](#additional-information)
 
 ## Fingerprint scanner instead of Start button
@@ -416,6 +417,10 @@ is then selected automatically.
   adapter :), it just logs debug output on what it *would* do.
 * Implement bare-bones actuator test by "moving" (i.e. blink LEDs :) the actuator 1mm backward then forward 1mm.
 * Implement checking valet mode. This is now stored in the flash.
+
+### Update Sun 6 May 2024
+
+* Rewrite the flash code to be "smarter". Actually, easier to use :).
 
 # Additional information
 

@@ -8,38 +8,35 @@
 #![no_std]
 #![no_main]
 
-use defmt::{debug, info};
-use embassy_executor::Spawner;
-use embassy_rp::flash::{Async, ERASE_SIZE};
-use embassy_rp::peripherals::FLASH;
-use {defmt_rtt as _, panic_probe as _};
+use defmt::{error, info};
 
-// offset from the flash start, NOT absolute address.
-const ADDR_OFFSET: u32 = 0x100000;
-const FLASH_SIZE: usize = 2 * 1024 * 1024;
+use embassy_executor::Spawner;
+use embassy_rp::flash::Async;
+
+pub mod config;
+use crate::config::*;
+
+use {defmt_rtt as _, panic_probe as _};
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
-    info!("Hello World!");
+    info!("Setting valet mode in flash");
 
+    // Instantiate the flash.
     let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH0);
 
-    write_flash(&mut flash, (ERASE_SIZE * 2) as u32, 1).await;
+    // Read old values.
+    match DbwConfig::read(&mut flash) {
+	Ok(mut config)  => {
+	    // Set the valet mode to 1 (true).
+	    config.valet_mode = 1;
+
+	    // Write flash.
+	    config::write_flash(&mut flash, config).await;
+	}
+	Err(e) => error!("Failed to read flash: {:?}", e)
+    }
 
     loop {}
-}
-
-async fn write_flash(flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH_SIZE>, offset: u32, buf: u8) {
-    match flash.blocking_erase(
-	ADDR_OFFSET + offset + ERASE_SIZE as u32,
-	ADDR_OFFSET + offset + ERASE_SIZE as u32 + ERASE_SIZE as u32)
-    {
-	Ok(_)  => debug!("Flash erase successful"),
-	Err(e) => info!("Flash erase failed: {}", e)
-    }
-    match flash.blocking_write(ADDR_OFFSET + offset + ERASE_SIZE as u32, &[buf]) {
-	Ok(_)  => debug!("Flash write successful"),
-	Err(e) => info!("Flash write failed: {}", e)
-    }
 }
