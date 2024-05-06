@@ -28,6 +28,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
    3. [Circuit diagram](#circuit-diagram)
       - [Wiring on bread boards](#wiring-on-bread-boards)
       - [Latest wiring on bread boards](#latest-wiring-on-bread-boards)
+   4. [PCB](#pcb)
 4. [Source code](#source-code)
    - [Code testing and setup](#code-testing-and-setup)
    - [DriveByWire code](#drivebywire-code)
@@ -332,6 +333,19 @@ Also, I'm missing the headers for the fingerprint scanner and the actuator in th
 This what it looks like now. I built a box :D :D.
 
 ![Latest wiring on bread boards](./2024-05-04%2011.09.21.jpg)
+
+## PCB
+
+With the help of Fusion360, something I've used a few years now (which is free for students and personal use!), I've
+managed to create a PCB layout.
+
+It'll probably won't be the last, and I'm not sure if it's valid (not sure about all these signal lines!), but here
+they are anyway.
+
+![PCB - Bottom (without components)](./PCB%20-%20Bottom%20%281%29.png)
+![PCB - Bottom (with components)](./PCB%20-%20Bottom%20%282%29.png)
+![PCB - Top (without components)](./PCB%20-%20Top%20%281%29.png)
+![PCB - Top (with components)](./PCB%20-%20Top%20%282%29.png)
 
 # Source code
 
