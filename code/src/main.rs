@@ -1,55 +1,40 @@
 #![no_std]
 #![no_main]
 
-use defmt::{debug, error, info, trace};
+use defmt::{debug, error, info};
 
 use embassy_executor::Spawner;
-use embassy_rp::gpio::{AnyPin, Level, Input, Output, Pin, Pull, SlewRate};
+use embassy_rp::gpio::{Level, Input, Output, Pin, Pull};
 use embassy_rp::bind_interrupts;
 use embassy_rp::peripherals::{PIO1, UART0, FLASH};
 use embassy_rp::uart::InterruptHandler as UARTInterruptHandler;
 use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
 use embassy_rp::watchdog::*;
 use embassy_rp::flash::Async;
-use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
-use embassy_sync::channel::{Channel, Receiver};
-use embassy_time::{with_deadline, Duration, Instant, Timer};
-
-use ws2812;
-use debounce;
-use r503;
-
-pub mod config;
-use crate::config::*;
+use embassy_time::{Duration, Timer};
 
 use {defmt_rtt as _, panic_probe as _};
 
-// ================================================================================
+use ws2812;
+use r503;
 
-#[derive(Copy, Clone, PartialEq)]
-#[repr(u8)]
-enum Button { P, R, N, D, UNSET }
-enum LedStatus { On, Off }
-enum StopWatchdog { Yes }
-enum CANMessage { Starting, InitFP, FPInitialized, InitActuator, ActuatorInitialized, Authorizing, Authorized }
+// External "defines".
+pub mod lib_actuator;
+pub mod lib_buttons;
+pub mod lib_can_bus;
+pub mod lib_config;
+pub mod lib_watchdog;
 
-// Setup the communication channels between the tasks.
-static CHANNEL_P:        Channel<ThreadModeRawMutex, LedStatus,    64>	= Channel::new();
-static CHANNEL_N:        Channel<ThreadModeRawMutex, LedStatus,    64>	= Channel::new();
-static CHANNEL_R:        Channel<ThreadModeRawMutex, LedStatus,    64>	= Channel::new();
-static CHANNEL_D:        Channel<ThreadModeRawMutex, LedStatus,    64>	= Channel::new();
-static CHANNEL_WATCHDOG: Channel<ThreadModeRawMutex, StopWatchdog, 64>	= Channel::new();
-static CHANNEL_ACTUATOR: Channel<ThreadModeRawMutex, Button,       64>	= Channel::new();
-static CHANNEL_CANWRITE: Channel<ThreadModeRawMutex, CANMessage,   64>	= Channel::new();
+use crate::lib_actuator::*;
+use crate::lib_buttons::*;
+use crate::lib_can_bus::*;
+use crate::lib_config::*;
+use crate::lib_watchdog::*;
 
-// Start with the button UNSET, then change it when we know what gear the car is in.
-static mut BUTTON_ENABLED: Button = Button::UNSET;
+use crate::CHANNEL_ACTUATOR;
+use crate::CHANNEL_CANWRITE;
+use crate::CHANNEL_WATCHDOG;
 
-// When the actuator is moving, we need to set this to `true` to block input.
-static mut BUTTONS_BLOCKED: bool = false;
-
-// Set the distance between the different mode. 70mm is the total throw from begining to end.
-static ACTUATOR_DISTANCE_BETWEEN_POSITIONS: i8 = 70 / 3; // 3 because the start doesn't count :).
 
 bind_interrupts!(struct Irqs {
     PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
@@ -57,385 +42,6 @@ bind_interrupts!(struct Irqs {
 });
 
 // ================================================================================
-
-// Doggy is hungry, needs to be feed every three quarter second, otherwise it gets cranky! :)
-#[embassy_executor::task]
-async fn feed_watchdog(
-    control: Receiver<'static, ThreadModeRawMutex, StopWatchdog, 64>,
-    mut wd: embassy_rp::watchdog::Watchdog)
-{
-    debug!("Started watchdog feeder task");
-
-    // Feed the watchdog every 3/4 second to avoid reset.
-    loop {
-	wd.feed();
-
-        Timer::after_millis(750).await;
-
-	trace!("Trying to receive");
-	match control.try_receive() { // Only *if* there's data, receive and deal with it.
-	    Ok(StopWatchdog::Yes) => {
-		info!("StopWatchdog = Yes received");
-		break
-	    },
-	    Err(_) => {
-		trace!("WD control - Uncaught error received");
-		continue
-	    }
-	}
-    }
-}
-
-// Write messages to CAN-bus.
-#[embassy_executor::task]
-async fn write_can(receiver: Receiver<'static, ThreadModeRawMutex, CANMessage, 64>) {
-    debug!("Started CAN write task");
-
-    loop {
-	let message = receiver.receive().await; // Block waiting for data.
-	match message {
-	    CANMessage::Starting		=> {
-		debug!("Sending message to IC: 'Starting Drive-By-Wire system'");
-	    }
-	    CANMessage::InitFP			=> {
-		debug!("Sending message to IC: 'Initializing Fingerprint Scanner'");
-	    }
-	    CANMessage::FPInitialized		=> {
-		debug!("Sending message to IC: 'Fingerprint scanner initialized'");
-	    }
-	    CANMessage::InitActuator		=> {
-		debug!("Sending message to IC: 'Initializing actuator'");
-	    }
-	    CANMessage::ActuatorInitialized	=> {
-		debug!("Sending message to IC: 'Actuator initialized'");
-	    }
-	    CANMessage::Authorizing		=> {
-		debug!("Sending message to IC: 'Authorizing use'");
-	    }
-	    CANMessage::Authorized		=> {
-		debug!("Sending message to IC: 'Use authorized'");
-	    }
-	}
-    }
-}
-
-// Read CAN-bus messages.
-#[embassy_executor::task]
-async fn read_can() {
-    debug!("Started CAN read task");
-
-    loop {
-	// TODO: Read CAN-bus messages (blocking).
-
-	// TODO: If we're moving, disable buttons.
-
-	// TODO: If we're NOT moving, and brake pedal is NOT depressed, disable buttons.
-
-	// TODO: If we're NOT moving, and brake pedal is depressed, enable buttons.
-
-	Timer::after_secs(600).await; // TODO: Nothing to do yet, just sleep as long as we can, but 10 minutes should do it.
-    }
-}
-
-// Actually move the actuator.
-// TODO: How do we actually move the actuator?
-//       Is it enough to send it +3V3 or +5V on the motor relay, or does it need more power? If so,
-//       we need two more MOSFETs.
-async fn move_actuator(
-    amount:		i8, // Distance in mm in either direction.
-    pin_motor_plus:	&mut Output<'static>,
-    pin_motor_minus:	&mut Output<'static>)
-{
-    if amount < 0 {
-	info!("Moving actuator: direction=FORWARD; amount={}", amount);
-	pin_motor_minus.set_low(); // Set the other pin to low. There can be only one!
-
-	// FAKE: Simulate move by toggling the pin HIGH and LOW `amount` (mm) times.
-	let mut pos: i8 = 0; // Make sure to blink BOTH at completion of every position move.
-	for i in amount..=0 {
-	    // FAKE: For every position, turn BOTH led on for a bit, to indicate position.
-	    trace!("pos={}; i={}", pos, i);
-	    if i % ACTUATOR_DISTANCE_BETWEEN_POSITIONS == 0 {
-		if pos != 0 {
-		    trace!("i % {}", ACTUATOR_DISTANCE_BETWEEN_POSITIONS);
-		    pin_motor_minus.set_high();
-		    pin_motor_plus.set_high();
-		    Timer::after_millis(100).await;
-		    pin_motor_minus.set_low();
-		    pin_motor_plus.set_low();
-		}
-
-		pos = pos + 1;
-	    }
-
-	    pin_motor_plus.set_high();
-	    Timer::after_millis(50).await;
-	    pin_motor_plus.set_low();
-	    Timer::after_millis(50).await;
-	}
-    } else {
-	info!("Moving actuator: direction=BACKWARD; amount={}", amount);
-	pin_motor_plus.set_low(); // Set the other pin to low. There can be only one!
-
-	// FAKE: Simulate move by toggling the pin HIGH and LOW `amount` (mm) times.
-	let mut pos: i8 = 0; // Make sure to blink BOTH at completion of every position move.
-	for i in 0..=amount {
-	    // FAKE: For every position, turn BOTH led on for a bit, to indicate position.
-	    trace!("pos={}; i={}", pos, i);
-	    if i % ACTUATOR_DISTANCE_BETWEEN_POSITIONS == 0 {
-		if pos != 0 {
-		    trace!("i % {}", ACTUATOR_DISTANCE_BETWEEN_POSITIONS);
-		    pin_motor_minus.set_high();
-		    pin_motor_plus.set_high();
-		    Timer::after_millis(100).await;
-		    pin_motor_minus.set_low();
-		    pin_motor_plus.set_low();
-		}
-
-		pos = pos + 1;
-	    }
-
-	    pin_motor_minus.set_high();
-	    Timer::after_millis(50).await;
-	    pin_motor_minus.set_low();
-	    Timer::after_millis(50).await;
-	}
-    }
-
-    // TODO: Verify with the potentiometer on the actuator that we've actually moved it to the right position.
-    //       Documentation say "Actual resistance value may vary within the 0-10kΩ range based on stroke length".
-}
-
-// Control the actuator. Calculate in what direction and how much to move it to get to
-// the desired drive mode position.
-#[embassy_executor::task]
-async fn actuator_control(
-    receiver:			Receiver<'static, ThreadModeRawMutex, Button, 64>,
-    mut flash:			embassy_rp::flash::Flash<'static, FLASH, Async, FLASH_SIZE>,
-    mut pin_motor_plus:		Output<'static>,
-    mut pin_motor_minus:	Output<'static>,
-    _pin_pot:			Input<'static>)
-{
-    debug!("Started actuator control task");
-
-    pin_motor_plus.set_slew_rate(SlewRate::Fast);
-    pin_motor_minus.set_slew_rate(SlewRate::Fast);
-
-    loop {
-	let button = receiver.receive().await; // Block waiting for data.
-
-	// TODO: Figure out what gear is in by reading the actuator potentiometer.
-	// NOTE: This might not be possible, the `get_level()` only gets the level (HIGH/LOW) of the pin,
-	//       not the actual value from the potentiometer.
-	//let _actuator_position = pin_pot.get_level();
-
-	// FAKE: Use the current button selected to calculate the direction and amount to move the actuator
-	let _actuator_position = unsafe { BUTTON_ENABLED as u8 };
-
-	// Calculate the direction to move, based on current position and where we want to go.
-	// - => Higher gear - BACKWARDS
-	// + => Lower gear  - FORWARD
-	let amount: i8 = (_actuator_position as i8 - button as i8) * ACTUATOR_DISTANCE_BETWEEN_POSITIONS;
-	debug!("Move direction and amount => '{} - {} = {}'", _actuator_position, button as i8, amount);
-
-	// Move the actuator.
-	move_actuator(amount, &mut pin_motor_plus, &mut pin_motor_minus).await;
-
-	// Now that we're done moving the actuator, Enable reading buttons again.
-	unsafe { BUTTONS_BLOCKED = false };
-
-	// .. and update the button enabled.
-	unsafe { BUTTON_ENABLED = button };
-
-	// .. and write it to flash.
-	let mut config = match DbwConfig::read(&mut flash) { // Read the old/current values.
-	    Ok(config)  => config,
-	    Err(e) => {
-		error!("Failed to read flash: {:?}", e);
-		DbwConfig { active_button: 0, valet_mode: 0 } // Resonable defaults.
-	    }
-	};
-	config.active_button = button as u8; // Set new value.
-	config::write_flash(&mut flash, config).await;
-    }
-}
-
-// Control the drive button LEDs - four buttons, four LEDs.
-#[embassy_executor::task(pool_size = 4)]
-async fn set_led(receiver: Receiver<'static, ThreadModeRawMutex, LedStatus, 64>, led_pin: AnyPin) {
-    debug!("Started button LED control task");
-
-    let mut led = Output::new(led_pin, Level::Low); // Always start with the LED off.
-
-    loop {
-	match receiver.receive().await { // Block waiting for data.
-	    LedStatus::On  => led.set_high(),
-	    LedStatus::Off => led.set_low()
-	}
-    }
-}
-
-// Listen for button presses - four buttons, one task each.
-#[embassy_executor::task(pool_size = 4)]
-async fn read_button(
-    spawner: Spawner,
-    button:  Button,
-    btn_pin: AnyPin,
-    led_pin: AnyPin)
-{
-    debug!("Started button control task");
-
-    let mut btn = debounce::Debouncer::new(Input::new(btn_pin, Pull::Up), Duration::from_millis(20));
-
-    // Spawn off a LED driver for this button.
-    match button {
-	Button::UNSET => (), // Should be impossible, but just to make the compiler happy.
-	Button::P     => spawner.spawn(set_led(CHANNEL_P.receiver(), led_pin)).unwrap(),
-	Button::N     => spawner.spawn(set_led(CHANNEL_N.receiver(), led_pin)).unwrap(),
-	Button::R     => spawner.spawn(set_led(CHANNEL_R.receiver(), led_pin)).unwrap(),
-	Button::D     => spawner.spawn(set_led(CHANNEL_D.receiver(), led_pin)).unwrap()
-    }
-
-    loop {
-	// NOTE: We need to wait for a button to be pressed, BEFORE we can check if we're
-	//       blocked. If we don't, we've checked if we're blocked, we're not and we
-	//       start listening to a button. But if someone else have got the press,
-	//       then "this" will still wait for a press!
-	//       If we ARE blocked, then sleep until we're not, then restart the loop from
-	//       the beginning, listening for a button press again.
-        btn.debounce().await; // Button pressed
-
-	if unsafe { BUTTONS_BLOCKED == true } {
-	    debug!("Buttons blocked == {}", unsafe { BUTTONS_BLOCKED as u8 });
-	    while unsafe { BUTTONS_BLOCKED == true } {
-		// Block here while we wait for it to be unblocked.
-		debug!("Waiting for unblock (button task: {})", button as u8);
-		Timer::after_secs(1).await;
-	    }
-	    continue;
-	}
-
-	// Got a valid button press. Process it..
-        let start = Instant::now();
-        info!("Button press detected (button task: {})", button as u8);
-
-	// Don't really care how long a button have been pressed as,
-	// the `debounce()` will detect when it's been RELEASED.
-	match with_deadline(start + Duration::from_secs(1), btn.debounce()).await {
-            Ok(_) => {
-		trace!("Button pressed for: {}ms", start.elapsed().as_millis());
-		debug!("Button enabled: {}; Button pressed: {}", unsafe { BUTTON_ENABLED as u8 }, button as u8);
-
-		// We know who WE are, so turn ON our own LED and turn off all the other LEDs.
-		match button {
-		    Button::UNSET => (),
-		    Button::P  => {
-			if unsafe { button == BUTTON_ENABLED } {
-			    // Already enabled => blink *our* LED three times.
-			    for _i in 0..3 {
-				CHANNEL_P.send(LedStatus::Off).await;
-				Timer::after_millis(500).await;
-				CHANNEL_P.send(LedStatus::On).await;
-				Timer::after_millis(500).await;
-			    }
-			} else {
-			    // Disable reading buttons while we deal with this one.
-			    unsafe { BUTTONS_BLOCKED = true };
-
-			    CHANNEL_P.send(LedStatus::On).await;
-			    CHANNEL_N.send(LedStatus::Off).await;
-			    CHANNEL_R.send(LedStatus::Off).await;
-			    CHANNEL_D.send(LedStatus::Off).await;
-
-			    // Trigger the actuator to switch to (P)ark.
-			    CHANNEL_ACTUATOR.send(Button::P).await;
-			}
-
-			continue;
-		    }
-		    Button::N  => {
-			if unsafe { button == BUTTON_ENABLED } {
-			    // Already enabled => blink *our* LED three times.
-			    for _i in 0..3 {
-				CHANNEL_N.send(LedStatus::Off).await;
-				Timer::after_millis(500).await;
-				CHANNEL_N.send(LedStatus::On).await;
-				Timer::after_millis(500).await;
-			    }
-			} else {
-			    // Disable reading buttons while we deal with this one.
-			    unsafe { BUTTONS_BLOCKED = true };
-
-			    CHANNEL_P.send(LedStatus::Off).await;
-			    CHANNEL_N.send(LedStatus::On).await;
-			    CHANNEL_R.send(LedStatus::Off).await;
-			    CHANNEL_D.send(LedStatus::Off).await;
-
-			    // Trigger the actuator to switch to (N)eutral.
-			    CHANNEL_ACTUATOR.send(Button::N).await;
-			}
-			continue;
-		    }
-		    Button::R  => {
-			if unsafe { button == BUTTON_ENABLED } {
-			    // Already enabled => blink *our* LED three times.
-			    for _i in 0..3 {
-				CHANNEL_R.send(LedStatus::Off).await;
-				Timer::after_millis(500).await;
-				CHANNEL_R.send(LedStatus::On).await;
-				Timer::after_millis(500).await;
-			    }
-			} else {
-			    // Disable reading buttons while we deal with this one.
-			    unsafe { BUTTONS_BLOCKED = true };
-
-			    CHANNEL_P.send(LedStatus::Off).await;
-			    CHANNEL_N.send(LedStatus::Off).await;
-			    CHANNEL_R.send(LedStatus::On).await;
-			    CHANNEL_D.send(LedStatus::Off).await;
-
-			    // Trigger the actuator to switch to (R)everse.
-			    CHANNEL_ACTUATOR.send(Button::R).await;
-			}
-
-			continue;
-		    }
-		    Button::D  => {
-			if unsafe { button == BUTTON_ENABLED } {
-			    // Already enabled => blink *our* LED three times.
-			    for _i in 0..3 {
-				CHANNEL_D.send(LedStatus::Off).await;
-				Timer::after_millis(500).await;
-				CHANNEL_D.send(LedStatus::On).await;
-				Timer::after_millis(500).await;
-			    }
-			} else {
-			    // Disable reading buttons while we deal with this one.
-			    unsafe { BUTTONS_BLOCKED = true };
-
-			    CHANNEL_P.send(LedStatus::Off).await;
-			    CHANNEL_N.send(LedStatus::Off).await;
-			    CHANNEL_R.send(LedStatus::Off).await;
-			    CHANNEL_D.send(LedStatus::On).await;
-
-			    // Trigger the actuator to switch to (D)rive.
-			    CHANNEL_ACTUATOR.send(Button::D).await;
-			}
-
-			continue;
-		    }
-		}
-            }
-
-	    // Don't allow another button for quarter second.
-	    _ => Timer::after_millis(250).await
-	}
-
-	// Wait for button release before handling another press.
-	btn.debounce().await;
-	trace!("Button pressed for: {}ms", start.elapsed().as_millis());
-    }
-}
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
