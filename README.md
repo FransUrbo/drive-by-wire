@@ -347,6 +347,17 @@ they are anyway.
 ![PCB - Top (without components)](./PCB%20-%20Top%20%281%29.png)
 ![PCB - Top (with components)](./PCB%20-%20Top%20%282%29.png)
 
+Fusion360 can even generate a 3D object of the PCB! Unfortunately, there's some 3D footprints etc missing, so it's
+not *that* very accurate. But pretty anyway :).
+
+![PCB - Bottom (3D)](./PCB%20-%20Bottom%20%283D%29.png)
+![PCB - Top (3D)](./PCB%20-%20Top%20%283D%29.png)
+
+.. and the perspective view.
+
+![PCB - Bottom (3D - Perspective)](./PCB%20-%20Bottom%20%283D%20-%20Perspective%29.png)
+![PCB - Top (3D - Perspective)](./PCB%20-%20Top%20%283D%20-%20Perspective%29.png)
+
 # Source code
 
 ## Code testing and setup
