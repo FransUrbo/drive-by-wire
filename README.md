@@ -475,8 +475,10 @@ is then selected automatically.
 
 ### Update Sun 8 May 2024
 
-Update the circuit diagram and PCB with a home-made CAN bus adapter, because I can't use the over-the-shelf
-ones.
+* Update the circuit diagram and PCB with a home-made CAN bus adapter, because I can't use the over-the-shelf
+  ones.
+* Remove the EIS/SteeringLock "relay". Can't really cut the power to EIS that way. If there's no power to it,
+  it won't detect the key, and won't allow me to turn the power to the device on! :).
 
 # Additional information
 

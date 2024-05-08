@@ -78,7 +78,6 @@ async fn main(spawner: Spawner) {
 
     // =====
     // Initialize the MOSFET relays.
-    let mut eis_steering_lock   = Output::new(p.PIN_18, Level::Low);	// EIS/steering lock
     let mut eis_ignition_switch = Output::new(p.PIN_19, Level::Low);	// EIS/ignition switch
     let mut eis_start           = Output::new(p.PIN_22, Level::Low);	// EIS/start
     info!("Initialized the MOSFET relays");
@@ -209,9 +208,6 @@ async fn main(spawner: Spawner) {
 	}
 	_ => ()
     }
-
-    // Turn on the steering lock, allowing the key to be inserted.
-    eis_steering_lock.set_high();
 
     // Turn on the ignition switch.
     eis_ignition_switch.set_high();
