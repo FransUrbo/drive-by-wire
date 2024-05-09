@@ -188,8 +188,8 @@ Or those two combined, [buttons and their LEDs and the status LED](https://www.e
 
 ### EIS Relays
 
+* ~~1x Control #2 (steering lock)~~
 * 1x Control #1 (ignition switch)
-* 1x Control #2 (steering lock)
 * 1x Control #3 (start signal)
 * 1x 5V
 * 1x GND
@@ -199,19 +199,22 @@ Or those two combined, [buttons and their LEDs and the status LED](https://www.e
 
 * 1x Actuator (Potentiometer Brush)
 * 1x Actuator (Motor Relay +)
+* 1x Actuator (Motor Relay -)
 * 1x 5V
 * 1x GND
-=> [4 pin](https://www.ebay.co.uk/itm/174775342997)
+=> [5 pin](https://www.ebay.co.uk/itm/174775342997)
 
 ### CAN bus #0 and #1
 
-* 2x CAN-L
-* 2x CAN-H
+* ~~2x~~ 1x CAN-L
+* ~~2x~~ 1x CAN-H
 => [4 pin](https://www.ebay.co.uk/itm/174775342997)
+=> [2 pin](https://www.ebay.co.uk/itm/174775342997)
 
 ### Total
 
-31 pins out from system.
+31 leads out from system - 24, counting only unique pins (SteeringLock "relay" and CAN#2 not counted, because
+those shouldn't be anyway).
 
 # Parts
 
@@ -223,10 +226,6 @@ Crossed out parts are things I either didn't buy or don't need. Yet. Which is wh
 | :--- | :---  |
 | [Actuator w/ feedback (potentiometer)](https://www.progressiveautomations.com/products/linear-actuator-with-potentiometer?variant=18277322424387) | £115 ($145) |
 | [Aston Martin drive select buttons](https://www.ebay.co.uk/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=hillsmotors&store_name=hillsmotors&_oac=1&_nkw=gear%20select%20switch) | £35	(*4 = £140) |
-| ~~[GX20 Aviation Plug  4-pin Male+Female Panel Mount](https://www.ebay.co.uk/itm/174775342997?var=473951323019)~~ | ~~£4~~ |
-| ~~[GX20 Aviation Plug  5-pin Male+Female Panel Mount](https://www.ebay.co.uk/itm/174775342997?var=473951323020)~~ | ~~£4~~ |
-| ~~[GX20 Aviation Plug  6-pin Male+Female Panel Mount](https://www.ebay.co.uk/itm/174775342997?var=473951323021)~~ | ~~£4~~ |
-| ~~[GX20 Aviation Plug 12-pin Male+Female Panel Mount](https://www.ebay.co.uk/itm/174775342997?var=473951323026)~~ | ~~£5~~ |
 
 ## Controller
 
@@ -236,7 +235,6 @@ Crossed out parts are things I either didn't buy or don't need. Yet. Which is wh
 | [DC-DC Buck Converter 7-24V to 5V 4A](https://thepihut.com/products/dc-dc-buck-converter-7-24v-to-5v-4a?variant=39865627607235) | £5 |
 | [Fingerprint scanner (panel mount)](https://thepihut.com/products/panel-mount-fingerprint-sensor-with-bi-colour-led-ring-r503?variant=41727311675587) | £23 |
 | [MOSFET Power Controller](https://thepihut.com/products/gravity-mosfet-power-controller) | £4 * 3 |
-| ~~[1Channel CAN bus extension board](https://thepihut.com/products/can-board-sn65hvd230?variant=40242101256387)~~ | ~~£6 * 2~~ |
 | [NeoPixel Diffused 5mm LED](https://thepihut.com/products/neopixel-diffused-5mm-through-hole-led-5-pack?variant=27739696529) | £5 |
 | [LED holder 5mm](https://thepihut.com/products/5mm-plastic-flat-led-holder-pack-of-5?variant=27739774353) | £1 |
 
@@ -246,19 +244,15 @@ Crossed out parts are things I either didn't buy or don't need. Yet. Which is wh
 | :--- | :---  |
 | [TJA1055T/1J Fault-tolerant CAN chip](https://www.mouser.co.uk/ProductDetail/771-TJA1055T-1J) | £2
 | [MCP2513FDTE/SL CAN Interface IC](https://www.mouser.co.uk/ProductDetail/579-MCP2518FDT-E-SL) | £2
-| [WR-FPC connector -  4pin](https://www.mouser.co.uk/ProductDetail/710-686104183822) | £1 * 2
-| [WR-FPC jumper cable -  4pin/10cm](https://www.mouser.co.uk/ProductDetail/710-686704100001) | £3 * 2
-| [WR-FPC connector -  5pin](https://www.mouser.co.uk/ProductDetail/710-686105183822) | £1 * 2
-| [WR-FPC jumper cable -  5pin/10cm](https://www.mouser.co.uk/ProductDetail/710-686705100001) | £3 * 2
-| [WR-FPC connector -  6pin](https://www.mouser.co.uk/ProductDetail/710-686106183822) | £1
-| [WR-FPC jumper cable -  6pin/10cm](https://www.mouser.co.uk/ProductDetail/710-686706100001) | £3
-| [WR-FPC connector - 10pin](https://www.mouser.co.uk/ProductDetail/710-686110183822) | £2
-| [WR-FPC jumper cable - 10pin/10cm](https://www.mouser.co.uk/ProductDetail/710-686710100001) | £3
 | [DC Power Connector](https://www.mouser.co.uk/ProductDetail/502-RASM722X) | £1
 | [Resistor -  1kΩ](https://www.mouser.co.uk/ProductDetail/710-560112132038) | £0.10 * 7
 | [Resistor - 10kΩ](https://www.mouser.co.uk/ProductDetail/710-560112116005) | £0.09
 | [Capacitor - 150pF](https://www.mouser.co.uk/ProductDetail/710-885012007017) | £0.08 * 2
 | [Resonator - 16MHz/15pF](https://www.mouser.co.uk/ProductDetail/81-CSTNE16M0VH3L000R) | £0.30
+| [Motherboard connector - 24pin](https://www.mouser.co.uk/ProductDetail/538-213227-2410) | £3
+| [Wire to Motherboard connector - 24pin](https://www.mouser.co.uk/ProductDetail/538-503148-2490) | £3
+| [Panel mount connector - 24 pin](https://www.mouser.co.uk/ProductDetail/798-DF51-24DEP-2C) | £1
+| [Wire to panel mount connector - 24pin](https://www.mouser.co.uk/ProductDetail/798-DF51-24DS-2C) | £0.3
 
 ## For development
 
@@ -270,7 +264,6 @@ Crossed out parts are things I either didn't buy or don't need. Yet. Which is wh
 | [Half-Size Breadboard](https://thepihut.com/products/breadboard-400-point-clear?variant=31986026381374) | £3 * 3 |
 | [Breadboard for Pico](https://thepihut.com/products/breadboard-for-pico?variant=39819276386499) | £4 |
 | [Short Plug Headers](https://thepihut.com/products/short-plug-headers-for-raspberry-pi-pico-2-x-20-pin-male?variant=42182974505155) | £1 |
-| ~~[10K potentiometer](https://thepihut.com/products/panel-mount-10k-potentiometer-breadboard-friendly?variant=27740444817)~~ | ~~£1~~ |
 | [Tactile Switch Buttons](https://thepihut.com/products/tactile-switch-buttons-6mm-tall-x-10-pack?variant=27739414097) | £3 |
 | [Breakout for 6-pin JST SH-Style Connector - Side Entry](https://thepihut.com/products/breakout-for-6-pin-jst-sh-style-connector-side-entry?variant=42438253871299) | £1 |
 | [Extra-long break-away 0.1" 16-pin strip male header (5 pieces)](https://thepihut.com/products/extra-long-break-away-0-1-16-pin-strip-male-header-5-pieces?variant=27740420881) | £3 |
@@ -279,9 +272,9 @@ Crossed out parts are things I either didn't buy or don't need. Yet. Which is wh
 | [Breadboard-friendly 2.1mm DC barrel jack](https://thepihut.com/products/breadboard-friendly-2-1mm-dc-barrel-jack?variant=27740417489) | £1 |
 | [In-line power switch for 2.1mm barrel jack](https://thepihut.com/products/in-line-power-switch-for-2-1mm-barrel-jack?variant=27739226065) | £2 |
 | [DB9 Right Angle MALE Connector - PCB Mount D-SUB](https://www.ebay.co.uk/itm/325261653847) | £3 |
-| ~~[Dupont Jump Wire F-F Jumper Breadboard Cable Lead -  6pin](https://www.ebay.co.uk/itm/275827705804?var=577580216871)~~ | £2 |
-| ~~[Dupont Jump Wire F-F Jumper Breadboard Cable Lead - 10pin](https://www.ebay.co.uk/itm/275827705804?var=577580216855)~~ | £2 |
-| ~~[Dupont Jump Wire M-M Jumper Breadboard Cable Lead - 10cm](https://www.ebay.co.uk/itm/275268807202?var=575537821821)~~ | £8 |
+| [Dupont Jump Wire F-F Jumper Breadboard Cable Lead -  6pin](https://www.ebay.co.uk/itm/275827705804?var=577580216871) | £2 |
+| [Dupont Jump Wire F-F Jumper Breadboard Cable Lead - 10pin](https://www.ebay.co.uk/itm/275827705804?var=577580216855) | £2 |
+| [Dupont Jump Wire M-M Jumper Breadboard Cable Lead - 10cm](https://www.ebay.co.uk/itm/275268807202?var=575537821821) | £8 |
 | [SO14 IC to Breadboard adapter](https://www.mouser.co.uk/ProductDetail/535-LCQT-SOIC14) | £4 * 2
 
 ## Other
