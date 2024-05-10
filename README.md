@@ -21,6 +21,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
       - [Actuation](#actuation)
       - [Controller](#controller)
       - [CAN bus](#can-bus)
+      - [Connectors](#connectors)
       - [For development](#for-development)
       - [Other](#other)
       - [Small footprint controllers](#small-footprint-controllers)
@@ -250,11 +251,28 @@ Crossed out parts are things I either didn't buy or don't need. Yet. Which is wh
 | [Resistor - 10kΩ](https://www.mouser.co.uk/ProductDetail/710-560112116005) | £0.09
 | [Capacitor - 150pF](https://www.mouser.co.uk/ProductDetail/710-885012007017) | £0.08 * 2
 | [Resonator - 16MHz/15pF](https://www.mouser.co.uk/ProductDetail/81-CSTNE16M0VH3L000R) | £0.30
+
+## Connectors
+
 | [Motherboard connector - 24pin/vertical](https://www.mouser.co.uk/ProductDetail/538-213227-2410) | £3
-| [Wire to Motherboard connector - 24pin](https://www.mouser.co.uk/ProductDetail/538-503148-2490) | £3
-| [Panel mount connector - 24 pin](https://www.mouser.co.uk/ProductDetail/798-DF51-24DEP-2C) | £1
-| [Wire to panel mount connector - 24pin](https://www.mouser.co.uk/ProductDetail/798-DF51-24DS-2C) | £0.3
+| [Motherboard connector - 24pin/horizontal](https://www.mouser.co.uk/ProductDetail/538-503148-2490)) | £3
+| ~~[Wire to Motherboard connector - 24pin](https://www.mouser.co.uk/ProductDetail/538-503148-2490) | £3~~
+| ~~[Panel mount connector - 24 pin](https://www.mouser.co.uk/ProductDetail/798-DF51-24DEP-2C) | £1~~
+| ~~[Wire to panel mount connector - 24pin](https://www.mouser.co.uk/ProductDetail/798-DF51-24DS-2C) | £0.3~~
 | [Debug connector - 5pin/vertical](https://www.mouser.co.uk/ProductDetail/538-53398-0567) | £0.6
+
+Don't think I'm going to buy the panel and wire to panel connectors. The motherboard connector looks quite big, so it might
+be better to just stick that out through the box. I'll leave them in here for now, because I might change my mind.
+
+I want this thing to be as small as possible, easier to hide it somewhere in the then :). I have yet to
+decide if I want a vertical or a horizontal connector..
+
+The side view with vertical motherboard connector:
+![PCB - Side view (1)](./PCB%20-%20Side%20%281%29.png)
+![PCB - Side view (2)](./PCB%20-%20Side%20%282%29.png)
+
+The view with horizontal motherboard connector, sticking out of the box (outside the PCB):
+![PCB - Side (3D - Perspective)](./PCB%20-%20Side%20%283D%20-%20Perspective%29.png)
 
 ## For development
 
