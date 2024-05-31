@@ -347,6 +347,10 @@ This is still work in progress, but this looks about right. That's what I've wir
 
 ![Circuit diagram](./Circuit%20Diagram.png)
 
+This is the diagram for the Aston Martin drive button. I only use the one switch within the button (SW2).
+
+![AstonMartin Button Diagram](./AstonMartin%20Button%20Diagram.png)
+
 ## Wiring on bread boards
 
 Those CAN bus adaptors I can't apparently used. They're for a high-speed CAN, but the MB I have have a low-frequency,
