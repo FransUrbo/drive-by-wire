@@ -50,25 +50,25 @@ async fn main(spawner: Spawner) {
     info!("Start");
 
     // =====
-    // Initialize the built-in LED and turn it on. Just for completness.
+    // 0. Initialize the built-in LED and turn it on. Just for completness.
     let _builtin_led = Output::new(p.PIN_25, Level::High);
 
     // =====
-    // Initialize the NeoPixel LED. Do this first, so we can turn on the status LED.
+    //  1. Initialize the NeoPixel LED. Do this first, so we can turn on the status LED.
     let Pio { mut common, sm0, .. } = Pio::new(p.PIO1, Irqs);
     let mut neopixel = ws2812::Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
     info!("Initialized the NeoPixel LED");
     neopixel.write(&[(255,100,0).into()]).await; // ORANGE -> starting
 
     // =====
-    // Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
+    //  2. Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
     let mut watchdog = Watchdog::new(p.WATCHDOG);
     watchdog.start(Duration::from_millis(1_050));
     spawner.spawn(feed_watchdog(CHANNEL_WATCHDOG.receiver(), watchdog)).unwrap();
     info!("Initialized the watchdog timer");
 
     // =====
-    // TODO: Initialize the CAN bus. Needs to come third, so we can talk to the IC.
+    //  3. TODO: Initialize the CAN bus. Needs to come third, so we can talk to the IC.
     spawner.spawn(read_can()).unwrap();
     spawner.spawn(write_can(CHANNEL_CANWRITE.receiver())).unwrap();
     info!("Initialized the CAN bus");
@@ -77,36 +77,32 @@ async fn main(spawner: Spawner) {
     CHANNEL_CANWRITE.send(CANMessage::Starting).await;
 
     // =====
-    // Initialize the MOSFET relays.
-    let mut eis_ignition_switch = Output::new(p.PIN_19, Level::Low);	// EIS/ignition switch
-    let mut eis_start           = Output::new(p.PIN_22, Level::Low);	// EIS/start
+    //  4. Initialize the MOSFET relays.
+    let mut eis_steering_lock = Output::new(p.PIN_18, Level::Low);	// EIS/steering lock
+    let mut eis_start         = Output::new(p.PIN_22, Level::Low);	// EIS/start
     info!("Initialized the MOSFET relays");
 
     // =====
-    // Initialize the flash drive where we store some config values across reboots.
+    //  5. Initialize the flash drive where we store some config values across reboots.
     let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH4);
-    let config = match DbwConfig::read(&mut flash) {
-	Ok(config)  => config,
-	Err(e) => {
-	    error!("Failed to read flash: {:?}", e);
-	    DbwConfig { active_button: 0, valet_mode: 0 }
-	}
-    };
+    let config = DbwConfig::read(&mut flash).unwrap();
     let stored_button = config.active_button;
     let valet_mode    = config.valet_mode;
 
     // =====
+    //  6. Initialize and test the actuator.
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
     let mut actuator_motor_plus  = Output::new(p.PIN_27, Level::Low);	// Actuator/Motor Relay (-)
     let mut actuator_motor_minus = Output::new(p.PIN_28, Level::Low);	// Actuator/Motor Relay (+)
     let actuator_potentiometer   = Input::new(p.PIN_26, Pull::None);	// Actuator/Potentiometer Brush
 
-    // Test actuator control. Move it backward 1mm, then forward 1mm.
-    // TODO: How do we know the actuator test worked?
-    info!("Testing actuator control");
-    move_actuator(-1, &mut actuator_motor_plus, &mut actuator_motor_minus).await;
-    Timer::after_millis(100).await;
-    move_actuator(1, &mut actuator_motor_plus, &mut actuator_motor_minus).await;
+    // Test actuator control.
+    if !test_actuator(&mut actuator_motor_plus, &mut actuator_motor_minus).await {
+	error!("Actuator failed to move");
+
+	// Stop feeding the watchdog, resulting in a reset.
+	CHANNEL_WATCHDOG.send(StopWatchdog::Yes).await;
+    }
 
     // Actuator works. Spawn off the actuator control task.
     spawner.spawn(actuator_control(
@@ -120,13 +116,11 @@ async fn main(spawner: Spawner) {
     CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
 
     // =====
-    // Initialize the fingerprint scanner.
+    //  7. Initialize the fingerprint scanner.
     CHANNEL_CANWRITE.send(CANMessage::InitFP).await;
     let mut fp_scanner = r503::R503::new(p.UART0, Irqs, p.PIN_16, p.DMA_CH0, p.PIN_17, p.DMA_CH1, p.PIN_13.into());
     info!("Initialized the fingerprint scanner");
     CHANNEL_CANWRITE.send(CANMessage::FPInitialized).await;
-
-    // ================================================================================
 
     // Send message to IC: "Authorizing use".
     CHANNEL_CANWRITE.send(CANMessage::Authorizing).await;
@@ -157,18 +151,19 @@ async fn main(spawner: Spawner) {
     CHANNEL_CANWRITE.send(CANMessage::Authorized).await;
 
     // =====
-    // Spawn off one button reader per button. They will then spawn off a LED controller each so that
-    // each button can control their "own" LED.
+    //  8. Spawn off one button reader per button. They will then spawn off a LED controller each so that
+    //     each button can control their "own" LED.
     spawner.spawn(read_button(spawner, Button::P, p.PIN_2.degrade(), p.PIN_6.degrade())).unwrap(); // button/P
     spawner.spawn(read_button(spawner, Button::R, p.PIN_3.degrade(), p.PIN_7.degrade())).unwrap(); // button/R
     spawner.spawn(read_button(spawner, Button::N, p.PIN_4.degrade(), p.PIN_8.degrade())).unwrap(); // button/N
     spawner.spawn(read_button(spawner, Button::D, p.PIN_5.degrade(), p.PIN_9.degrade())).unwrap(); // button/D
     info!("Initialized the drive buttons");
 
-    // TODO: Find out what gear the car is in.
-    // NOTE: Need to do this *after* we've verified that the actuator works. It will tell us what position it
-    //       is in, and from there we can extrapolate the gear.
-    // FAKE: Read what button (gear) was enabled when last it changed from the flash.
+    // =====
+    //  9. TODO: Find out what gear the car is in.
+    //     NOTE: Need to do this *after* we've verified that the actuator works. It will tell us what position it
+    //           is in, and from there we can extrapolate the gear.
+    //     FAKE: Read what button (gear) was enabled when last it changed from the flash.
     match stored_button {
 	0 => {
 	    debug!("Setting enabled button to P");
@@ -209,11 +204,12 @@ async fn main(spawner: Spawner) {
 	_ => ()
     }
 
-    // Turn on the ignition switch.
-    eis_ignition_switch.set_high();
+    // =====
+    // 10. Turn on the ignition switch.
+    eis_steering_lock.set_high();
 
     // =====
-    // Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
+    // 11. Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
     if valet_mode != 0 {
 	// Set the status LED to BLUE to indicate valet mode.
 	neopixel.write(&[(0,0,255).into()]).await;
@@ -230,7 +226,7 @@ async fn main(spawner: Spawner) {
     }
 
     // =====
-    // TODO: Not sure how we avoid stopping the program here, the button presses are done in separate tasks!
+    // 12. TODO: Not sure how we avoid stopping the program here, the button presses are done in separate tasks!
     info!("Main function complete, control handed over to subtasks.");
     loop {
 	Timer::after_secs(600).await; // Nothing to do, just sleep as long as we can, but 10 minutes should do it.

@@ -29,7 +29,9 @@ impl DbwConfig {
 	    }
 	    Err(e) => {
 		error!("Flash read failed: {}", e);
-		return Err(e);
+
+		// Still return ok, but with resonable default instead.
+		return Ok(DbwConfig { active_button: 0, valet_mode: 0 });
 	    }
 	}
     }
@@ -58,7 +60,7 @@ impl DbwConfig {
 pub async fn write_flash(flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH_SIZE>, buf: DbwConfig) {
     trace!("write_flash({:?})", buf);
 
-    match DbwConfig::read(flash) {
+     match DbwConfig::read(flash) {
 	Ok(v)  => debug!("Config (before write): {:?}", v),
 	Err(e) => error!("Failed to read (before write): {:?}", e)
     }

@@ -142,3 +142,18 @@ pub async fn actuator_control(
 	lib_config::write_flash(&mut flash, config).await;
     }
 }
+
+// ========================================
+
+// Test actuator control. Move it backward 1mm, then forward 1mm.
+// This should be safe to do EVEN IF (!!) we're moving (for whatever reason).
+pub async fn test_actuator(pin_motor_plus:	&mut Output<'static>, pin_motor_minus:	&mut Output<'static>) -> bool {
+    info!("Testing actuator control");
+    move_actuator(-1, pin_motor_plus, pin_motor_minus).await;
+    Timer::after_millis(100).await;
+    move_actuator(1, pin_motor_plus, pin_motor_minus).await;
+
+    // TODO: How do we know the actuator test worked?
+
+    return true;
+}
