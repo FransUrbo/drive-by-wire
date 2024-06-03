@@ -71,7 +71,6 @@ async fn main(spawner: Spawner) {
     //  3. TODO: Initialize the CAN bus. Needs to come third, so we can talk to the IC.
     spawner.spawn(read_can()).unwrap();
     spawner.spawn(write_can(CHANNEL_CANWRITE.receiver())).unwrap();
-    info!("Initialized the CAN bus");
 
     // Send message to IC: "Starting Drive-By-Wire system".
     CHANNEL_CANWRITE.send(CANMessage::Starting).await;
@@ -80,14 +79,32 @@ async fn main(spawner: Spawner) {
     //  4. Initialize the MOSFET relays.
     let mut eis_steering_lock = Output::new(p.PIN_18, Level::Low);	// EIS/steering lock
     let mut eis_start         = Output::new(p.PIN_22, Level::Low);	// EIS/start
-    info!("Initialized the MOSFET relays");
+    CHANNEL_CANWRITE.send(CANMessage::RelaysInitialized).await;
 
     // =====
     //  5. Initialize the flash drive where we store some config values across reboots.
     let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH4);
+
+    // Read the config from flash drive.
     let config = DbwConfig::read(&mut flash).unwrap();
-    let stored_button = config.active_button;
-    let valet_mode    = config.valet_mode;
+
+    // Translate the u8 to a bool.
+    let valet_mode;
+    match config.valet_mode {
+	0 => valet_mode = false,
+	1 => valet_mode = true,
+	_ => valet_mode = true // Never going to happen, but just to keep the compiler happy with resonable default
+    }
+
+    // Translate the u8 to a Button.
+    let stored_button;
+    match config.active_button {
+	0 => stored_button = Button::P,
+	1 => stored_button = Button::R,
+	2 => stored_button = Button::N,
+	3 => stored_button = Button::D,
+	_ => stored_button = Button::P // Never going to happen, but just to keep the compiler happy with resonable default
+    }
 
     // =====
     //  6. Initialize and test the actuator.
@@ -112,21 +129,19 @@ async fn main(spawner: Spawner) {
 	actuator_motor_minus,
 	actuator_potentiometer)
     ).unwrap();
-    info!("Initialized the actuator");
     CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
 
     // =====
     //  7. Initialize the fingerprint scanner.
     CHANNEL_CANWRITE.send(CANMessage::InitFP).await;
     let mut fp_scanner = r503::R503::new(p.UART0, Irqs, p.PIN_16, p.DMA_CH0, p.PIN_17, p.DMA_CH1, p.PIN_13.into());
-    info!("Initialized the fingerprint scanner");
     CHANNEL_CANWRITE.send(CANMessage::FPInitialized).await;
 
     // Send message to IC: "Authorizing use".
     CHANNEL_CANWRITE.send(CANMessage::Authorizing).await;
 
     // Verify fingerprint.
-    if valet_mode != 0 {
+    if valet_mode {
 	info!("Valet mode, won't check fingerprint");
     } else {
 	if fp_scanner.Wrapper_Verify_Fingerprint().await {
@@ -157,7 +172,7 @@ async fn main(spawner: Spawner) {
     spawner.spawn(read_button(spawner, Button::R, p.PIN_3.degrade(), p.PIN_7.degrade())).unwrap(); // button/R
     spawner.spawn(read_button(spawner, Button::N, p.PIN_4.degrade(), p.PIN_8.degrade())).unwrap(); // button/N
     spawner.spawn(read_button(spawner, Button::D, p.PIN_5.degrade(), p.PIN_9.degrade())).unwrap(); // button/D
-    info!("Initialized the drive buttons");
+    CHANNEL_CANWRITE.send(CANMessage::ButtonsInitialized).await;
 
     // =====
     //  9. TODO: Find out what gear the car is in.
@@ -165,7 +180,7 @@ async fn main(spawner: Spawner) {
     //           is in, and from there we can extrapolate the gear.
     //     FAKE: Read what button (gear) was enabled when last it changed from the flash.
     match stored_button {
-	0 => {
+	Button::P => {
 	    debug!("Setting enabled button to P");
 	    CHANNEL_P.send(LedStatus::On).await;
 	    CHANNEL_R.send(LedStatus::Off).await;
@@ -174,7 +189,7 @@ async fn main(spawner: Spawner) {
 
 	    unsafe { BUTTON_ENABLED = Button::P };
 	}
-	1 => {
+	Button::R => {
 	    debug!("Setting enabled button to R");
 	    CHANNEL_P.send(LedStatus::Off).await;
 	    CHANNEL_R.send(LedStatus::On).await;
@@ -183,7 +198,7 @@ async fn main(spawner: Spawner) {
 
 	    unsafe { BUTTON_ENABLED = Button::R };
 	}
-	2 => {
+	Button::N => {
 	    debug!("Setting enabled button to N");
 	    CHANNEL_P.send(LedStatus::Off).await;
 	    CHANNEL_R.send(LedStatus::Off).await;
@@ -192,7 +207,7 @@ async fn main(spawner: Spawner) {
 
 	    unsafe { BUTTON_ENABLED = Button::N };
 	}
-	3 => {
+	Button::D => {
 	    debug!("Setting enabled button to D");
 	    CHANNEL_P.send(LedStatus::Off).await;
 	    CHANNEL_R.send(LedStatus::Off).await;
@@ -210,16 +225,18 @@ async fn main(spawner: Spawner) {
 
     // =====
     // 11. Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
-    if valet_mode != 0 {
+    if valet_mode {
 	// Set the status LED to BLUE to indicate valet mode.
 	neopixel.write(&[(0,0,255).into()]).await;
+	CHANNEL_CANWRITE.send(CANMessage::ValetMode).await;
     } else {
 	// Sleep here three seconds to allow the car to "catch up".
 	// Sometime, it takes a while for the car to "wake up". Not sure why..
 	debug!("Waiting 3s to wakeup the car");
 	Timer::after_secs(3).await;
 
-	info!("Sending start signal to car");
+	CHANNEL_CANWRITE.send(CANMessage::StartCar).await;
+
 	eis_start.set_high();
 	Timer::after_secs(1).await;
 	eis_start.set_low();

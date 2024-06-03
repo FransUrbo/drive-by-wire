@@ -1,10 +1,12 @@
-use defmt::debug;
+use defmt::{debug, info};
 
 use embassy_sync::channel::{Channel, Receiver};
 use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
 use embassy_time::Timer;
 
-pub enum CANMessage { Starting, InitFP, FPInitialized, InitActuator, ActuatorInitialized, Authorizing, Authorized }
+pub enum CANMessage { Starting, InitFP, FPInitialized, InitActuator, ActuatorInitialized,
+		      RelaysInitialized, ButtonsInitialized, ValetMode, StartCar, Authorizing,
+		      Authorized }
 pub static CHANNEL_CANWRITE: Channel<ThreadModeRawMutex, CANMessage, 64> = Channel::new();
 
 // Write messages to CAN-bus.
@@ -16,25 +18,37 @@ pub async fn write_can(receiver: Receiver<'static, ThreadModeRawMutex, CANMessag
 	let message = receiver.receive().await; // Block waiting for data.
 	match message {
 	    CANMessage::Starting		=> {
-		debug!("Sending message to IC: 'Starting Drive-By-Wire system'");
+		info!("=> 'Starting Drive-By-Wire system'");
 	    }
 	    CANMessage::InitFP			=> {
-		debug!("Sending message to IC: 'Initializing Fingerprint Scanner'");
+		info!("=> 'Initializing Fingerprint Scanner'");
 	    }
 	    CANMessage::FPInitialized		=> {
-		debug!("Sending message to IC: 'Fingerprint scanner initialized'");
+		info!("=> 'Fingerprint scanner initialized'");
 	    }
 	    CANMessage::InitActuator		=> {
-		debug!("Sending message to IC: 'Initializing actuator'");
+		info!("=> 'Initializing actuator'");
 	    }
 	    CANMessage::ActuatorInitialized	=> {
-		debug!("Sending message to IC: 'Actuator initialized'");
+		info!("=> 'Actuator initialized'");
+	    }
+	    CANMessage::RelaysInitialized       => {
+		info!("=> 'Relays initialized");
+	    }
+	    CANMessage::ButtonsInitialized       => {
+		info!("=> 'Drive buttons initialized'");
+	    }
+	    CANMessage::ValetMode       => {
+		info!("=> 'Valet mode, won't authorize use'");
 	    }
 	    CANMessage::Authorizing		=> {
-		debug!("Sending message to IC: 'Authorizing use'");
+		info!("=> 'Authorizing use'");
 	    }
 	    CANMessage::Authorized		=> {
-		debug!("Sending message to IC: 'Use authorized'");
+		info!("=> 'Use authorized'");
+	    }
+	    CANMessage::StartCar       => {
+		info!("=> 'Sending start signal to car'");
 	    }
 	}
     }
