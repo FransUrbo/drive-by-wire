@@ -73,7 +73,7 @@ pub async fn read_button(
         btn.debounce().await; // Button pressed
 
 	if unsafe { BUTTONS_BLOCKED == true } {
-	    debug!("Buttons blocked == {}", unsafe { BUTTONS_BLOCKED as u8 });
+	    debug!("Buttons blocked (button task: {})", button as u8);
 	    while unsafe { BUTTONS_BLOCKED == true } {
 		// Block here while we wait for it to be unblocked.
 		debug!("Waiting for unblock (button task: {})", button as u8);
@@ -81,6 +81,12 @@ pub async fn read_button(
 	    }
 	    continue;
 	}
+
+	// Disable reading buttons as soon as possible, while we deal with this one.
+	// If this isn't "us", then the buttons will be re-enabled in the actuator task,
+	// once the actuator have finished moving..
+	// If this IS "us", we re-enable the buttons again after we've blinked "our" LED.
+	unsafe { BUTTONS_BLOCKED = true };
 
 	// Got a valid button press. Process it..
         let start = Instant::now();
@@ -105,10 +111,9 @@ pub async fn read_button(
 				CHANNEL_P.send(LedStatus::On).await;
 				Timer::after_millis(500).await;
 			    }
-			} else {
-			    // Disable reading buttons while we deal with this one.
-			    unsafe { BUTTONS_BLOCKED = true };
 
+			    unsafe { BUTTONS_BLOCKED = false };
+			} else {
 			    CHANNEL_P.send(LedStatus::On).await;
 			    CHANNEL_N.send(LedStatus::Off).await;
 			    CHANNEL_R.send(LedStatus::Off).await;
@@ -129,10 +134,9 @@ pub async fn read_button(
 				CHANNEL_N.send(LedStatus::On).await;
 				Timer::after_millis(500).await;
 			    }
-			} else {
-			    // Disable reading buttons while we deal with this one.
-			    unsafe { BUTTONS_BLOCKED = true };
 
+			    unsafe { BUTTONS_BLOCKED = false };
+			} else {
 			    CHANNEL_P.send(LedStatus::Off).await;
 			    CHANNEL_N.send(LedStatus::On).await;
 			    CHANNEL_R.send(LedStatus::Off).await;
@@ -152,10 +156,9 @@ pub async fn read_button(
 				CHANNEL_R.send(LedStatus::On).await;
 				Timer::after_millis(500).await;
 			    }
-			} else {
-			    // Disable reading buttons while we deal with this one.
-			    unsafe { BUTTONS_BLOCKED = true };
 
+			    unsafe { BUTTONS_BLOCKED = false };
+			} else {
 			    CHANNEL_P.send(LedStatus::Off).await;
 			    CHANNEL_N.send(LedStatus::Off).await;
 			    CHANNEL_R.send(LedStatus::On).await;
@@ -176,10 +179,9 @@ pub async fn read_button(
 				CHANNEL_D.send(LedStatus::On).await;
 				Timer::after_millis(500).await;
 			    }
-			} else {
-			    // Disable reading buttons while we deal with this one.
-			    unsafe { BUTTONS_BLOCKED = true };
 
+			    unsafe { BUTTONS_BLOCKED = false };
+			} else {
 			    CHANNEL_P.send(LedStatus::Off).await;
 			    CHANNEL_N.send(LedStatus::Off).await;
 			    CHANNEL_R.send(LedStatus::Off).await;
