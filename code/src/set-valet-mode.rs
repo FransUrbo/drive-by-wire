@@ -35,14 +35,14 @@ async fn main(_spawner: Spawner) {
 
     // Read old values.
     match DbwConfig::read(&mut flash) {
-	Ok(mut config)  => {
-	    // Set the valet mode to true.
-	    config.valet_mode = true;
+        Ok(mut config) => {
+            // Set the valet mode to true.
+            config.valet_mode = true;
 
-	    // Write flash.
-	    lib_config::write_flash(&mut flash, config).await;
-	}
-	Err(e) => error!("Failed to read flash: {:?}", e)
+            // Write flash.
+            lib_config::write_flash(&mut flash, config).await;
+        }
+        Err(e) => error!("Failed to read flash: {:?}", e),
     }
 
     loop {}

@@ -37,13 +37,17 @@ fn erase_write_sector(flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLA
     // READ initial state
     defmt::unwrap!(flash.blocking_read(ADDR_OFFSET + ERASE_SIZE as u32, &mut buf));
 
-    info!("Addr of flash block is {:x}", ADDR_OFFSET + ERASE_SIZE as u32 + FLASH_BASE as u32);
+    info!(
+        "Addr of flash block is {:x}",
+        ADDR_OFFSET + ERASE_SIZE as u32 + FLASH_BASE as u32
+    );
     info!("Contents start with {=[u8]}", buf[0..4]);
 
     // ERASE flash area.
     defmt::unwrap!(flash.blocking_erase(
-	ADDR_OFFSET + ERASE_SIZE as u32,
-	ADDR_OFFSET + ERASE_SIZE as u32 + ERASE_SIZE as u32));
+        ADDR_OFFSET + ERASE_SIZE as u32,
+        ADDR_OFFSET + ERASE_SIZE as u32 + ERASE_SIZE as u32
+    ));
 
     // READ after erase.
     defmt::unwrap!(flash.blocking_read(ADDR_OFFSET + ERASE_SIZE as u32, &mut buf));

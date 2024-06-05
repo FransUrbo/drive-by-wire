@@ -24,7 +24,6 @@ use crate::CHANNEL_ACTUATOR;
 
 use {defmt_rtt as _, panic_probe as _};
 
-
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
@@ -35,14 +34,14 @@ async fn main(_spawner: Spawner) {
 
     // Read old values.
     match DbwConfig::read(&mut flash) {
-	Ok(mut config)  => {
-	    // Set the valet mode to false.
-	    config.valet_mode = false;
+        Ok(mut config) => {
+            // Set the valet mode to false.
+            config.valet_mode = false;
 
-	    // Write flash.
-	    lib_config::write_flash(&mut flash, config).await;
-	}
-	Err(e) => error!("Failed to read flash: {:?}", e)
+            // Write flash.
+            lib_config::write_flash(&mut flash, config).await;
+        }
+        Err(e) => error!("Failed to read flash: {:?}", e),
     }
 
     loop {}

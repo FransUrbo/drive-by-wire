@@ -35,10 +35,10 @@ async fn main(_spawner: Spawner) {
 
     // Read old values.
     match DbwConfig::read(&mut flash) {
-	Ok(config)  => {
-	    info!("Config: {:?}", config);
-	}
-	Err(e) => error!("Failed to read flash: {:?}", e)
+        Ok(config) => {
+            info!("Config: {:?}", config);
+        }
+        Err(e) => error!("Failed to read flash: {:?}", e),
     }
 
     loop {}
