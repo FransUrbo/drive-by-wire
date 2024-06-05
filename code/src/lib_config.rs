@@ -32,32 +32,30 @@ impl DbwConfig {
                 debug!("Flash read successful");
 
                 // Translate the u8's.
-                let stored_button;
-                match read_buf[0] {
-                    0 => stored_button = Button::P,
-                    1 => stored_button = Button::R,
-                    2 => stored_button = Button::N,
-                    3 => stored_button = Button::D,
-                    _ => stored_button = Button::P, // Never going to happen, but just to keep the compiler happy with resonable default
-                }
+                let active_button = match read_buf[0] {
+                    0 => Button::P,
+                    1 => Button::R,
+                    2 => Button::N,
+                    3 => Button::D,
+                    _ => Button::P, // Never going to happen, but just to keep the compiler happy with resonable default
+                };
 
-                let valet_mode;
-                match read_buf[1] {
-                    0 => valet_mode = false,
-                    1 => valet_mode = true,
-                    _ => valet_mode = true, // Never going to happen, but just to keep the compiler happy with resonable default
-                }
+                let valet_mode = match read_buf[1] {
+                    0 => false,
+                    1 => true,
+                    _ => true, // Never going to happen, but just to keep the compiler happy with resonable default
+                };
 
-                return Ok(DbwConfig {
-                    active_button: stored_button,
-                    valet_mode: valet_mode,
-                });
+                Ok(DbwConfig {
+                    active_button,
+                    valet_mode,
+                })
             }
             Err(e) => {
                 error!("Flash read failed: {}", e);
 
                 // Still return ok, but with resonable default instead.
-                return Ok(resonable_defaults());
+                Ok(resonable_defaults())
             }
         }
     }
@@ -69,17 +67,14 @@ impl DbwConfig {
         // Convert our struct to an array, so we can loop through it easier.
         let buf: [u8; 2] = config.as_array();
 
-        let mut j = 0; // Keep track of offset in flash.
-        for i in 0..buf.len() {
-            match flash.blocking_write(ADDR_OFFSET + ERASE_SIZE as u32 + j, &[buf[i]] as &[u8]) {
+        for (j, b) in buf.into_iter().enumerate() {
+            match flash.blocking_write(ADDR_OFFSET + ERASE_SIZE as u32 + j as u32, &[b] as &[u8]) {
                 Ok(_) => trace!("Flash write {} successful", j),
                 Err(e) => {
                     error!("Flash write {} failed: {}", j, e);
                     return Err(e);
                 }
             }
-
-            j = j + 1;
         }
 
         Ok(())

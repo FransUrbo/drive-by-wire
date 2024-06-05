@@ -44,5 +44,6 @@ async fn main(_spawner: Spawner) {
         Err(e) => error!("Failed to read flash: {:?}", e),
     }
 
+    #[allow(clippy::empty_loop)]
     loop {}
 }

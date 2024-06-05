@@ -15,9 +15,6 @@ use embassy_time::{Duration, Timer};
 
 use {defmt_rtt as _, panic_probe as _};
 
-use r503;
-use ws2812;
-
 // External "defines".
 pub mod lib_actuator;
 pub mod lib_buttons;
@@ -140,21 +137,19 @@ async fn main(spawner: Spawner) {
     // Verify fingerprint.
     if config.valet_mode {
         info!("Valet mode, won't check fingerprint");
+    } else if fp_scanner.Wrapper_Verify_Fingerprint().await {
+        error!("Can't match fingerprint");
+
+        debug!("NeoPixel RED");
+        neopixel.write(&[(255, 0, 0).into()]).await; // RED
+
+        // Give it five seconds before we reset.
+        Timer::after_secs(5).await;
+
+        // Stop feeding the watchdog, resulting in a reset.
+        CHANNEL_WATCHDOG.send(StopWatchdog::Yes).await;
     } else {
-        if fp_scanner.Wrapper_Verify_Fingerprint().await {
-            error!("Can't match fingerprint");
-
-            debug!("NeoPixel RED");
-            neopixel.write(&[(255, 0, 0).into()]).await; // RED
-
-            // Give it five seconds before we reset.
-            Timer::after_secs(5).await;
-
-            // Stop feeding the watchdog, resulting in a reset.
-            CHANNEL_WATCHDOG.send(StopWatchdog::Yes).await;
-        } else {
-            info!("Fingerprint matches, use authorized");
-        }
+        info!("Fingerprint matches, use authorized");
     }
     neopixel.write(&[(0, 255, 0).into()]).await; // GREEN
     fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.

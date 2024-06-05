@@ -27,6 +27,7 @@ async fn main(_spawner: Spawner) {
 
     erase_write_sector(&mut flash);
 
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 

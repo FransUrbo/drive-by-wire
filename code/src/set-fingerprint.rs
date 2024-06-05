@@ -14,9 +14,6 @@ use embassy_time::Timer;
 
 use {defmt_rtt as _, panic_probe as _};
 
-use r503;
-use ws2812;
-
 bind_interrupts!(pub struct Irqs {
     PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
     UART0_IRQ  => UARTInterruptHandler<UART0>;	// Fingerprint scanner

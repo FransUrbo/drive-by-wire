@@ -49,7 +49,7 @@ pub async fn move_actuator(
                     pin_motor_plus.set_low();
                 }
 
-                pos = pos + 1;
+                pos += 1;
             }
 
             pin_motor_plus.set_high();
@@ -76,7 +76,7 @@ pub async fn move_actuator(
                     pin_motor_plus.set_low();
                 }
 
-                pos = pos + 1;
+                pos += 1;
             }
 
             pin_motor_minus.set_high();
@@ -164,5 +164,5 @@ pub async fn test_actuator(
 
     // TODO: How do we know the actuator test worked?
 
-    return true;
+    true
 }

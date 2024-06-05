@@ -1,6 +1,6 @@
 [package]
 name = "drive-by-wire"
-version = "0.1.0"
+version = "0.2.0"
 description = "Provide Drive-by-Wire buttons for the Mercedes-Benz SLK55 AMG 2010 (R171)"
 edition = "2021"
 license = "GPL v3"
