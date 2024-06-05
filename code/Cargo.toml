@@ -5,6 +5,7 @@ description = "Provide Drive-by-Wire buttons for the Mercedes-Benz SLK55 AMG 201
 edition = "2021"
 license = "GPL v3"
 authors = ["Turbo Fredriksson <turbo@bayour.com>"]
+homepage = "https://github.com/FransUrbo/drive-by-wire"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
