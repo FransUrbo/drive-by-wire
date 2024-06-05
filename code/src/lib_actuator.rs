@@ -135,7 +135,7 @@ pub async fn actuator_control(
 	    Ok(config)  => config,
 	    Err(e) => {
 		error!("Failed to read flash: {:?}", e);
-		DbwConfig { active_button: 0, valet_mode: 0 } // Resonable defaults.
+		lib_config::resonable_defaults()
 	    }
 	};
 	config.active_button = button as u8; // Set new value.
