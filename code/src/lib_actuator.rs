@@ -2,17 +2,18 @@ use defmt::{debug, error, info, trace};
 
 use embassy_rp::gpio::{Input, Output, SlewRate};
 use embassy_rp::flash::Async;
+use embassy_rp::peripherals::FLASH;
 use embassy_time::Timer;
 use embassy_sync::channel::{Channel, Receiver};
 use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
 
 // External "defines".
-use crate::lib_config;
 use crate::Button;
 use crate::BUTTON_ENABLED;
 use crate::BUTTONS_BLOCKED;
+
+use crate::lib_config;
 use crate::DbwConfig;
-use crate::FLASH;
 use crate::FLASH_SIZE;
 
 pub static CHANNEL_ACTUATOR: Channel<ThreadModeRawMutex, Button, 64> = Channel::new();
@@ -138,7 +139,7 @@ pub async fn actuator_control(
 		lib_config::resonable_defaults()
 	    }
 	};
-	config.active_button = button as u8; // Set new value.
+	config.active_button = button; // Set new value.
 	lib_config::write_flash(&mut flash, config).await;
     }
 }

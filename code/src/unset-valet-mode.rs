@@ -12,8 +12,15 @@ use defmt::{error, info};
 use embassy_executor::Spawner;
 use embassy_rp::flash::Async;
 
+pub mod lib_actuator;
+pub mod lib_buttons;
 pub mod lib_config;
+
+use crate::lib_actuator::*;
+use crate::lib_buttons::*;
 use crate::lib_config::*;
+
+use crate::CHANNEL_ACTUATOR;
 
 use {defmt_rtt as _, panic_probe as _};
 
@@ -29,8 +36,8 @@ async fn main(_spawner: Spawner) {
     // Read old values.
     match DbwConfig::read(&mut flash) {
 	Ok(mut config)  => {
-	    // Set the valet mode to 0 (false).
-	    config.valet_mode = 0;
+	    // Set the valet mode to false.
+	    config.valet_mode = false;
 
 	    // Write flash.
 	    lib_config::write_flash(&mut flash, config).await;

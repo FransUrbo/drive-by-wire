@@ -6,7 +6,7 @@ use defmt::{debug, error, info};
 use embassy_executor::Spawner;
 use embassy_rp::gpio::{Level, Input, Output, Pin, Pull};
 use embassy_rp::bind_interrupts;
-use embassy_rp::peripherals::{PIO1, UART0, FLASH};
+use embassy_rp::peripherals::{PIO1, UART0};
 use embassy_rp::uart::InterruptHandler as UARTInterruptHandler;
 use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
 use embassy_rp::watchdog::*;
@@ -88,24 +88,6 @@ async fn main(spawner: Spawner) {
     // Read the config from flash drive.
     let config = DbwConfig::read(&mut flash).unwrap();
 
-    // Translate the u8 to a bool.
-    let valet_mode;
-    match config.valet_mode {
-	0 => valet_mode = false,
-	1 => valet_mode = true,
-	_ => valet_mode = true // Never going to happen, but just to keep the compiler happy with resonable default
-    }
-
-    // Translate the u8 to a Button.
-    let stored_button;
-    match config.active_button {
-	0 => stored_button = Button::P,
-	1 => stored_button = Button::R,
-	2 => stored_button = Button::N,
-	3 => stored_button = Button::D,
-	_ => stored_button = Button::P // Never going to happen, but just to keep the compiler happy with resonable default
-    }
-
     // =====
     //  6. Initialize and test the actuator.
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
@@ -141,7 +123,7 @@ async fn main(spawner: Spawner) {
     CHANNEL_CANWRITE.send(CANMessage::Authorizing).await;
 
     // Verify fingerprint.
-    if valet_mode {
+    if config.valet_mode {
 	info!("Valet mode, won't check fingerprint");
     } else {
 	if fp_scanner.Wrapper_Verify_Fingerprint().await {
@@ -179,7 +161,7 @@ async fn main(spawner: Spawner) {
     //     NOTE: Need to do this *after* we've verified that the actuator works. It will tell us what position it
     //           is in, and from there we can extrapolate the gear.
     //     FAKE: Read what button (gear) was enabled when last it changed from the flash.
-    match stored_button {
+    match config.active_button {
 	Button::P => {
 	    debug!("Setting enabled button to P");
 	    CHANNEL_P.send(LedStatus::On).await;
@@ -225,7 +207,7 @@ async fn main(spawner: Spawner) {
 
     // =====
     // 11. Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
-    if valet_mode {
+    if config.valet_mode {
 	// Set the status LED to BLUE to indicate valet mode.
 	neopixel.write(&[(0,0,255).into()]).await;
 	CHANNEL_CANWRITE.send(CANMessage::ValetMode).await;

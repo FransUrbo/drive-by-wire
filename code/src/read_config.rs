@@ -13,8 +13,15 @@ use defmt::{error, info};
 use embassy_executor::Spawner;
 use embassy_rp::flash::Async;
 
+pub mod lib_actuator;
+pub mod lib_buttons;
 pub mod lib_config;
+
+use crate::lib_actuator::*;
+use crate::lib_buttons::*;
 use crate::lib_config::*;
+
+use crate::CHANNEL_ACTUATOR;
 
 use {defmt_rtt as _, panic_probe as _};
 

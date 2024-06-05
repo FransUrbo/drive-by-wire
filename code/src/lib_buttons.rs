@@ -1,4 +1,4 @@
-use defmt::{debug, info, trace};
+use defmt::{Format, debug, info, trace};
 
 use embassy_executor::Spawner;
 use embassy_sync::channel::{Channel, Receiver};
@@ -8,16 +8,16 @@ use embassy_time::{with_deadline, Duration, Instant, Timer};
 
 use debounce;
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, Format, PartialEq)]
 #[repr(u8)]
 pub enum Button { P, R, N, D, UNSET }
 pub enum LedStatus { On, Off }
 
 // Setup the communication channels between the tasks.
-pub static CHANNEL_P:        Channel<ThreadModeRawMutex, LedStatus,    64>	= Channel::new();
-pub static CHANNEL_N:        Channel<ThreadModeRawMutex, LedStatus,    64>	= Channel::new();
-pub static CHANNEL_R:        Channel<ThreadModeRawMutex, LedStatus,    64>	= Channel::new();
-pub static CHANNEL_D:        Channel<ThreadModeRawMutex, LedStatus,    64>	= Channel::new();
+pub static CHANNEL_P: Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
+pub static CHANNEL_N: Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
+pub static CHANNEL_R: Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
+pub static CHANNEL_D: Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
 
 use crate::CHANNEL_ACTUATOR; // External "define".
 
