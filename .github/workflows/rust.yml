@@ -1,0 +1,82 @@
+name: Drive By Wire
+
+on: [push]
+
+env:
+  CARGO_TERM_COLOR: always
+  DEFMT_LOG: debug
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./code
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install build-essential libssl-dev gcc-arm-none-eabi binutils-arm-none-eabi libclang-dev clang curl git
+          echo "Fetching Rust dependencies"
+          cargo fetch
+          echo "Installing Rust binaries"
+          cargo install flip-link
+
+      - name: Add rust target for thumbv6m
+        run: rustup target add thumbv6m-none-eabi
+
+      - name: Check project
+        run: cargo verify-project
+
+      - name: Check linting
+        run: cargo clippy 2>&1 | tee _check-package.log
+
+      - name: Check formating
+        run: cargo fmt --check 2>&1 | tee _check-fmt.log
+
+  build:
+    needs: check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./code
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install build-essential libssl-dev gcc-arm-none-eabi binutils-arm-none-eabi libclang-dev clang curl git
+          echo "Fetching Rust dependencies"
+          cargo fetch
+          echo "Installing Rust binaries"
+          cargo install flip-link
+
+      - name: Add rust target for thumbv6m
+        run: rustup target add thumbv6m-none-eabi
+
+      - name: Build Debug
+        run: cargo build --verbose --profile dev
+
+      - name: Build Release w/ debug logging
+        run: cargo build --verbose --profile release-dev
+
+      - name: Build Release
+        run: cargo build --verbose --profile release
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: |
+            code/target/thumbv6m-none-eabi/debug/drive-by-wire
+            code/target/thumbv6m-none-eabi/release-dev/drive-by-wire
+            code/target/thumbv6m-none-eabi/release/drive-by-wire
+            code/_check-package.log
+            code/_check-fmt.log
