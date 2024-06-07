@@ -95,7 +95,7 @@ pub async fn move_actuator(
 #[embassy_executor::task]
 pub async fn actuator_control(
     receiver: Receiver<'static, ThreadModeRawMutex, Button, 64>,
-    mut flash: embassy_rp::flash::Flash<'static, FLASH, Async, FLASH_SIZE>,
+    flash: &mut embassy_rp::flash::Flash<'static, FLASH, Async, FLASH_SIZE>,
     mut pin_motor_plus: Output<'static>,
     mut pin_motor_minus: Output<'static>,
     _pin_pot: Input<'static>,
@@ -136,7 +136,7 @@ pub async fn actuator_control(
         unsafe { BUTTON_ENABLED = button };
 
         // .. and write it to flash.
-        let mut config = match DbwConfig::read(&mut flash) {
+        let mut config = match DbwConfig::read(flash) {
             // Read the old/current values.
             Ok(config) => config,
             Err(e) => {
@@ -145,7 +145,7 @@ pub async fn actuator_control(
             }
         };
         config.active_button = button; // Set new value.
-        lib_config::write_flash(&mut flash, config).await;
+        lib_config::write_flash(flash, config).await;
     }
 }
 

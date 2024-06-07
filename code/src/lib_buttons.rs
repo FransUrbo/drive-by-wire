@@ -1,11 +1,14 @@
 use defmt::{debug, info, trace, Format};
 
 use embassy_executor::Spawner;
+use embassy_rp::flash::Async;
 use embassy_rp::gpio::{AnyPin, Input, Level, Output, Pull};
+use embassy_rp::peripherals::FLASH;
 use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
 use embassy_time::{with_deadline, Duration, Instant, Timer};
 
+use crate::FLASH_SIZE;
 use debounce;
 
 #[derive(Copy, Clone, Format, PartialEq)]
@@ -54,7 +57,13 @@ async fn set_led(receiver: Receiver<'static, ThreadModeRawMutex, LedStatus, 64>,
 
 // Listen for button presses - four buttons, one task each.
 #[embassy_executor::task(pool_size = 4)]
-pub async fn read_button(spawner: Spawner, button: Button, btn_pin: AnyPin, led_pin: AnyPin) {
+pub async fn read_button(
+    spawner: Spawner,
+    flash: &mut embassy_rp::flash::Flash<'static, FLASH, Async, FLASH_SIZE>,
+    button: Button,
+    btn_pin: AnyPin,
+    led_pin: AnyPin,
+) {
     debug!("Started button control task");
 
     let mut btn =

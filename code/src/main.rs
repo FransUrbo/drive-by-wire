@@ -124,7 +124,7 @@ async fn main(spawner: Spawner) {
     spawner
         .spawn(actuator_control(
             CHANNEL_ACTUATOR.receiver(),
-            flash,
+            &mut flash,
             actuator_motor_plus,
             actuator_motor_minus,
             actuator_potentiometer,
@@ -178,6 +178,7 @@ async fn main(spawner: Spawner) {
     spawner
         .spawn(read_button(
             spawner,
+            &mut flash,
             Button::P,
             p.PIN_2.degrade(),
             p.PIN_6.degrade(),
@@ -186,6 +187,7 @@ async fn main(spawner: Spawner) {
     spawner
         .spawn(read_button(
             spawner,
+            &mut flash,
             Button::R,
             p.PIN_3.degrade(),
             p.PIN_7.degrade(),
@@ -194,6 +196,7 @@ async fn main(spawner: Spawner) {
     spawner
         .spawn(read_button(
             spawner,
+            &mut flash,
             Button::N,
             p.PIN_0.degrade(),
             p.PIN_8.degrade(),
@@ -202,6 +205,7 @@ async fn main(spawner: Spawner) {
     spawner
         .spawn(read_button(
             spawner,
+            &mut flash,
             Button::D,
             p.PIN_1.degrade(),
             p.PIN_9.degrade(),
