@@ -88,6 +88,15 @@ pub async fn read_button(spawner: Spawner, button: Button, btn_pin: AnyPin, led_
 
         if unsafe { BUTTONS_BLOCKED } {
             debug!("Buttons blocked (button task: {})", button as u8);
+
+            if unsafe { BUTTON_ENABLED == Button::D } && button == Button::N {
+                debug!("Both 'D' and 'N' pressed");
+
+                // TODO: Toggle Valet Mode.
+
+                unsafe { BUTTONS_BLOCKED = false };
+            }
+
             while unsafe { BUTTONS_BLOCKED } {
                 // Block here while we wait for it to be unblocked.
                 debug!("Waiting for unblock (button task: {})", button as u8);
