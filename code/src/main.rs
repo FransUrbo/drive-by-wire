@@ -57,8 +57,7 @@ async fn main(spawner: Spawner) {
 
     // =====
     //  1. Initialize the serial UART for debug/log output.
-    let mut uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, Config::default()); // => 115200/8N1
-    uart.blocking_write("Hello World!\r\n".as_bytes()).unwrap();
+    let uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, Config::default()); // => 115200/8N1
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
     info!("Start");
