@@ -9,9 +9,7 @@ use embassy_rp::flash::Async;
 use embassy_rp::gpio::{Input, Level, Output, Pin, Pull};
 use embassy_rp::peripherals::{PIO1, UART0, UART1};
 use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
-use embassy_rp::uart::{
-    Blocking, Config, InterruptHandler as UARTInterruptHandler, UartTx,
-};
+use embassy_rp::uart::{Blocking, Config, InterruptHandler as UARTInterruptHandler, UartTx};
 use embassy_rp::watchdog::*;
 use embassy_time::{Duration, Timer};
 
