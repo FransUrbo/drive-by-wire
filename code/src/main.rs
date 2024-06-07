@@ -7,13 +7,17 @@ use embassy_executor::Spawner;
 use embassy_rp::bind_interrupts;
 use embassy_rp::flash::Async;
 use embassy_rp::gpio::{Input, Level, Output, Pin, Pull};
-use embassy_rp::peripherals::{PIO1, UART0};
+use embassy_rp::peripherals::{PIO1, UART0, UART1};
 use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
-use embassy_rp::uart::InterruptHandler as UARTInterruptHandler;
+use embassy_rp::uart::{
+    Blocking, Config, InterruptHandler as UARTInterruptHandler, UartTx,
+};
 use embassy_rp::watchdog::*;
 use embassy_time::{Duration, Timer};
 
-use {defmt_rtt as _, panic_probe as _};
+use static_cell::StaticCell;
+
+use {defmt_serial as _, panic_probe as _};
 
 // External "defines".
 pub mod lib_actuator;
@@ -32,9 +36,17 @@ use crate::CHANNEL_ACTUATOR;
 use crate::CHANNEL_CANWRITE;
 use crate::CHANNEL_WATCHDOG;
 
+static SERIAL: StaticCell<UartTx<'_, UART1, Blocking>> = StaticCell::new();
+
+// DMA Channels used:
+// * Fingerprint scanner:	UART0	DMA_CH[0-1]	PIN_13, PIN_16, PIN_17
+// * NeoPixel:			PIO1	DMA_CH2		PIN_15
+// * Flash:			FLASH	DMA_CH3		-
+// * Serial logging:		UART1	DMA_CH4		PIN_4
 bind_interrupts!(struct Irqs {
     PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
     UART0_IRQ  => UARTInterruptHandler<UART0>;	// Fingerprint scanner
+    UART1_IRQ  => UARTInterruptHandler<UART1>;	// Serial logging
 });
 
 // ================================================================================
@@ -43,23 +55,29 @@ bind_interrupts!(struct Irqs {
 async fn main(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
 
+    // =====
+    //  1. Initialize the serial UART for debug/log output.
+    let mut uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, Config::default()); // => 115200/8N1
+    uart.blocking_write("Hello World!\r\n".as_bytes()).unwrap();
+    defmt_serial::defmt_serial(SERIAL.init(uart));
+
     info!("Start");
 
     // =====
-    // 0. Initialize the built-in LED and turn it on. Just for completness.
+    //  2. Initialize the built-in LED and turn it on. Just for completness.
     let _builtin_led = Output::new(p.PIN_25, Level::High);
 
     // =====
-    //  1. Initialize the NeoPixel LED. Do this first, so we can turn on the status LED.
+    //  3. Initialize the NeoPixel LED. Do this first, so we can turn on the status LED.
     let Pio {
         mut common, sm0, ..
     } = Pio::new(p.PIO1, Irqs);
-    let mut neopixel = ws2812::Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
+    let mut neopixel = ws2812::Ws2812::new(&mut common, sm0, p.DMA_CH2, p.PIN_15);
     info!("Initialized the NeoPixel LED");
     neopixel.write(&[(255, 100, 0).into()]).await; // ORANGE -> starting
 
     // =====
-    //  2. Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
+    //  4. Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
     let mut watchdog = Watchdog::new(p.WATCHDOG);
     watchdog.start(Duration::from_millis(1_050));
     spawner
@@ -68,7 +86,7 @@ async fn main(spawner: Spawner) {
     info!("Initialized the watchdog timer");
 
     // =====
-    //  3. TODO: Initialize the CAN bus. Needs to come third, so we can talk to the IC.
+    //  5. TODO: Initialize the CAN bus. Needs to come third, so we can talk to the IC.
     spawner.spawn(read_can()).unwrap();
     spawner
         .spawn(write_can(CHANNEL_CANWRITE.receiver()))
@@ -78,20 +96,20 @@ async fn main(spawner: Spawner) {
     CHANNEL_CANWRITE.send(CANMessage::Starting).await;
 
     // =====
-    //  4. Initialize the MOSFET relays.
+    //  6. Initialize the MOSFET relays.
     let mut eis_steering_lock = Output::new(p.PIN_18, Level::Low); // EIS/steering lock
     let mut eis_start = Output::new(p.PIN_22, Level::Low); // EIS/start
     CHANNEL_CANWRITE.send(CANMessage::RelaysInitialized).await;
 
     // =====
-    //  5. Initialize the flash drive where we store some config values across reboots.
-    let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH4);
+    //  7. Initialize the flash drive where we store some config values across reboots.
+    let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH3);
 
     // Read the config from flash drive.
     let config = DbwConfig::read(&mut flash).unwrap();
 
     // =====
-    //  6. Initialize and test the actuator.
+    //  8. Initialize and test the actuator.
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
     let mut actuator_motor_plus = Output::new(p.PIN_27, Level::Low); // Actuator/Motor Relay (-)
     let mut actuator_motor_minus = Output::new(p.PIN_28, Level::Low); // Actuator/Motor Relay (+)
@@ -118,7 +136,7 @@ async fn main(spawner: Spawner) {
     CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
 
     // =====
-    //  7. Initialize the fingerprint scanner.
+    //  9. Initialize the fingerprint scanner.
     CHANNEL_CANWRITE.send(CANMessage::InitFP).await;
     let mut fp_scanner = r503::R503::new(
         p.UART0,
@@ -158,7 +176,7 @@ async fn main(spawner: Spawner) {
     CHANNEL_CANWRITE.send(CANMessage::Authorized).await;
 
     // =====
-    //  8. Spawn off one button reader per button. They will then spawn off a LED controller each so that
+    // 10. Spawn off one button reader per button. They will then spawn off a LED controller each so that
     //     each button can control their "own" LED.
     spawner
         .spawn(read_button(
@@ -180,7 +198,7 @@ async fn main(spawner: Spawner) {
         .spawn(read_button(
             spawner,
             Button::N,
-            p.PIN_4.degrade(),
+            p.PIN_0.degrade(),
             p.PIN_8.degrade(),
         ))
         .unwrap(); // button/N
@@ -188,14 +206,14 @@ async fn main(spawner: Spawner) {
         .spawn(read_button(
             spawner,
             Button::D,
-            p.PIN_5.degrade(),
+            p.PIN_1.degrade(),
             p.PIN_9.degrade(),
         ))
         .unwrap(); // button/D
     CHANNEL_CANWRITE.send(CANMessage::ButtonsInitialized).await;
 
     // =====
-    //  9. TODO: Find out what gear the car is in.
+    // 11. TODO: Find out what gear the car is in.
     //     NOTE: Need to do this *after* we've verified that the actuator works. It will tell us what position it
     //           is in, and from there we can extrapolate the gear.
     //     FAKE: Read what button (gear) was enabled when last it changed from the flash.
@@ -240,11 +258,11 @@ async fn main(spawner: Spawner) {
     }
 
     // =====
-    // 10. Turn on the ignition switch.
+    // 12. Turn on the ignition switch.
     eis_steering_lock.set_high();
 
     // =====
-    // 11. Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
+    // 13. Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
     if config.valet_mode {
         // Set the status LED to BLUE to indicate valet mode.
         neopixel.write(&[(0, 0, 255).into()]).await;
@@ -263,7 +281,7 @@ async fn main(spawner: Spawner) {
     }
 
     // =====
-    // 12. TODO: Not sure how we avoid stopping the program here, the button presses are done in separate tasks!
+    // 14. TODO: Not sure how we avoid stopping the program here, the button presses are done in separate tasks!
     info!("Main function complete, control handed over to subtasks.");
     loop {
         Timer::after_secs(600).await; // Nothing to do, just sleep as long as we can, but 10 minutes should do it.

@@ -137,13 +137,13 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 
 | Pin | Port    | Use                          |-| Pin | Port    | Use
 | --: | :------ | :--------------------------- |-| --: | :------ | :----------------------------------- |
-|   1 | GPIO  0 | Debug (RX)                   |-| 40  | VBUS    |                                      |
-|   2 | GPIO  1 | Debug (TX)                   |-| 39  | VSYS    |                                      |
+|   1 | GPIO  0 | Button (Switch - N)          |-| 40  | VBUS    |                                      |
+|   2 | GPIO  1 | Button (Switch - D)          |-| 39  | VSYS    |                                      |
 |   3 | GND     |                              |-| 38  | GND     |                                      |
 |   4 | GPIO  2 | Button (Switch - P)          |-| 37  | 3V3_EN  |                                      |
 |   5 | GPIO  3 | Button (Switch - R)          |-| 36  | 3V3_OUT |                                      |
-|   6 | GPIO  4 | Button (Switch - N)          |-| 35  | VDC_REF |                                      |
-|   7 | GPIO  5 | Button (Switch - D)          |-| 34  | GPIO 28 | Actuator - Motor Relay (+)           |
+|   6 | GPIO  4 | Debug (TX)                   |-| 35  | VDC_REF |                                      |
+|   7 | GPIO  5 | Debug (RX)                   |-| 34  | GPIO 28 | Actuator - Motor Relay (+)           |
 |   8 | GND     |                              |-| 33  | GND     |                                      |
 |   9 | GPIO  6 | Button (Telltale - P)        |-| 32  | GPIO 27 | Actuator - Motor Relay (-)           |
 |  10 | GPIO  7 | Button (Telltale - R)        |-| 31  | GPIO 26 | Actuator - Potentiometer Brush       |
@@ -161,6 +161,10 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 LED | GPIO 25
 
 [Olimex RP2040-PICO30-16](https://thepihut.com/products/olimex-rp2040-pico30-16) also exposes GPIO 23-25, 29 by sacrificing four GROUND pins.
+
+The different uses are specifically this way, because I need to consider UARTs/PIOs etc, and which pins they
+have connected to them. So it's not as .. "pretty" and simple as just throwing them in there and start using
+the ports..
 
 ## External contacts
 
