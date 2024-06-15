@@ -5,13 +5,16 @@ use defmt::{debug, error, info};
 
 use embassy_executor::Spawner;
 use embassy_rp::bind_interrupts;
-use embassy_rp::flash::Async;
+use embassy_rp::flash::{Async, Flash};
 use embassy_rp::gpio::{Input, Level, Output, Pin, Pull};
-use embassy_rp::peripherals::{PIO1, UART0, UART1};
+use embassy_rp::peripherals::{FLASH, PIO1, UART0, UART1};
 use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
 use embassy_rp::uart::{Blocking, Config, InterruptHandler as UARTInterruptHandler, UartTx};
 use embassy_rp::watchdog::*;
+use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer};
+
+type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
 
 use static_cell::StaticCell;
 
@@ -100,10 +103,15 @@ async fn main(spawner: Spawner) {
 
     // =====
     //  7. Initialize the flash drive where we store some config values across reboots.
-    let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH3);
+    let flash = Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH3);
+    static MY_FLASH: StaticCell<FlashMutex> = StaticCell::new();
+    let flash = MY_FLASH.init(Mutex::new(flash));
 
     // Read the config from flash drive.
-    let config = DbwConfig::read(&mut flash).unwrap();
+    let config = {
+        let mut flash_read = flash.lock().await;
+        DbwConfig::read(&mut flash_read).unwrap()
+    };
 
     // =====
     //  8. Initialize and test the actuator.
@@ -178,6 +186,7 @@ async fn main(spawner: Spawner) {
     spawner
         .spawn(read_button(
             spawner,
+            flash,
             Button::P,
             p.PIN_2.degrade(),
             p.PIN_6.degrade(),
@@ -186,6 +195,7 @@ async fn main(spawner: Spawner) {
     spawner
         .spawn(read_button(
             spawner,
+            flash,
             Button::R,
             p.PIN_3.degrade(),
             p.PIN_7.degrade(),
@@ -194,6 +204,7 @@ async fn main(spawner: Spawner) {
     spawner
         .spawn(read_button(
             spawner,
+            flash,
             Button::N,
             p.PIN_0.degrade(),
             p.PIN_8.degrade(),
@@ -202,6 +213,7 @@ async fn main(spawner: Spawner) {
     spawner
         .spawn(read_button(
             spawner,
+            flash,
             Button::D,
             p.PIN_1.degrade(),
             p.PIN_9.degrade(),

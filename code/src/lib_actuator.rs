@@ -1,11 +1,15 @@
 use defmt::{debug, error, info, trace};
 
-use embassy_rp::flash::Async;
+use embassy_rp::flash::{Async, Flash};
 use embassy_rp::gpio::{Input, Output, SlewRate};
 use embassy_rp::peripherals::FLASH;
-use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
+use embassy_sync::{
+    blocking_mutex::raw::CriticalSectionRawMutex, blocking_mutex::raw::NoopRawMutex, mutex::Mutex,
+};
 use embassy_time::Timer;
+
+type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
 
 // External "defines".
 use crate::Button;
@@ -16,7 +20,7 @@ use crate::lib_config;
 use crate::DbwConfig;
 use crate::FLASH_SIZE;
 
-pub static CHANNEL_ACTUATOR: Channel<ThreadModeRawMutex, Button, 64> = Channel::new();
+pub static CHANNEL_ACTUATOR: Channel<CriticalSectionRawMutex, Button, 64> = Channel::new();
 
 // Set the distance between the different mode. 70mm is the total throw from begining to end.
 static ACTUATOR_DISTANCE_BETWEEN_POSITIONS: i8 = 70 / 3; // 3 because the start doesn't count :).
@@ -94,8 +98,8 @@ pub async fn move_actuator(
 // the desired drive mode position.
 #[embassy_executor::task]
 pub async fn actuator_control(
-    receiver: Receiver<'static, ThreadModeRawMutex, Button, 64>,
-    mut flash: embassy_rp::flash::Flash<'static, FLASH, Async, FLASH_SIZE>,
+    receiver: Receiver<'static, CriticalSectionRawMutex, Button, 64>,
+    flash: &'static FlashMutex,
     mut pin_motor_plus: Output<'static>,
     mut pin_motor_minus: Output<'static>,
     _pin_pot: Input<'static>,
@@ -136,16 +140,19 @@ pub async fn actuator_control(
         unsafe { BUTTON_ENABLED = button };
 
         // .. and write it to flash.
-        let mut config = match DbwConfig::read(&mut flash) {
-            // Read the old/current values.
-            Ok(config) => config,
-            Err(e) => {
-                error!("Failed to read flash: {:?}", e);
-                lib_config::resonable_defaults()
-            }
-        };
-        config.active_button = button; // Set new value.
-        lib_config::write_flash(&mut flash, config).await;
+        {
+            let mut flash = flash.lock().await;
+            let mut config = match DbwConfig::read(&mut flash) {
+                // Read the old/current values.
+                Ok(config) => config,
+                Err(e) => {
+                    error!("Failed to read flash: {:?}", e);
+                    lib_config::resonable_defaults()
+                }
+            };
+            config.active_button = button; // Set new value.
+            lib_config::write_flash(&mut flash, config).await;
+        }
     }
 }
 

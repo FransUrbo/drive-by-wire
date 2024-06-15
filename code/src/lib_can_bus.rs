@@ -1,6 +1,6 @@
 use defmt::{debug, info};
 
-use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
 use embassy_time::Timer;
 
@@ -16,12 +16,14 @@ pub enum CANMessage {
     StartCar,
     Authorizing,
     Authorized,
+    EnableValetMode,
+    DisableValetMode,
 }
-pub static CHANNEL_CANWRITE: Channel<ThreadModeRawMutex, CANMessage, 64> = Channel::new();
+pub static CHANNEL_CANWRITE: Channel<CriticalSectionRawMutex, CANMessage, 64> = Channel::new();
 
 // Write messages to CAN-bus.
 #[embassy_executor::task]
-pub async fn write_can(receiver: Receiver<'static, ThreadModeRawMutex, CANMessage, 64>) {
+pub async fn write_can(receiver: Receiver<'static, CriticalSectionRawMutex, CANMessage, 64>) {
     debug!("Started CAN write task");
 
     loop {
@@ -59,6 +61,12 @@ pub async fn write_can(receiver: Receiver<'static, ThreadModeRawMutex, CANMessag
             }
             CANMessage::StartCar => {
                 info!("=> 'Sending start signal to car'");
+            }
+            CANMessage::EnableValetMode => {
+                info!("=> 'Enable Valet Mode'");
+            }
+            CANMessage::DisableValetMode => {
+                info!("=> 'Disable Valet Mode'");
             }
         }
     }

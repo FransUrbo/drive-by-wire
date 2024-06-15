@@ -1,12 +1,27 @@
-use defmt::{debug, info, trace, Format};
+use defmt::{debug, error, info, trace, Format};
 
 use embassy_executor::Spawner;
+use embassy_rp::flash::{Async, Flash};
 use embassy_rp::gpio::{AnyPin, Input, Level, Output, Pull};
-use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
+use embassy_rp::peripherals::FLASH;
 use embassy_sync::channel::{Channel, Receiver};
+use embassy_sync::{
+    blocking_mutex::raw::CriticalSectionRawMutex, blocking_mutex::raw::NoopRawMutex, mutex::Mutex,
+};
 use embassy_time::{with_deadline, Duration, Instant, Timer};
 
+type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
+
 use debounce;
+
+// External "defines".
+use crate::CANMessage;
+use crate::CHANNEL_ACTUATOR;
+use crate::CHANNEL_CANWRITE;
+
+use crate::lib_config;
+use crate::DbwConfig;
+use crate::FLASH_SIZE;
 
 #[derive(Copy, Clone, Format, PartialEq)]
 #[repr(u8)]
@@ -23,12 +38,10 @@ pub enum LedStatus {
 }
 
 // Setup the communication channels between the tasks.
-pub static CHANNEL_P: Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
-pub static CHANNEL_N: Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
-pub static CHANNEL_R: Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
-pub static CHANNEL_D: Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
-
-use crate::CHANNEL_ACTUATOR; // External "define".
+pub static CHANNEL_P: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
+pub static CHANNEL_N: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
+pub static CHANNEL_R: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
+pub static CHANNEL_D: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
 
 // Start with the button UNSET, then change it when we know what gear the car is in.
 pub static mut BUTTON_ENABLED: Button = Button::UNSET;
@@ -38,7 +51,10 @@ pub static mut BUTTONS_BLOCKED: bool = false;
 
 // Control the drive button LEDs - four buttons, four LEDs.
 #[embassy_executor::task(pool_size = 4)]
-async fn set_led(receiver: Receiver<'static, ThreadModeRawMutex, LedStatus, 64>, led_pin: AnyPin) {
+async fn set_led(
+    receiver: Receiver<'static, CriticalSectionRawMutex, LedStatus, 64>,
+    led_pin: AnyPin,
+) {
     debug!("Started button LED control task");
 
     let mut led = Output::new(led_pin, Level::Low); // Always start with the LED off.
@@ -54,11 +70,17 @@ async fn set_led(receiver: Receiver<'static, ThreadModeRawMutex, LedStatus, 64>,
 
 // Listen for button presses - four buttons, one task each.
 #[embassy_executor::task(pool_size = 4)]
-pub async fn read_button(spawner: Spawner, button: Button, btn_pin: AnyPin, led_pin: AnyPin) {
+pub async fn read_button(
+    spawner: Spawner,
+    flash: &'static FlashMutex,
+    button: Button,
+    btn_pin: AnyPin,
+    led_pin: AnyPin,
+) {
     debug!("Started button control task");
 
     let mut btn =
-        debounce::Debouncer::new(Input::new(btn_pin, Pull::Up), Duration::from_millis(20));
+        debounce::Debouncer::new(Input::new(btn_pin, Pull::Up), Duration::from_millis(50));
 
     // Spawn off a LED driver for this button.
     match button {
@@ -88,6 +110,36 @@ pub async fn read_button(spawner: Spawner, button: Button, btn_pin: AnyPin, led_
 
         if unsafe { BUTTONS_BLOCKED } {
             debug!("Buttons blocked (button task: {})", button as u8);
+
+            if unsafe { BUTTON_ENABLED == Button::N } && button == Button::D {
+                debug!("Both 'N' and 'D' pressed - toggling Valet Mode");
+
+                {
+                    // Lock the flash and read old values.
+                    let mut flash = flash.lock().await;
+                    let mut config = match DbwConfig::read(&mut flash) {
+                        // Read the old/current values.
+                        Ok(config) => config,
+                        Err(e) => {
+                            error!("Failed to read flash: {:?}", e);
+                            lib_config::resonable_defaults()
+                        }
+                    };
+
+                    // Toggle Valet Mode.
+                    if config.valet_mode {
+                        CHANNEL_CANWRITE.send(CANMessage::DisableValetMode).await;
+                        config.valet_mode = false;
+                    } else {
+                        CHANNEL_CANWRITE.send(CANMessage::EnableValetMode).await;
+                        config.valet_mode = true;
+                    }
+                    lib_config::write_flash(&mut flash, config).await;
+                }
+
+                unsafe { BUTTONS_BLOCKED = false };
+            }
+
             while unsafe { BUTTONS_BLOCKED } {
                 // Block here while we wait for it to be unblocked.
                 debug!("Waiting for unblock (button task: {})", button as u8);
