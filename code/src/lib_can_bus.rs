@@ -16,6 +16,8 @@ pub enum CANMessage {
     StartCar,
     Authorizing,
     Authorized,
+    EnableValetMode,
+    DisableValetMode,
 }
 pub static CHANNEL_CANWRITE: Channel<CriticalSectionRawMutex, CANMessage, 64> = Channel::new();
 
@@ -59,6 +61,12 @@ pub async fn write_can(receiver: Receiver<'static, CriticalSectionRawMutex, CANM
             }
             CANMessage::StartCar => {
                 info!("=> 'Sending start signal to car'");
+            }
+            CANMessage::EnableValetMode => {
+                info!("=> 'Enable Valet Mode'");
+            }
+            CANMessage::DisableValetMode => {
+                info!("=> 'Disable Valet Mode'");
             }
         }
     }

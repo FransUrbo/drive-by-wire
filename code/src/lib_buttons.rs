@@ -1,4 +1,4 @@
-use defmt::{debug, info, trace, Format};
+use defmt::{debug, error, info, trace, Format};
 
 use embassy_executor::Spawner;
 use embassy_rp::flash::{Async, Flash};
@@ -12,8 +12,16 @@ use embassy_time::{with_deadline, Duration, Instant, Timer};
 
 type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
 
-use crate::FLASH_SIZE;
 use debounce;
+
+// External "defines".
+use crate::CANMessage;
+use crate::CHANNEL_ACTUATOR;
+use crate::CHANNEL_CANWRITE;
+
+use crate::lib_config;
+use crate::DbwConfig;
+use crate::FLASH_SIZE;
 
 #[derive(Copy, Clone, Format, PartialEq)]
 #[repr(u8)]
@@ -34,8 +42,6 @@ pub static CHANNEL_P: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel:
 pub static CHANNEL_N: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
 pub static CHANNEL_R: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
 pub static CHANNEL_D: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
-
-use crate::CHANNEL_ACTUATOR; // External "define".
 
 // Start with the button UNSET, then change it when we know what gear the car is in.
 pub static mut BUTTON_ENABLED: Button = Button::UNSET;
@@ -66,7 +72,7 @@ async fn set_led(
 #[embassy_executor::task(pool_size = 4)]
 pub async fn read_button(
     spawner: Spawner,
-    _flash: &'static FlashMutex,
+    flash: &'static FlashMutex,
     button: Button,
     btn_pin: AnyPin,
     led_pin: AnyPin,
@@ -74,7 +80,7 @@ pub async fn read_button(
     debug!("Started button control task");
 
     let mut btn =
-        debounce::Debouncer::new(Input::new(btn_pin, Pull::Up), Duration::from_millis(20));
+        debounce::Debouncer::new(Input::new(btn_pin, Pull::Up), Duration::from_millis(50));
 
     // Spawn off a LED driver for this button.
     match button {
@@ -105,10 +111,31 @@ pub async fn read_button(
         if unsafe { BUTTONS_BLOCKED } {
             debug!("Buttons blocked (button task: {})", button as u8);
 
-            if unsafe { BUTTON_ENABLED == Button::D } && button == Button::N {
-                debug!("Both 'D' and 'N' pressed");
+            if unsafe { BUTTON_ENABLED == Button::N } && button == Button::D {
+                debug!("Both 'N' and 'D' pressed - toggling Valet Mode");
 
-                // TODO: Toggle Valet Mode.
+                {
+                    // Lock the flash and read old values.
+                    let mut flash = flash.lock().await;
+                    let mut config = match DbwConfig::read(&mut flash) {
+                        // Read the old/current values.
+                        Ok(config) => config,
+                        Err(e) => {
+                            error!("Failed to read flash: {:?}", e);
+                            lib_config::resonable_defaults()
+                        }
+                    };
+
+                    // Toggle Valet Mode.
+                    if config.valet_mode {
+                        CHANNEL_CANWRITE.send(CANMessage::DisableValetMode).await;
+                        config.valet_mode = false;
+                    } else {
+                        CHANNEL_CANWRITE.send(CANMessage::EnableValetMode).await;
+                        config.valet_mode = true;
+                    }
+                    lib_config::write_flash(&mut flash, config).await;
+                }
 
                 unsafe { BUTTONS_BLOCKED = false };
             }

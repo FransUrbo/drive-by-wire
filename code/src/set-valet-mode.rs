@@ -15,10 +15,12 @@ use embassy_rp::flash::{Async, Flash};
 
 pub mod lib_actuator;
 pub mod lib_buttons;
+pub mod lib_can_bus;
 pub mod lib_config;
 
 use crate::lib_actuator::*;
 use crate::lib_buttons::*;
+use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
 use crate::lib_config::*;
 
 use crate::CHANNEL_ACTUATOR;
