@@ -139,6 +139,18 @@ pub async fn read_button(
                     lib_config::write_flash(&mut flash, config).await;
                 }
 
+                // Blink the 'D' LED three time, to indicate that both have been pressed.
+                // The 'N' LED will be flashed three times further below..
+                for _i in 0..3 {
+                    CHANNEL_D.send(LedStatus::On).await;
+                    Timer::after_millis(500).await;
+                    CHANNEL_D.send(LedStatus::Off).await;
+                    Timer::after_millis(500).await;
+                }
+
+                // Give it a second, so we don't *also* deal with the enabled button.
+                // As in, let the button block "reach" the 'N' button task.
+                Timer::after_secs(1).await;
                 unsafe { BUTTONS_BLOCKED = false };
             }
 
