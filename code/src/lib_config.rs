@@ -1,6 +1,6 @@
 use defmt::{debug, error, info, trace, Format};
 
-use embassy_rp::flash::{Async, Error, ERASE_SIZE};
+use embassy_rp::flash::{Async, Error, Flash, ERASE_SIZE};
 use embassy_rp::peripherals::FLASH;
 
 // External "defines".
@@ -22,9 +22,7 @@ impl DbwConfig {
         [self.active_button as u8, self.valet_mode as u8]
     }
 
-    pub fn read(
-        flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH_SIZE>,
-    ) -> Result<DbwConfig, Error> {
+    pub fn read(flash: &mut Flash<'_, FLASH, Async, FLASH_SIZE>) -> Result<DbwConfig, Error> {
         let mut read_buf = [0u8; ERASE_SIZE];
 
         match flash.blocking_read(ADDR_OFFSET + ERASE_SIZE as u32, &mut read_buf) {
@@ -61,7 +59,7 @@ impl DbwConfig {
     }
 
     pub fn write(
-        flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH_SIZE>,
+        flash: &mut Flash<'_, FLASH, Async, FLASH_SIZE>,
         config: Self,
     ) -> Result<(), Error> {
         // Convert our struct to an array, so we can loop through it easier.
@@ -81,10 +79,7 @@ impl DbwConfig {
     }
 }
 
-pub async fn write_flash(
-    flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH_SIZE>,
-    buf: DbwConfig,
-) {
+pub async fn write_flash(flash: &mut Flash<'_, FLASH, Async, FLASH_SIZE>, buf: DbwConfig) {
     trace!("write_flash({:?})", buf);
 
     match DbwConfig::read(flash) {

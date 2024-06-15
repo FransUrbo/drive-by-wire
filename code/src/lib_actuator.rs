@@ -1,11 +1,13 @@
 use defmt::{debug, error, info, trace};
 
-use embassy_rp::flash::Async;
+use embassy_rp::flash::{Async, Flash};
 use embassy_rp::gpio::{Input, Output, SlewRate};
 use embassy_rp::peripherals::FLASH;
-use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
+use embassy_sync::{blocking_mutex::raw::ThreadModeRawMutex, mutex::Mutex};
 use embassy_time::Timer;
+
+type FlashMutex = Mutex<ThreadModeRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
 
 // External "defines".
 use crate::Button;
@@ -95,7 +97,7 @@ pub async fn move_actuator(
 #[embassy_executor::task]
 pub async fn actuator_control(
     receiver: Receiver<'static, ThreadModeRawMutex, Button, 64>,
-    flash: &mut embassy_rp::flash::Flash<'static, FLASH, Async, FLASH_SIZE>,
+    flash: &'static FlashMutex,
     mut pin_motor_plus: Output<'static>,
     mut pin_motor_minus: Output<'static>,
     _pin_pot: Input<'static>,
@@ -136,16 +138,19 @@ pub async fn actuator_control(
         unsafe { BUTTON_ENABLED = button };
 
         // .. and write it to flash.
-        let mut config = match DbwConfig::read(flash) {
-            // Read the old/current values.
-            Ok(config) => config,
-            Err(e) => {
-                error!("Failed to read flash: {:?}", e);
-                lib_config::resonable_defaults()
-            }
-        };
-        config.active_button = button; // Set new value.
-        lib_config::write_flash(flash, config).await;
+        {
+            let mut flash = flash.lock().await;
+            let mut config = match DbwConfig::read(&mut flash) {
+                // Read the old/current values.
+                Ok(config) => config,
+                Err(e) => {
+                    error!("Failed to read flash: {:?}", e);
+                    lib_config::resonable_defaults()
+                }
+            };
+            config.active_button = button; // Set new value.
+            lib_config::write_flash(&mut flash, config).await;
+        }
     }
 }
 

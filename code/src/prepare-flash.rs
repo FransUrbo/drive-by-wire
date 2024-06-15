@@ -10,7 +10,7 @@
 
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_rp::flash::{Async, ERASE_SIZE, FLASH_BASE};
+use embassy_rp::flash::{Async, Flash, ERASE_SIZE, FLASH_BASE};
 use embassy_rp::peripherals::FLASH;
 use {defmt_rtt as _, panic_probe as _};
 
@@ -23,7 +23,7 @@ async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
     info!("Hello World!");
 
-    let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH0);
+    let mut flash = Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH0);
 
     erase_write_sector(&mut flash);
 
@@ -31,7 +31,7 @@ async fn main(_spawner: Spawner) {
     loop {}
 }
 
-fn erase_write_sector(flash: &mut embassy_rp::flash::Flash<'_, FLASH, Async, FLASH_SIZE>) {
+fn erase_write_sector(flash: &mut Flash<'_, FLASH, Async, FLASH_SIZE>) {
     info!(">>>> [erase_write_sector]");
     let mut buf = [0u8; ERASE_SIZE];
 

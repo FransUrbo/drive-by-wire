@@ -10,7 +10,7 @@
 
 use defmt::{error, info};
 use embassy_executor::Spawner;
-use embassy_rp::flash::Async;
+use embassy_rp::flash::{Async, Flash};
 
 pub mod lib_actuator;
 pub mod lib_buttons;
@@ -30,7 +30,7 @@ async fn main(_spawner: Spawner) {
     info!("Unsetting valet mode in flash");
 
     // Instantiate the flash.
-    let mut flash = embassy_rp::flash::Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH0);
+    let mut flash = Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH0);
 
     // Read old values.
     match DbwConfig::read(&mut flash) {
