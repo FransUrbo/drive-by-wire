@@ -77,8 +77,7 @@ pub async fn read_button(
     btn_pin: AnyPin,
     led_pin: AnyPin,
 ) {
-    debug!("Started button control task");
-
+    // Initialize the button listener.
     let mut btn =
         debounce::Debouncer::new(Input::new(btn_pin, Pull::Up), Duration::from_millis(50));
 
@@ -97,7 +96,8 @@ pub async fn read_button(
         Button::D => spawner
             .spawn(set_led(CHANNEL_D.receiver(), led_pin))
             .unwrap(),
-    }
+    };
+    debug!("Button::{}: Started button control task", button);
 
     loop {
         // NOTE: We need to wait for a button to be pressed, BEFORE we can check if we're
@@ -109,19 +109,21 @@ pub async fn read_button(
         btn.debounce().await; // Button pressed
 
         if unsafe { BUTTONS_BLOCKED } {
-            debug!("Buttons blocked (button task: {})", button as u8);
+            debug!("Button::{}: Buttons blocked", button);
 
             if unsafe { BUTTON_ENABLED == Button::N } && button == Button::D {
-                debug!("Both 'N' and 'D' pressed - toggling Valet Mode");
+                debug!(
+                    "Button::{}: Both 'N' and 'D' pressed - toggling Valet Mode",
+                    button
+                );
 
                 {
                     // Lock the flash and read old values.
                     let mut flash = flash.lock().await;
                     let mut config = match DbwConfig::read(&mut flash) {
-                        // Read the old/current values.
                         Ok(config) => config,
                         Err(e) => {
-                            error!("Failed to read flash: {:?}", e);
+                            error!("Button::{}: Failed to read flash: {:?}", button, e);
                             lib_config::resonable_defaults()
                         }
                     };
@@ -142,9 +144,10 @@ pub async fn read_button(
 
             while unsafe { BUTTONS_BLOCKED } {
                 // Block here while we wait for it to be unblocked.
-                debug!("Waiting for unblock (button task: {})", button as u8);
+                debug!("Button::{}: Waiting for unblock", button);
                 Timer::after_secs(1).await;
             }
+
             continue;
         }
 
@@ -156,17 +159,22 @@ pub async fn read_button(
 
         // Got a valid button press. Process it..
         let start = Instant::now();
-        info!("Button press detected (button task: {})", button as u8);
+        info!("Button::{}: Button press detected", button);
 
         // Don't really care how long a button have been pressed as,
         // the `debounce()` will detect when it's been RELEASED.
         match with_deadline(start + Duration::from_secs(1), btn.debounce()).await {
             Ok(_) => {
-                trace!("Button pressed for: {}ms", start.elapsed().as_millis());
+                trace!(
+                    "{}: Button pressed for: {}ms",
+                    button,
+                    start.elapsed().as_millis()
+                );
                 debug!(
-                    "Button enabled: {}; Button pressed: {}",
-                    unsafe { BUTTON_ENABLED as u8 },
-                    button as u8
+                    "Button::{}: Button enabled: {}; Button pressed: {}",
+                    button,
+                    unsafe { BUTTON_ENABLED },
+                    button
                 );
 
                 // We know who WE are, so turn ON our own LED and turn off all the other LEDs.
@@ -175,6 +183,11 @@ pub async fn read_button(
                     Button::P => {
                         if unsafe { button == BUTTON_ENABLED } {
                             // Already enabled => blink *our* LED three times.
+                            debug!(
+                                "Button::{}: Already enabled, blinking LED three times",
+                                button
+                            );
+
                             for _i in 0..3 {
                                 CHANNEL_P.send(LedStatus::Off).await;
                                 Timer::after_millis(500).await;
@@ -198,6 +211,11 @@ pub async fn read_button(
                     Button::N => {
                         if unsafe { button == BUTTON_ENABLED } {
                             // Already enabled => blink *our* LED three times.
+                            debug!(
+                                "Button::{}: Already enabled, blinking LED three times",
+                                button
+                            );
+
                             for _i in 0..3 {
                                 CHANNEL_N.send(LedStatus::Off).await;
                                 Timer::after_millis(500).await;
@@ -215,11 +233,17 @@ pub async fn read_button(
                             // Trigger the actuator to switch to (N)eutral.
                             CHANNEL_ACTUATOR.send(Button::N).await;
                         }
+
                         continue;
                     }
                     Button::R => {
                         if unsafe { button == BUTTON_ENABLED } {
                             // Already enabled => blink *our* LED three times.
+                            debug!(
+                                "Button::{}: Already enabled, blinking LED three times",
+                                button
+                            );
+
                             for _i in 0..3 {
                                 CHANNEL_R.send(LedStatus::Off).await;
                                 Timer::after_millis(500).await;
@@ -243,6 +267,11 @@ pub async fn read_button(
                     Button::D => {
                         if unsafe { button == BUTTON_ENABLED } {
                             // Already enabled => blink *our* LED three times.
+                            debug!(
+                                "Button::{}: Already enabled, blinking LED three times",
+                                button
+                            );
+
                             for _i in 0..3 {
                                 CHANNEL_D.send(LedStatus::Off).await;
                                 Timer::after_millis(500).await;
@@ -272,6 +301,10 @@ pub async fn read_button(
 
         // Wait for button release before handling another press.
         btn.debounce().await;
-        trace!("Button pressed for: {}ms", start.elapsed().as_millis());
+        trace!(
+            "{}: Button pressed for: {}ms",
+            button,
+            start.elapsed().as_millis()
+        );
     }
 }
