@@ -11,10 +11,10 @@ use embassy_rp::peripherals::{FLASH, PIO1, UART0, UART1};
 use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
 use embassy_rp::uart::{Blocking, Config, InterruptHandler as UARTInterruptHandler, UartTx};
 use embassy_rp::watchdog::*;
-use embassy_sync::{blocking_mutex::raw::ThreadModeRawMutex, mutex::Mutex};
+use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer};
 
-type FlashMutex = Mutex<ThreadModeRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
+type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
 
 use static_cell::StaticCell;
 

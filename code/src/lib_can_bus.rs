@@ -1,6 +1,6 @@
 use defmt::{debug, info};
 
-use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
 use embassy_time::Timer;
 
@@ -17,11 +17,11 @@ pub enum CANMessage {
     Authorizing,
     Authorized,
 }
-pub static CHANNEL_CANWRITE: Channel<ThreadModeRawMutex, CANMessage, 64> = Channel::new();
+pub static CHANNEL_CANWRITE: Channel<CriticalSectionRawMutex, CANMessage, 64> = Channel::new();
 
 // Write messages to CAN-bus.
 #[embassy_executor::task]
-pub async fn write_can(receiver: Receiver<'static, ThreadModeRawMutex, CANMessage, 64>) {
+pub async fn write_can(receiver: Receiver<'static, CriticalSectionRawMutex, CANMessage, 64>) {
     debug!("Started CAN write task");
 
     loop {

@@ -5,10 +5,12 @@ use embassy_rp::flash::{Async, Flash};
 use embassy_rp::gpio::{AnyPin, Input, Level, Output, Pull};
 use embassy_rp::peripherals::FLASH;
 use embassy_sync::channel::{Channel, Receiver};
-use embassy_sync::{blocking_mutex::raw::ThreadModeRawMutex, mutex::Mutex};
+use embassy_sync::{
+    blocking_mutex::raw::CriticalSectionRawMutex, blocking_mutex::raw::NoopRawMutex, mutex::Mutex,
+};
 use embassy_time::{with_deadline, Duration, Instant, Timer};
 
-type FlashMutex = Mutex<ThreadModeRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
+type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
 
 use crate::FLASH_SIZE;
 use debounce;
@@ -28,10 +30,10 @@ pub enum LedStatus {
 }
 
 // Setup the communication channels between the tasks.
-pub static CHANNEL_P: Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
-pub static CHANNEL_N: Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
-pub static CHANNEL_R: Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
-pub static CHANNEL_D: Channel<ThreadModeRawMutex, LedStatus, 64> = Channel::new();
+pub static CHANNEL_P: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
+pub static CHANNEL_N: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
+pub static CHANNEL_R: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
+pub static CHANNEL_D: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
 
 use crate::CHANNEL_ACTUATOR; // External "define".
 
@@ -43,7 +45,10 @@ pub static mut BUTTONS_BLOCKED: bool = false;
 
 // Control the drive button LEDs - four buttons, four LEDs.
 #[embassy_executor::task(pool_size = 4)]
-async fn set_led(receiver: Receiver<'static, ThreadModeRawMutex, LedStatus, 64>, led_pin: AnyPin) {
+async fn set_led(
+    receiver: Receiver<'static, CriticalSectionRawMutex, LedStatus, 64>,
+    led_pin: AnyPin,
+) {
     debug!("Started button LED control task");
 
     let mut led = Output::new(led_pin, Level::Low); // Always start with the LED off.

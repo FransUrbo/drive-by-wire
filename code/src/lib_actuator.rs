@@ -4,10 +4,12 @@ use embassy_rp::flash::{Async, Flash};
 use embassy_rp::gpio::{Input, Output, SlewRate};
 use embassy_rp::peripherals::FLASH;
 use embassy_sync::channel::{Channel, Receiver};
-use embassy_sync::{blocking_mutex::raw::ThreadModeRawMutex, mutex::Mutex};
+use embassy_sync::{
+    blocking_mutex::raw::CriticalSectionRawMutex, blocking_mutex::raw::NoopRawMutex, mutex::Mutex,
+};
 use embassy_time::Timer;
 
-type FlashMutex = Mutex<ThreadModeRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
+type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
 
 // External "defines".
 use crate::Button;
@@ -18,7 +20,7 @@ use crate::lib_config;
 use crate::DbwConfig;
 use crate::FLASH_SIZE;
 
-pub static CHANNEL_ACTUATOR: Channel<ThreadModeRawMutex, Button, 64> = Channel::new();
+pub static CHANNEL_ACTUATOR: Channel<CriticalSectionRawMutex, Button, 64> = Channel::new();
 
 // Set the distance between the different mode. 70mm is the total throw from begining to end.
 static ACTUATOR_DISTANCE_BETWEEN_POSITIONS: i8 = 70 / 3; // 3 because the start doesn't count :).
@@ -96,7 +98,7 @@ pub async fn move_actuator(
 // the desired drive mode position.
 #[embassy_executor::task]
 pub async fn actuator_control(
-    receiver: Receiver<'static, ThreadModeRawMutex, Button, 64>,
+    receiver: Receiver<'static, CriticalSectionRawMutex, Button, 64>,
     flash: &'static FlashMutex,
     mut pin_motor_plus: Output<'static>,
     mut pin_motor_minus: Output<'static>,

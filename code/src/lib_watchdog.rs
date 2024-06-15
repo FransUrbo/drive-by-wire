@@ -1,6 +1,6 @@
 use defmt::{debug, info, trace};
 
-use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
 use embassy_time::Timer;
 
@@ -8,12 +8,12 @@ pub enum StopWatchdog {
     Yes,
 }
 
-pub static CHANNEL_WATCHDOG: Channel<ThreadModeRawMutex, StopWatchdog, 64> = Channel::new();
+pub static CHANNEL_WATCHDOG: Channel<CriticalSectionRawMutex, StopWatchdog, 64> = Channel::new();
 
 // Doggy is hungry, needs to be feed every three quarter second, otherwise it gets cranky! :)
 #[embassy_executor::task]
 pub async fn feed_watchdog(
-    control: Receiver<'static, ThreadModeRawMutex, StopWatchdog, 64>,
+    control: Receiver<'static, CriticalSectionRawMutex, StopWatchdog, 64>,
     mut wd: embassy_rp::watchdog::Watchdog,
 ) {
     debug!("Started watchdog feeder task");
