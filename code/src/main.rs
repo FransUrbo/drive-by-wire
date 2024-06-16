@@ -143,7 +143,7 @@ async fn main(spawner: Spawner) {
     // =====
     //  9. Initialize the fingerprint scanner.
     CHANNEL_CANWRITE.send(CANMessage::InitFP).await;
-    let mut fp_scanner = r503::R503::new(
+    let fp_scanner = r503::R503::new(
         p.UART0,
         Irqs,
         p.PIN_16,
@@ -153,6 +153,9 @@ async fn main(spawner: Spawner) {
         p.PIN_13.into(),
     );
     CHANNEL_CANWRITE.send(CANMessage::FPInitialized).await;
+
+    static MY_FP_SCANNER: StaticCell<r503::R503<UART0>> = StaticCell::new();
+    let fp_scanner = MY_FP_SCANNER.init(fp_scanner);
 
     // Send message to IC: "Authorizing use".
     CHANNEL_CANWRITE.send(CANMessage::Authorizing).await;
@@ -187,6 +190,7 @@ async fn main(spawner: Spawner) {
         .spawn(read_button(
             spawner,
             flash,
+            fp_scanner,
             Button::P,
             p.PIN_2.degrade(),
             p.PIN_6.degrade(),
@@ -196,6 +200,7 @@ async fn main(spawner: Spawner) {
         .spawn(read_button(
             spawner,
             flash,
+            fp_scanner,
             Button::R,
             p.PIN_3.degrade(),
             p.PIN_7.degrade(),
@@ -205,6 +210,7 @@ async fn main(spawner: Spawner) {
         .spawn(read_button(
             spawner,
             flash,
+            fp_scanner,
             Button::N,
             p.PIN_0.degrade(),
             p.PIN_8.degrade(),
@@ -214,6 +220,7 @@ async fn main(spawner: Spawner) {
         .spawn(read_button(
             spawner,
             flash,
+            fp_scanner,
             Button::D,
             p.PIN_1.degrade(),
             p.PIN_9.degrade(),
