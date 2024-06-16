@@ -3,7 +3,7 @@ use defmt::{debug, error, info, trace, Format};
 use embassy_executor::Spawner;
 use embassy_rp::flash::{Async, Flash};
 use embassy_rp::gpio::{AnyPin, Input, Level, Output, Pull};
-use embassy_rp::peripherals::FLASH;
+use embassy_rp::peripherals::{FLASH, UART0};
 use embassy_sync::channel::{Channel, Receiver};
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex, blocking_mutex::raw::NoopRawMutex, mutex::Mutex,
@@ -11,6 +11,7 @@ use embassy_sync::{
 use embassy_time::{with_deadline, Duration, Instant, Timer};
 
 type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
+type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static, UART0>>;
 
 use debounce;
 
@@ -22,6 +23,8 @@ use crate::CHANNEL_CANWRITE;
 use crate::lib_config;
 use crate::DbwConfig;
 use crate::FLASH_SIZE;
+
+use r503;
 
 #[derive(Copy, Clone, Format, PartialEq)]
 #[repr(u8)]
@@ -73,6 +76,7 @@ async fn set_led(
 pub async fn read_button(
     spawner: Spawner,
     flash: &'static FlashMutex,
+    fp_scanner: &'static ScannerMutex,
     button: Button,
     btn_pin: AnyPin,
     led_pin: AnyPin,
@@ -118,25 +122,40 @@ pub async fn read_button(
                 );
 
                 {
-                    // Lock the flash and read old values.
-                    let mut flash = flash.lock().await;
-                    let mut config = match DbwConfig::read(&mut flash) {
-                        Ok(config) => config,
-                        Err(e) => {
-                            error!("Button::{}: Failed to read flash: {:?}", button, e);
-                            lib_config::resonable_defaults()
-                        }
-                    };
+                    // Verify with a valid fingerprint that we're authorized to change Valet Mode.
+                    let mut fp_scanner = fp_scanner.lock().await;
+                    if fp_scanner.Wrapper_Verify_Fingerprint().await {
+                        error!("Can't match fingerprint");
 
-                    // Toggle Valet Mode.
-                    if config.valet_mode {
-                        CHANNEL_CANWRITE.send(CANMessage::DisableValetMode).await;
-                        config.valet_mode = false;
+                        // Give it five seconds before we retry.
+                        Timer::after_secs(5).await;
+
+                        // Turn off the aura.
+                        fp_scanner.Wrapper_AuraSet_Off().await;
+
+                        // Restart loop.
+                        continue;
                     } else {
-                        CHANNEL_CANWRITE.send(CANMessage::EnableValetMode).await;
-                        config.valet_mode = true;
+                        // Lock the flash and read old values.
+                        let mut flash = flash.lock().await;
+                        let mut config = match DbwConfig::read(&mut flash) {
+                            Ok(config) => config,
+                            Err(e) => {
+                                error!("Button::{}: Failed to read flash: {:?}", button, e);
+                                lib_config::resonable_defaults()
+                            }
+                        };
+
+                        // Toggle Valet Mode.
+                        if config.valet_mode {
+                            CHANNEL_CANWRITE.send(CANMessage::DisableValetMode).await;
+                            config.valet_mode = false;
+                        } else {
+                            CHANNEL_CANWRITE.send(CANMessage::EnableValetMode).await;
+                            config.valet_mode = true;
+                        }
+                        lib_config::write_flash(&mut flash, config).await;
                     }
-                    lib_config::write_flash(&mut flash, config).await;
                 }
 
                 // Blink the 'D' LED three time, to indicate that both have been pressed.

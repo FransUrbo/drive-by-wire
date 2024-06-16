@@ -35,7 +35,7 @@ rev = "ab5831"
 
 [dependencies.r503]
 git = "https://github.com/FransUrbo/rust-libs-r503.git"
-rev = "2236cd"
+version = "0.2.0"
 
 [dependencies.debounce]
 git = "https://github.com/FransUrbo/rust-libs-debounce.git"
