@@ -163,22 +163,22 @@ async fn main(spawner: Spawner) {
     if config.valet_mode {
         info!("Valet mode, won't check fingerprint");
     } else {
-	loop {
-	    let mut fp_scanner = fp_scanner.lock().await;
-	    if fp_scanner.Wrapper_Verify_Fingerprint().await {
-		error!("Can't match fingerprint - retrying");
+        loop {
+            let mut fp_scanner = fp_scanner.lock().await;
+            if fp_scanner.Wrapper_Verify_Fingerprint().await {
+                error!("Can't match fingerprint - retrying");
 
-		debug!("NeoPixel RED");
-		neopixel.write(&[(255, 0, 0).into()]).await; // RED
+                debug!("NeoPixel RED");
+                neopixel.write(&[(255, 0, 0).into()]).await; // RED
 
-		// Give it five seconds before we retry.
-		Timer::after_secs(5).await;
-	    } else {
-		info!("Fingerprint matches, use authorized");
-		break;
-	    }
-	    fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
-	}
+                // Give it five seconds before we retry.
+                Timer::after_secs(5).await;
+            } else {
+                info!("Fingerprint matches, use authorized");
+                break;
+            }
+            fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
+        }
     }
     neopixel.write(&[(0, 255, 0).into()]).await; // GREEN
 

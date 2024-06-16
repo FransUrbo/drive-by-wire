@@ -123,17 +123,17 @@ pub async fn read_button(
 
                 {
                     // Verify with a valid fingerprint that we're authorized to change Valet Mode.
-		    let mut fp_scanner = fp_scanner.lock().await;
+                    let mut fp_scanner = fp_scanner.lock().await;
                     if fp_scanner.Wrapper_Verify_Fingerprint().await {
                         error!("Can't match fingerprint");
 
-			// Give it five seconds before we retry.
-			Timer::after_secs(5).await;
+                        // Give it five seconds before we retry.
+                        Timer::after_secs(5).await;
 
-			// Turn off the aura.
-			fp_scanner.Wrapper_AuraSet_Off().await;
+                        // Turn off the aura.
+                        fp_scanner.Wrapper_AuraSet_Off().await;
 
-			// Restart loop.
+                        // Restart loop.
                         continue;
                     } else {
                         // Lock the flash and read old values.
