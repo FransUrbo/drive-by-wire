@@ -15,6 +15,7 @@ use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer};
 
 type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
+type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static, UART0>>;
 
 use static_cell::StaticCell;
 
@@ -37,8 +38,6 @@ use crate::CHANNEL_ACTUATOR;
 use crate::CHANNEL_CANWRITE;
 use crate::CHANNEL_WATCHDOG;
 
-static SERIAL: StaticCell<UartTx<'_, UART1, Blocking>> = StaticCell::new();
-
 // DMA Channels used:
 // * Fingerprint scanner:	UART0	DMA_CH[0-1]	PIN_13, PIN_16, PIN_17
 // * NeoPixel:			PIO1	DMA_CH2		PIN_15
@@ -59,6 +58,7 @@ async fn main(spawner: Spawner) {
     // =====
     //  1. Initialize the serial UART for debug/log output.
     let uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, Config::default()); // => 115200/8N1
+    static SERIAL: StaticCell<UartTx<'_, UART1, Blocking>> = StaticCell::new();
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
     info!("Start");
@@ -104,13 +104,13 @@ async fn main(spawner: Spawner) {
     // =====
     //  7. Initialize the flash drive where we store some config values across reboots.
     let flash = Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH3);
-    static MY_FLASH: StaticCell<FlashMutex> = StaticCell::new();
-    let flash = MY_FLASH.init(Mutex::new(flash));
+    static FLASH: StaticCell<FlashMutex> = StaticCell::new();
+    let flash = FLASH.init(Mutex::new(flash));
 
     // Read the config from flash drive.
     let config = {
-        let mut flash_read = flash.lock().await;
-        DbwConfig::read(&mut flash_read).unwrap()
+        let mut flash = flash.lock().await;
+        DbwConfig::read(&mut flash).unwrap()
     };
 
     // =====
@@ -152,10 +152,9 @@ async fn main(spawner: Spawner) {
         p.DMA_CH1,
         p.PIN_13.into(),
     );
+    static FP_SCANNER: StaticCell<ScannerMutex> = StaticCell::new();
+    let fp_scanner = FP_SCANNER.init(Mutex::new(fp_scanner));
     CHANNEL_CANWRITE.send(CANMessage::FPInitialized).await;
-
-    static MY_FP_SCANNER: StaticCell<r503::R503<UART0>> = StaticCell::new();
-    let fp_scanner = MY_FP_SCANNER.init(fp_scanner);
 
     // Send message to IC: "Authorizing use".
     CHANNEL_CANWRITE.send(CANMessage::Authorizing).await;
@@ -163,22 +162,25 @@ async fn main(spawner: Spawner) {
     // Verify fingerprint.
     if config.valet_mode {
         info!("Valet mode, won't check fingerprint");
-    } else if fp_scanner.Wrapper_Verify_Fingerprint().await {
-        error!("Can't match fingerprint");
-
-        debug!("NeoPixel RED");
-        neopixel.write(&[(255, 0, 0).into()]).await; // RED
-
-        // Give it five seconds before we reset.
-        Timer::after_secs(5).await;
-
-        // Stop feeding the watchdog, resulting in a reset.
-        CHANNEL_WATCHDOG.send(StopWatchdog::Yes).await;
     } else {
-        info!("Fingerprint matches, use authorized");
+	loop {
+	    let mut fp_scanner = fp_scanner.lock().await;
+	    if fp_scanner.Wrapper_Verify_Fingerprint().await {
+		error!("Can't match fingerprint - retrying");
+
+		debug!("NeoPixel RED");
+		neopixel.write(&[(255, 0, 0).into()]).await; // RED
+
+		// Give it five seconds before we retry.
+		Timer::after_secs(5).await;
+	    } else {
+		info!("Fingerprint matches, use authorized");
+		break;
+	    }
+	    fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
+	}
     }
     neopixel.write(&[(0, 255, 0).into()]).await; // GREEN
-    fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
 
     // Send message to IC: "Use authorized".
     CHANNEL_CANWRITE.send(CANMessage::Authorized).await;

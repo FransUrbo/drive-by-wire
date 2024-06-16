@@ -63,10 +63,10 @@ pub async fn write_can(receiver: Receiver<'static, CriticalSectionRawMutex, CANM
                 info!("=> 'Sending start signal to car'");
             }
             CANMessage::EnableValetMode => {
-                info!("=> 'Enable Valet Mode'");
+                info!("=> 'Valet Mode Enabled'");
             }
             CANMessage::DisableValetMode => {
-                info!("=> 'Disable Valet Mode'");
+                info!("=> 'Valet Mode Disabled'");
             }
         }
     }

@@ -11,6 +11,7 @@ use embassy_sync::{
 use embassy_time::{with_deadline, Duration, Instant, Timer};
 
 type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
+type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static, UART0>>;
 
 use debounce;
 
@@ -75,7 +76,7 @@ async fn set_led(
 pub async fn read_button(
     spawner: Spawner,
     flash: &'static FlashMutex,
-    fp_scanner: &'static r503::R503<'static, UART0>,
+    fp_scanner: &'static ScannerMutex,
     button: Button,
     btn_pin: AnyPin,
     led_pin: AnyPin,
@@ -122,8 +123,17 @@ pub async fn read_button(
 
                 {
                     // Verify with a valid fingerprint that we're authorized to change Valet Mode.
+		    let mut fp_scanner = fp_scanner.lock().await;
                     if fp_scanner.Wrapper_Verify_Fingerprint().await {
                         error!("Can't match fingerprint");
+
+			// Give it five seconds before we retry.
+			Timer::after_secs(5).await;
+
+			// Turn off the aura.
+			fp_scanner.Wrapper_AuraSet_Off().await;
+
+			// Restart loop.
                         continue;
                     } else {
                         // Lock the flash and read old values.
