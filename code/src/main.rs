@@ -121,7 +121,7 @@ async fn main(spawner: Spawner) {
     let actuator_potentiometer = Input::new(p.PIN_26, Pull::None); // Actuator/Potentiometer Brush
 
     // Test actuator control.
-    if !test_actuator(&mut actuator_motor_plus, &mut actuator_motor_minus).await {
+    if !actuator::test_actuator(&mut actuator_motor_plus, &mut actuator_motor_minus).await {
         error!("Actuator failed to move");
 
         // Stop feeding the watchdog, resulting in a reset.
