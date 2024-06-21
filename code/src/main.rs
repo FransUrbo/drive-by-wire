@@ -4,17 +4,20 @@
 use defmt::{debug, error, info};
 
 use embassy_executor::Spawner;
-use embassy_rp::bind_interrupts;
-use embassy_rp::flash::{Async, Flash};
-use embassy_rp::gpio::{Input, Level, Output, Pin, Pull};
+use embassy_rp::adc::{Adc, Config as AdcConfig, InterruptHandler as ADCInterruptHandler};
+use embassy_rp::flash::{Async as FlashAsync, Flash};
+use embassy_rp::gpio::{Level, Output, Pin, Pull};
 use embassy_rp::peripherals::{FLASH, PIO1, UART0, UART1};
 use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
-use embassy_rp::uart::{Blocking, Config, InterruptHandler as UARTInterruptHandler, UartTx};
+use embassy_rp::uart::{
+    Blocking, Config as UartConfig, InterruptHandler as UARTInterruptHandler, UartTx,
+};
 use embassy_rp::watchdog::*;
+use embassy_rp::{adc, bind_interrupts};
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer};
 
-type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
+type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SIZE>>;
 type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static, UART0>>;
 
 use static_cell::StaticCell;
@@ -44,9 +47,10 @@ use crate::CHANNEL_WATCHDOG;
 // * Flash:			FLASH	DMA_CH3		-
 // * Serial logging:		UART1	DMA_CH4		PIN_4
 bind_interrupts!(struct Irqs {
-    PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
-    UART0_IRQ  => UARTInterruptHandler<UART0>;	// Fingerprint scanner
-    UART1_IRQ  => UARTInterruptHandler<UART1>;	// Serial logging
+    PIO1_IRQ_0   => PIOInterruptHandler<PIO1>;		// NeoPixel
+    UART0_IRQ    => UARTInterruptHandler<UART0>;	// Fingerprint scanner
+    UART1_IRQ    => UARTInterruptHandler<UART1>;	// Serial logging
+    ADC_IRQ_FIFO => ADCInterruptHandler;		// Actuator potentiometer
 });
 
 // ================================================================================
@@ -57,7 +61,7 @@ async fn main(spawner: Spawner) {
 
     // =====
     //  1. Initialize the serial UART for debug/log output.
-    let uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, Config::default()); // => 115200/8N1
+    let uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, UartConfig::default()); // => 115200/8N1
     static SERIAL: StaticCell<UartTx<'_, UART1, Blocking>> = StaticCell::new();
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
@@ -103,7 +107,7 @@ async fn main(spawner: Spawner) {
 
     // =====
     //  7. Initialize the flash drive where we store some config values across reboots.
-    let flash = Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH3);
+    let flash = Flash::<_, FlashAsync, FLASH_SIZE>::new(p.FLASH, p.DMA_CH3);
     static FLASH: StaticCell<FlashMutex> = StaticCell::new();
     let flash = FLASH.init(Mutex::new(flash));
 
@@ -116,12 +120,22 @@ async fn main(spawner: Spawner) {
     // =====
     //  8. Initialize and test the actuator.
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
-    let mut actuator_motor_plus = Output::new(p.PIN_27, Level::Low); // Actuator/Motor Relay (-)
-    let mut actuator_motor_minus = Output::new(p.PIN_28, Level::Low); // Actuator/Motor Relay (+)
-    let actuator_potentiometer = Input::new(p.PIN_26, Pull::None); // Actuator/Potentiometer Brush
+    let mut actuator_motor_plus = Output::new(p.PIN_27, Level::Low); // Actuator/Motor Relay (#1)
+    let mut actuator_motor_minus = Output::new(p.PIN_28, Level::Low); // Actuator/Motor Relay (#2)
+
+    //  Initialize the actuator potentiometer.
+    let mut adc = Adc::new(p.ADC, Irqs, AdcConfig::default());
+    let mut actuator_potentiometer = adc::Channel::new_pin(p.PIN_26, Pull::None); // Actuator/Potentiometer Brush
 
     // Test actuator control.
-    if !actuator::test_actuator(&mut actuator_motor_plus, &mut actuator_motor_minus).await {
+    if !actuator::test_actuator(
+        &mut actuator_motor_plus,
+        &mut actuator_motor_minus,
+        &mut adc,
+        &mut actuator_potentiometer,
+    )
+    .await
+    {
         error!("Actuator failed to move");
 
         // Stop feeding the watchdog, resulting in a reset.
@@ -135,6 +149,7 @@ async fn main(spawner: Spawner) {
             flash,
             actuator_motor_plus,
             actuator_motor_minus,
+            adc,
             actuator_potentiometer,
         ))
         .unwrap();
