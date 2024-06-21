@@ -22,7 +22,6 @@ use crate::FLASH_SIZE;
 pub static CHANNEL_ACTUATOR: Channel<CriticalSectionRawMutex, Button, 64> = Channel::new();
 type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
 
-
 // Control the actuator. Calculate in what direction and how much to move it to get to
 // the desired drive mode position.
 #[embassy_executor::task]
