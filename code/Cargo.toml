@@ -42,8 +42,9 @@ git = "https://github.com/FransUrbo/rust-libs-debounce.git"
 rev = "362de7"
 
 [dependencies.actuator]
-git = "https://github.com/FransUrbo/rust-libs-actuator.git"
-rev = "90cf47a"
+#git = "https://github.com/FransUrbo/rust-libs-actuator.git"
+#rev = "90cf47a"
+path = "/Users/Turbo.Fredriksson/Library/CloudStorage/Dropbox/Documents/Cars/Mercedes SLK Drive Selector/rust-libs-actuator"
 
 # They haven't released the `embassy_time::with_deadline` yet, so need to use the GIT version.
 [dependencies.embassy-embedded-hal]

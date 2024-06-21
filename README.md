@@ -15,7 +15,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
       - [Fingerprint scanner](#fingerprint-scanner)
       - [EIS Relay](#eis-relays)
       - [Actuator](#actuator)
-      - [CAN busses](#can-bus-0-and-1)
+      - [CAN bus](#can-bus-0)
       - [Total](#total)
    2. [Parts](#parts)
       - [Actuation](#actuation)
@@ -136,27 +136,27 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 # Pin layout for RaspberryPI 3-5, and Pico
 
 | Pin | Port    | Use                          |-| Pin | Port    | Use
-| --: | :------ | :--------------------------- |-| --: | :------ | :----------------------------------- |
-|   1 | GPIO  0 | Button (Switch - N)          |-| 40  | VBUS    |                                      |
-|   2 | GPIO  1 | Button (Switch - D)          |-| 39  | VSYS    |                                      |
-|   3 | GND     |                              |-| 38  | GND     |                                      |
-|   4 | GPIO  2 | Button (Switch - P)          |-| 37  | 3V3_EN  |                                      |
-|   5 | GPIO  3 | Button (Switch - R)          |-| 36  | 3V3_OUT |                                      |
-|   6 | GPIO  4 | Debug (TX)                   |-| 35  | VDC_REF |                                      |
-|   7 | GPIO  5 | Debug (RX)                   |-| 34  | GPIO 28 | Actuator - Motor Relay (+)           |
-|   8 | GND     |                              |-| 33  | GND     |                                      |
-|   9 | GPIO  6 | Button (Telltale - P)        |-| 32  | GPIO 27 | Actuator - Motor Relay (-)           |
-|  10 | GPIO  7 | Button (Telltale - R)        |-| 31  | GPIO 26 | Actuator - Potentiometer Brush       |
-|  11 | GPIO  8 | Button (Telltale - N)        |-| 30  | RUN     |                                      |
-|  12 | GPIO  9 | Button (Telltale - D)        |-| 29  | GPIO 22 | EIS Relay (#3 - start)               |
-|  13 | GND     | *[GPIO 29]*                  |-| 28  | GND     | *[GPIO 23]*                          |
-|  14 | GPIO 10 | ~~CAN #1 (RX)~~              |-| 27  | GPIO 21 | CAN #0 (RX)                          |
-|  15 | GPIO 11 | ~~CAN #1 (TX)~~              |-| 26  | GPIO 20 | CAN #0 (TX)                          |
-|  16 | GPIO 12 |                              |-| 25  | GPIO 19 | ~~EIS Relay (#1 - ignition switch)~~ |
-|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP) |-| 24  | GPIO 18 | EIS Relay (#2 - steering lock)       |
-|  18 | GND     | *[GPIO 25]*                  |-| 23  | GND     | *[GPIO 24]*                          |
-|  19 | GPIO 14 | Status LED (Data OUT)        |-| 22  | GPIO 17 | Fingerprint Scanner (TX)             |
-|  20 | GPIO 15 | Status LED (Data IN)         |-| 21  | GPIO 16 | Fingerprint Scanner (RX)             |
+| --: | :------ | :--------------------------- |-| --: | :------ | :----------------------------- |
+|   1 | GPIO  0 | Button (Switch - N)          |-| 40  | VBUS    |                                |
+|   2 | GPIO  1 | Button (Switch - D)          |-| 39  | VSYS    |                                |
+|   3 | GND     |                              |-| 38  | GND     |                                |
+|   4 | GPIO  2 | Button (Switch - P)          |-| 37  | 3V3_EN  |                                |
+|   5 | GPIO  3 | Button (Switch - R)          |-| 36  | 3V3_OUT |                                |
+|   6 | GPIO  4 | Debug (TX)                   |-| 35  | VDC_REF |                                |
+|   7 | GPIO  5 | Debug (RX)                   |-| 34  | GPIO 28 | Actuator - Motor Relay (#1)    |
+|   8 | GND     |                              |-| 33  | GND     |                                |
+|   9 | GPIO  6 | Button (Telltale - P)        |-| 32  | GPIO 27 | Actuator - Motor Relay (#2)    |
+|  10 | GPIO  7 | Button (Telltale - R)        |-| 31  | GPIO 26 | Actuator - Potentiometer Brush |
+|  11 | GPIO  8 | Button (Telltale - N)        |-| 30  | RUN     |                                |
+|  12 | GPIO  9 | Button (Telltale - D)        |-| 29  | GPIO 22 | EIS Relay (#3 - start)         |
+|  13 | GND     | *[GPIO 29]*                  |-| 28  | GND     | *[GPIO 23]*                    |
+|  14 | GPIO 10 |                              |-| 27  | GPIO 21 | CAN #0 (RX)                    |
+|  15 | GPIO 11 |                              |-| 26  | GPIO 20 | CAN #0 (TX)                    |
+|  16 | GPIO 12 |                              |-| 25  | GPIO 19 |                                |
+|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP) |-| 24  | GPIO 18 | EIS Relay (#1 - steering lock) |
+|  18 | GND     | *[GPIO 25]*                  |-| 23  | GND     | *[GPIO 24]*                    |
+|  19 | GPIO 14 | Status LED (Data OUT)        |-| 22  | GPIO 17 | Fingerprint Scanner (TX)       |
+|  20 | GPIO 15 | Status LED (Data IN)         |-| 21  | GPIO 16 | Fingerprint Scanner (RX)       |
 
 LED | GPIO 25
 
@@ -194,8 +194,7 @@ Or those two combined, [buttons and their LEDs and the status LED](https://www.e
 
 ### EIS Relays
 
-* ~~1x Control #2 (steering lock)~~
-* 1x Control #1 (ignition switch)
+* 1x Control #2 (steering lock)
 * 1x Control #3 (start signal)
 * 1x 5V
 * 1x GND
@@ -210,12 +209,10 @@ Or those two combined, [buttons and their LEDs and the status LED](https://www.e
 * 1x GND
 => [5 pin](https://www.ebay.co.uk/itm/174775342997)
 
-### CAN bus #0 and #1
+### CAN bus #0
 
-* ~~2x~~ 1x CAN-L
-* ~~2x~~ 1x CAN-H
-=> [4 pin](https://www.ebay.co.uk/itm/174775342997)
-=> [2 pin](https://www.ebay.co.uk/itm/174775342997)
+* 1x CAN-L
+* 1x CAN-H
 
 ### Total
 
@@ -253,22 +250,27 @@ Crossed out parts are things I either didn't buy or don't need. Yet. Which is wh
 | [DC Power Connector](https://www.mouser.co.uk/ProductDetail/502-RASM722X) | £1
 | [Resistor -  1kΩ](https://www.mouser.co.uk/ProductDetail/710-560112132038) | £0.10 * 7
 | [Resistor - 10kΩ](https://www.mouser.co.uk/ProductDetail/710-560112116005) | £0.09
-| [Capacitor - 150pF](https://www.mouser.co.uk/ProductDetail/710-885012007017) | £0.08 * 2
-| [Resonator - 16MHz/15pF](https://www.mouser.co.uk/ProductDetail/81-CSTNE16M0VH3L000R) | £0.30
+| [Capacitor - 150pF](https://www.mouser.co.uk/ProductDetail/80-C1206C151F1G) | £0.08 * 2
+| [Resonator - 16MHz/15pF](https://www.mouser.co.uk/ProductDetail/81-CSTNE16M0V530000R) | £0.30
 
 ## Connectors
 
+| Part | Price |
+| :--- | :---  |
 | [Motherboard connector - 24pin/vertical](https://www.mouser.co.uk/ProductDetail/538-213227-2410) | £3
-| [Motherboard connector - 24pin/horizontal](https://www.mouser.co.uk/ProductDetail/538-503148-2490)) | £3
-| ~~[Wire to Motherboard connector - 24pin](https://www.mouser.co.uk/ProductDetail/538-503148-2490) | £3~~
-| ~~[Panel mount connector - 24 pin](https://www.mouser.co.uk/ProductDetail/798-DF51-24DEP-2C) | £1~~
-| ~~[Wire to panel mount connector - 24pin](https://www.mouser.co.uk/ProductDetail/798-DF51-24DS-2C) | £0.3~~
+| [Motherboard connector - 24pin/horizontal](https://www.mouser.co.uk/ProductDetail/538-503148-2490) | £3
+| [Headers & Wire Housings - 24pin](https://www.mouser.co.uk/ProductDetail/538-503149-2400) | £0.6
+| ~~[Wire to Motherboard connector - 24pin](https://www.mouser.co.uk/ProductDetail/538-503148-2490)~~ | ~~£3~~
+| ~~[Panel mount connector - 24 pin](https://www.mouser.co.uk/ProductDetail/798-DF51-24DEP-2C)~~ | ~~£1~~
+| ~~[Wire to panel mount connector - 24pin](https://www.mouser.co.uk/ProductDetail/798-DF51-24DS-2C)~~ | ~~£0.3~~
+| ~~[Molex MiniFit Jr Housing - 2x3pin](https://www.mouser.co.uk/ProductDetail/538-39-30-6068)~~ | ~~£1~~
 | [Debug connector - 5pin/vertical](https://www.mouser.co.uk/ProductDetail/538-53398-0567) | £0.6
+| [DC Power Connector](https://www.mouser.co.uk/ProductDetail/502-RASM722X) | £1.3
 
 Don't think I'm going to buy the panel and wire to panel connectors. The motherboard connector looks quite big, so it might
 be better to just stick that out through the box. I'll leave them in here for now, because I might change my mind.
 
-I want this thing to be as small as possible, easier to hide it somewhere in the then :). I have yet to
+I want this thing to be as small as possible, easier to hide it somewhere in the car then :). I have yet to
 decide if I want a vertical or a horizontal connector..
 
 The side view with vertical motherboard connector:
@@ -282,24 +284,25 @@ The view with horizontal motherboard connector, sticking out of the box (outside
 
 | Part | Price |
 | :--- | :---  |
-| [Raspberry Pi Debug Probe](https://thepihut.com/products/raspberry-pi-debug-probe?variant=42380171870403) | £12 |
-| [120-Piece Ultimate Jumper Bumper Pack](https://thepihut.com/products/thepihuts-jumper-bumper-pack-120pcs-dupont-wire?variant=13530244284478) | £6 |
-| [575-Piece Ultimate Resistor Kit](https://thepihut.com/products/ultimate-resistor-kit?variant=36476117073) | £6 |
-| [Half-Size Breadboard](https://thepihut.com/products/breadboard-400-point-clear?variant=31986026381374) | £3 * 3 |
-| [Breadboard for Pico](https://thepihut.com/products/breadboard-for-pico?variant=39819276386499) | £4 |
-| [Short Plug Headers](https://thepihut.com/products/short-plug-headers-for-raspberry-pi-pico-2-x-20-pin-male?variant=42182974505155) | £1 |
-| [Tactile Switch Buttons](https://thepihut.com/products/tactile-switch-buttons-6mm-tall-x-10-pack?variant=27739414097) | £3 |
-| [Breakout for 6-pin JST SH-Style Connector - Side Entry](https://thepihut.com/products/breakout-for-6-pin-jst-sh-style-connector-side-entry?variant=42438253871299) | £1 |
-| [Extra-long break-away 0.1" 16-pin strip male header (5 pieces)](https://thepihut.com/products/extra-long-break-away-0-1-16-pin-strip-male-header-5-pieces?variant=27740420881) | £3 |
-| [220V Power Supply Adapter (12V/10A)](https://www.ebay.co.uk/itm/234147120198?var=533767190848) | £21 |
-| [DB9 Breakout Board PCB – Male](https://thepihut.com/products/db9-breakout-board-pcb-male?variant=41727856148675) | £2 |
-| [Breadboard-friendly 2.1mm DC barrel jack](https://thepihut.com/products/breadboard-friendly-2-1mm-dc-barrel-jack?variant=27740417489) | £1 |
-| [In-line power switch for 2.1mm barrel jack](https://thepihut.com/products/in-line-power-switch-for-2-1mm-barrel-jack?variant=27739226065) | £2 |
-| [DB9 Right Angle MALE Connector - PCB Mount D-SUB](https://www.ebay.co.uk/itm/325261653847) | £3 |
-| [Dupont Jump Wire F-F Jumper Breadboard Cable Lead -  6pin](https://www.ebay.co.uk/itm/275827705804?var=577580216871) | £2 |
-| [Dupont Jump Wire F-F Jumper Breadboard Cable Lead - 10pin](https://www.ebay.co.uk/itm/275827705804?var=577580216855) | £2 |
-| [Dupont Jump Wire M-M Jumper Breadboard Cable Lead - 10cm](https://www.ebay.co.uk/itm/275268807202?var=575537821821) | £8 |
+| [Raspberry Pi Debug Probe](https://thepihut.com/products/raspberry-pi-debug-probe?variant=42380171870403) | £12
+| [120-Piece Ultimate Jumper Bumper Pack](https://thepihut.com/products/thepihuts-jumper-bumper-pack-120pcs-dupont-wire?variant=13530244284478) | £6
+| [575-Piece Ultimate Resistor Kit](https://thepihut.com/products/ultimate-resistor-kit?variant=36476117073) | £6
+| [Half-Size Breadboard](https://thepihut.com/products/breadboard-400-point-clear?variant=31986026381374) | £3 * 3
+| [Breadboard for Pico](https://thepihut.com/products/breadboard-for-pico?variant=39819276386499) | £4
+| [Short Plug Headers](https://thepihut.com/products/short-plug-headers-for-raspberry-pi-pico-2-x-20-pin-male?variant=42182974505155) | £1
+| [Tactile Switch Buttons](https://thepihut.com/products/tactile-switch-buttons-6mm-tall-x-10-pack?variant=27739414097) | £3
+| [Breakout for 6-pin JST SH-Style Connector - Side Entry](https://thepihut.com/products/breakout-for-6-pin-jst-sh-style-connector-side-entry?variant=42438253871299) | £1
+| [Extra-long break-away 0.1" 16-pin strip male header (5 pieces)](https://thepihut.com/products/extra-long-break-away-0-1-16-pin-strip-male-header-5-pieces?variant=27740420881) | £3
+| [220V Power Supply Adapter (12V/10A)](https://www.ebay.co.uk/itm/234147120198?var=533767190848) | £21
+| [DB9 Breakout Board PCB – Male](https://thepihut.com/products/db9-breakout-board-pcb-male?variant=41727856148675) | £2
+| [Breadboard-friendly 2.1mm DC barrel jack](https://thepihut.com/products/breadboard-friendly-2-1mm-dc-barrel-jack?variant=27740417489) | £1
+| [In-line power switch for 2.1mm barrel jack](https://thepihut.com/products/in-line-power-switch-for-2-1mm-barrel-jack?variant=27739226065) | £2
+| [DB9 Right Angle MALE Connector - PCB Mount D-SUB](https://www.ebay.co.uk/itm/325261653847) | £3
+| [Dupont Jump Wire F-F Jumper Breadboard Cable Lead -  6pin](https://www.ebay.co.uk/itm/275827705804?var=577580216871) | £2
+| [Dupont Jump Wire F-F Jumper Breadboard Cable Lead - 10pin](https://www.ebay.co.uk/itm/275827705804?var=577580216855) | £2
+| [Dupont Jump Wire M-M Jumper Breadboard Cable Lead - 10cm](https://www.ebay.co.uk/itm/275268807202?var=575537821821) | £8
 | [SO14 IC to Breadboard adapter](https://www.mouser.co.uk/ProductDetail/535-LCQT-SOIC14) | £4 * 2
+| [Molex MiniFit Jr connector + cable - 2x3pin, 600mm](https://www.mouser.co.uk/ProductDetail/538-215328-1063) | £6.7
 
 ## Other
 
@@ -308,13 +311,15 @@ These aren't things needed, but maybe I'll have a need for them one day..
 | Part | Price |
 | :--- | :---  |
 | [1 Channel Relay for RPi](https://thepihut.com/products/grove-relay?variant=40341004746947) | £3 |
-| [2 Channel Relay Breakout](https://thepihut.com/products/2-channel-relay-breakout-12v) | £8 |
-| [2 Channel Isolated Relay Breakout](https://thepihut.com/products/2-channel-isolated-relay-breakout-12v) | £12 |
+| [2 Channel Relay Breakout - 12v](https://thepihut.com/products/2-channel-relay-breakout-12v) | £8 |
+| [2 Channel Relay Breakout -  5v](https://thepihut.com/products/2-channel-relay-breakout-5v) | £7 |
+| [2 Channel Isolated Relay Breakout - 12v](https://thepihut.com/products/2-channel-isolated-relay-breakout-12v) | £12 |
+| [2 Channel Isolated Relay Breakout -  5v](https://thepihut.com/products/2-channel-isolated-relay-breakout-5v) | £13 |
 | [4 Channel Relay Breakout](https://thepihut.com/products/4-channel-relay-breakout-12v) | £16 |
-| [2 Channel Latching Relay](https://thepihut.com/products/grove-2-coil-latching-relay) | £7 |
+| [2 Channel Latching Relay - 5V](https://thepihut.com/products/grove-2-coil-latching-relay) | £7 |
 | [9A/28V SPDT MOSFET Switch](https://thepihut.com/products/moswitch-9a-28v-spdt-mosfet-switch) | £5 |
-| [DC-DC Buck-Mode Power Module (8~28V to 5V 1.6A)](https://thepihut.com/products/dc-dc-buck-mode-power-module-8-28v-to-5v-1-6a) | £3 |
-| [DC-DC Buck-Mode Power Module (5.5~28V to 3.3V 2.4A)](https://thepihut.com/products/dc-dc-buck-mode-power-module-5-5-28v-to-3-3v-2-4a) | £3 |
+| [DC-DC Buck-Mode Power Module (8-28V to 5V 1.6A)](https://thepihut.com/products/dc-dc-buck-mode-power-module-8-28v-to-5v-1-6a) | £3 |
+| [DC-DC Buck-Mode Power Module (5.5-28V to 3.3V 2.4A)](https://thepihut.com/products/dc-dc-buck-mode-power-module-5-5-28v-to-3-3v-2-4a) | £3 |
 | [5V Buck Converter Unit (ME3116AM6G)](https://thepihut.com/products/5v-buck-converter-unit-me3116am6g) | £4 |
 | [High Precision Capacitive Fingerprint Reader](https://thepihut.com/products/high-precision-capacitive-fingerprint-reader-b) | £61 |
 | [I2C GPIO Expander](https://thepihut.com/products/adafruit-pcf8574-i2c-gpio-expander-breakout-stemma-qt-qwiic) | £5 |
