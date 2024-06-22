@@ -18,7 +18,7 @@ pub struct DbwConfig {
 }
 
 impl DbwConfig {
-    pub fn as_array(&self) -> [u8; 2] {
+    fn as_array(&self) -> [u8; 2] {
         [self.active_button as u8, self.valet_mode as u8]
     }
 
