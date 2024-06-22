@@ -30,7 +30,7 @@ type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SI
 pub async fn actuator_control(
     receiver: Receiver<'static, CriticalSectionRawMutex, Button, 64>,
     flash: &'static FlashMutex,
-    mut actuator: Actuator<'static, PIN_26>, //AnyPin>,
+    mut actuator: Actuator<'static, PIN_26>,
 ) {
     debug!("Started actuator control task");
 
