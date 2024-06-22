@@ -1,10 +1,10 @@
 use defmt::{debug, error};
 
-use embassy_rp::adc;
-use embassy_rp::adc::{Adc, Async as AdcAsync};
+//use embassy_rp::adc::AdcPin;
+//use embassy_rp::gpio::AnyPin;
+
 use embassy_rp::flash::{Async as FlashAsync, Flash};
-use embassy_rp::gpio::{Output, SlewRate};
-use embassy_rp::peripherals::FLASH;
+use embassy_rp::peripherals::{FLASH, PIN_26};
 use embassy_sync::channel::{Channel, Receiver};
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex, blocking_mutex::raw::NoopRawMutex, mutex::Mutex,
@@ -19,6 +19,8 @@ use crate::lib_config;
 use crate::DbwConfig;
 use crate::FLASH_SIZE;
 
+use actuator::Actuator;
+
 pub static CHANNEL_ACTUATOR: Channel<CriticalSectionRawMutex, Button, 64> = Channel::new();
 type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SIZE>>;
 
@@ -28,27 +30,20 @@ type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SI
 pub async fn actuator_control(
     receiver: Receiver<'static, CriticalSectionRawMutex, Button, 64>,
     flash: &'static FlashMutex,
-    mut pin_motor_plus: Output<'static>,
-    mut pin_motor_minus: Output<'static>,
-    mut pot_adc: Adc<'static, AdcAsync>,
-    mut pot_pin: adc::Channel<'static>,
+    mut actuator: Actuator<'static, PIN_26>, //AnyPin>,
 ) {
     debug!("Started actuator control task");
 
     // TODO: Get the real value (in Ω).
-    // If we create a command to work the actuator, we can find this value and store it in the config.
+    // If we create a command to calibrate the actuator, we can find this value and store it in the config.
     // We already know how many Ω it takes to move the actuator 1mm..
     static ACTUATOR_START_POSITION: i16 = 1200;
-
-    pin_motor_plus.set_slew_rate(SlewRate::Fast);
-    pin_motor_minus.set_slew_rate(SlewRate::Fast);
 
     loop {
         let button = receiver.receive().await; // Block waiting for data.
 
         // Get the current gear from the actuator.
-        let current_gear =
-            actuator::find_gear(&mut pot_adc, &mut pot_pin, ACTUATOR_START_POSITION).await;
+        let current_gear = actuator.find_gear(ACTUATOR_START_POSITION).await;
 
         // Calculate the amount of gears and direction to move.
         // - => Higher gear - BACKWARDS
@@ -56,14 +51,7 @@ pub async fn actuator_control(
         let amount: i8 = current_gear as i8 - button as i8;
 
         // Move the actuator.
-        actuator::move_actuator(
-            amount,
-            &mut pin_motor_plus,
-            &mut pin_motor_minus,
-            &mut pot_adc,
-            &mut pot_pin,
-        )
-        .await;
+        actuator.move_actuator(amount).await;
 
         // Now that we're done moving the actuator, Enable reading buttons again.
         unsafe { BUTTONS_BLOCKED = false };

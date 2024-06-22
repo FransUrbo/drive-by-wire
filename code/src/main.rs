@@ -4,16 +4,16 @@
 use defmt::{debug, error, info};
 
 use embassy_executor::Spawner;
-use embassy_rp::adc::{Adc, Config as AdcConfig, InterruptHandler as ADCInterruptHandler};
+use embassy_rp::adc::InterruptHandler as ADCInterruptHandler;
+use embassy_rp::bind_interrupts;
 use embassy_rp::flash::{Async as FlashAsync, Flash};
-use embassy_rp::gpio::{Level, Output, Pin, Pull};
+use embassy_rp::gpio::{Level, Output, Pin};
 use embassy_rp::peripherals::{FLASH, PIO1, UART0, UART1};
 use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
 use embassy_rp::uart::{
     Blocking, Config as UartConfig, InterruptHandler as UARTInterruptHandler, UartTx,
 };
 use embassy_rp::watchdog::*;
-use embassy_rp::{adc, bind_interrupts};
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer};
 
@@ -21,6 +21,8 @@ type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SI
 type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static, UART0>>;
 
 use static_cell::StaticCell;
+
+use actuator::Actuator;
 
 use {defmt_serial as _, panic_probe as _};
 
@@ -120,22 +122,10 @@ async fn main(spawner: Spawner) {
     // =====
     //  8. Initialize and test the actuator.
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
-    let mut actuator_motor_plus = Output::new(p.PIN_27, Level::Low); // Actuator/Motor Relay (#1)
-    let mut actuator_motor_minus = Output::new(p.PIN_28, Level::Low); // Actuator/Motor Relay (#2)
-
-    //  Initialize the actuator potentiometer.
-    let mut adc = Adc::new(p.ADC, Irqs, AdcConfig::default());
-    let mut actuator_potentiometer = adc::Channel::new_pin(p.PIN_26, Pull::None); // Actuator/Potentiometer Brush
+    let mut actuator = Actuator::new(p.PIN_27.into(), p.PIN_28.into(), p.PIN_26, p.ADC, Irqs);
 
     // Test actuator control.
-    if !actuator::test_actuator(
-        &mut actuator_motor_plus,
-        &mut actuator_motor_minus,
-        &mut adc,
-        &mut actuator_potentiometer,
-    )
-    .await
-    {
+    if !actuator.test_actuator().await {
         error!("Actuator failed to move");
 
         // Stop feeding the watchdog, resulting in a reset.
@@ -147,10 +137,7 @@ async fn main(spawner: Spawner) {
         .spawn(actuator_control(
             CHANNEL_ACTUATOR.receiver(),
             flash,
-            actuator_motor_plus,
-            actuator_motor_minus,
-            adc,
-            actuator_potentiometer,
+            actuator,
         ))
         .unwrap();
     CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
