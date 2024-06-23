@@ -44,6 +44,10 @@ pub async fn actuator_control(
 
         // Get the current gear from the actuator.
         let current_gear = actuator.find_gear(ACTUATOR_START_POSITION).await;
+        debug!(
+            "Found current gear: {:?} (button={:?})",
+            current_gear, button
+        );
 
         // Calculate the amount of gears and direction to move.
         // - => Higher gear - BACKWARDS
