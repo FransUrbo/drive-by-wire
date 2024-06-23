@@ -53,12 +53,14 @@ pub static mut BUTTON_ENABLED: Button = Button::UNSET;
 pub static mut BUTTONS_BLOCKED: bool = false;
 
 // Control the drive button LEDs - four buttons, four LEDs.
+// The `button` parameter is only here to prettify the log output :).
 #[embassy_executor::task(pool_size = 4)]
 async fn set_led(
     receiver: Receiver<'static, CriticalSectionRawMutex, LedStatus, 64>,
     led_pin: AnyPin,
+    button: Button,
 ) {
-    debug!("Started button LED control task");
+    debug!("Button::{}: Started button LED control task", button);
 
     let mut led = Output::new(led_pin, Level::Low); // Always start with the LED off.
 
@@ -89,16 +91,16 @@ pub async fn read_button(
     match button {
         Button::UNSET => (), // Should be impossible, but just to make the compiler happy.
         Button::P => spawner
-            .spawn(set_led(CHANNEL_P.receiver(), led_pin))
+            .spawn(set_led(CHANNEL_P.receiver(), led_pin, button))
             .unwrap(),
         Button::N => spawner
-            .spawn(set_led(CHANNEL_N.receiver(), led_pin))
+            .spawn(set_led(CHANNEL_N.receiver(), led_pin, button))
             .unwrap(),
         Button::R => spawner
-            .spawn(set_led(CHANNEL_R.receiver(), led_pin))
+            .spawn(set_led(CHANNEL_R.receiver(), led_pin, button))
             .unwrap(),
         Button::D => spawner
-            .spawn(set_led(CHANNEL_D.receiver(), led_pin))
+            .spawn(set_led(CHANNEL_D.receiver(), led_pin, button))
             .unwrap(),
     };
     debug!("Button::{}: Started button control task", button);
