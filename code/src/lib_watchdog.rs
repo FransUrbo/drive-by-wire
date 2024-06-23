@@ -1,4 +1,4 @@
-use defmt::{debug, info, trace};
+use defmt::{debug, info};
 
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
@@ -23,8 +23,6 @@ pub async fn feed_watchdog(
         wd.feed();
 
         Timer::after_millis(750).await;
-
-        trace!("Trying to receive");
         match control.try_receive() {
             // Only *if* there's data, receive and deal with it.
             Ok(StopWatchdog::Yes) => {
