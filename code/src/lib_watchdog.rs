@@ -20,16 +20,17 @@ pub async fn feed_watchdog(
 
     // Feed the watchdog every 3/4 second to avoid reset.
     loop {
-        wd.feed();
-
-        Timer::after_millis(750).await;
         match control.try_receive() {
             // Only *if* there's data, receive and deal with it.
             Ok(StopWatchdog::Yes) => {
                 info!("StopWatchdog = Yes received");
-                break;
+                return;
             }
-            Err(_) => continue,
+            _ => {
+                Timer::after_millis(750).await;
+                wd.feed();
+                continue;
+            }
         }
     }
 }
