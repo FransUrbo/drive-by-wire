@@ -43,6 +43,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Update Sun 6 May 2024](#update-sun-6-may-2024)
      - [Update Sun 8 May 2024](#update-sun-8-may-2024)
      - [Update Sun 9 May 2024](#update-sun-9-may-2024)
+     - [Update Thu 27 Jun 2024](#update-thu-27-jun-2024)
 5. [Additional information](#additional-information)
 
 ## Fingerprint scanner instead of Start button
@@ -512,6 +513,21 @@ is then selected automatically.
 * Change the DEBUG connector to a vertical, 5pin, JST connector.
 * Change all smaller motherboard connectors with one big one. This should then go to ONE big panel/chassis
   connector, which can then be split up into multiple leads to the different parts of the car.
+
+### Update Thu 27 Jun 2024
+
+* Need to protect the 5V rail from spikes from the actuator control relay, so add
+  a big, fat electrolytic capacitor.
+* Because of the new capacitor is HUGE (!!), better rearrange all the connectors to
+  the BOTTOM layer.
+* Move the two CAN-bus ICs from the BOTTOM to the TOP layer, to make room for the
+  connectors on the BOTTOM layer.
+
+These changes will allow us to use a different case, where we can put the RPi/Pico,
+the 5V converter and the CAN-bus controllers on one side, and mount it as low in
+the case as possible. IF we get an aluminium case, we can even use that as a heat
+shield for the RPi/Pico CPU, but most importantly, for the 5V converter, which if
+it draws "a lot" of power, will get hot.
 
 # Additional information
 
