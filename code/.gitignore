@@ -1,4 +1,4 @@
 Cargo.lock
 *~
-*.log
+*.log*
 target*
