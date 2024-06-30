@@ -44,6 +44,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Update Sun 8 May 2024](#update-sun-8-may-2024)
      - [Update Sun 9 May 2024](#update-sun-9-may-2024)
      - [Update Thu 27 Jun 2024](#update-thu-27-jun-2024)
+     - [Update Sun 30 Jun 2024](#update-sun-30-jun-2024)
 5. [Additional information](#additional-information)
 
 ## Fingerprint scanner instead of Start button
@@ -528,6 +529,14 @@ the 5V converter and the CAN-bus controllers on one side, and mount it as low in
 the case as possible. IF we get an aluminium case, we can even use that as a heat
 shield for the RPi/Pico CPU, but most importantly, for the 5V converter, which if
 it draws "a lot" of power, will get hot.
+
+### Update Sun 30 Jun 2024
+
+* Rewrite and get the actuator functionality working. Well, mostly anyway. I might have a
+  hardware problem, the Pico just "suddenly" reboots for no apparent reason (no crash etc).
+  MIGHT be a feedback from the actuator, or a dip in voltage/amps when it's moving that the
+  power supply can't quite handle (I DID get a very cheap one!), so the Pico doesn't get
+  enough power..
 
 # Additional information
 
