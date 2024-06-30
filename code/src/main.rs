@@ -89,7 +89,7 @@ async fn main(spawner: Spawner) {
     spawner
         .spawn(feed_watchdog(CHANNEL_WATCHDOG.receiver(), watchdog))
         .unwrap();
-    info!("Initialized the watchdog timer");
+    info!("Initialized the Watchdog timer");
 
     // =====
     //  5. TODO: Initialize the CAN bus. Needs to come third, so we can talk to the IC.
@@ -122,14 +122,15 @@ async fn main(spawner: Spawner) {
     // =====
     //  8. Initialize and test the actuator.
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
-    let mut actuator = Actuator::new(p.PIN_27.into(), p.PIN_28.into(), p.PIN_26, p.ADC, Irqs);
+    let mut actuator = Actuator::new(p.PIN_10.into(), p.PIN_11.into(), p.PIN_26, p.ADC, Irqs);
 
     // Test actuator control.
     if !actuator.test_actuator().await {
-        error!("Actuator failed to move");
+        // ERROR: Actuator have not moved.
+        CHANNEL_CANWRITE.send(CANMessage::ActuatorTestFailed).await;
 
         // Stop feeding the watchdog, resulting in a reset.
-        CHANNEL_WATCHDOG.send(StopWatchdog::Yes).await;
+        //CHANNEL_WATCHDOG.send(StopWatchdog::Yes).await;
     }
 
     // Actuator works. Spawn off the actuator control task.
@@ -163,7 +164,8 @@ async fn main(spawner: Spawner) {
 
     // Verify fingerprint.
     if config.valet_mode {
-        info!("Valet mode, won't check fingerprint");
+        neopixel.write(&[(0, 0, 255).into()]).await; // BLUE to indicate valet mode.
+        CHANNEL_CANWRITE.send(CANMessage::ValetMode).await;
     } else {
         loop {
             let mut fp_scanner = fp_scanner.lock().await;
@@ -181,11 +183,11 @@ async fn main(spawner: Spawner) {
             }
             fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
         }
-    }
-    neopixel.write(&[(0, 255, 0).into()]).await; // GREEN
 
-    // Send message to IC: "Use authorized".
-    CHANNEL_CANWRITE.send(CANMessage::Authorized).await;
+        // Send message to IC: "Use authorized".
+        neopixel.write(&[(0, 255, 0).into()]).await; // GREEN
+        CHANNEL_CANWRITE.send(CANMessage::Authorized).await;
+    }
 
     // =====
     // 10. Spawn off one button reader per button. They will then spawn off a LED controller each so that
@@ -283,11 +285,7 @@ async fn main(spawner: Spawner) {
 
     // =====
     // 13. Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
-    if config.valet_mode {
-        // Set the status LED to BLUE to indicate valet mode.
-        neopixel.write(&[(0, 0, 255).into()]).await;
-        CHANNEL_CANWRITE.send(CANMessage::ValetMode).await;
-    } else {
+    if !config.valet_mode {
         // Sleep here three seconds to allow the car to "catch up".
         // Sometime, it takes a while for the car to "wake up". Not sure why..
         debug!("Waiting 3s to wakeup the car");
