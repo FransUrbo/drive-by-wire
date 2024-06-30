@@ -43,7 +43,7 @@ rev = "362de7"
 
 [dependencies.actuator]
 git = "https://github.com/FransUrbo/rust-libs-actuator.git"
-rev = "63a208d"
+rev = "f32ac1c"
 
 # They haven't released the `embassy_time::with_deadline` yet, so need to use the GIT version.
 [dependencies.embassy-embedded-hal]
@@ -169,3 +169,19 @@ path = "src/set-password.rs"
 [[bin]]
 name = "set-fingerprint"
 path = "src/set-fingerprint.rs"
+
+[[bin]]
+name = "read-actuator-pot"
+path = "src/read-actuator-pot.rs"
+
+[[bin]]
+name = "move-actuator_forward"
+path = "src/move-actuator_forward.rs"
+
+[[bin]]
+name = "move-actuator_backward"
+path = "src/move-actuator_backward.rs"
+
+[[bin]]
+name = "test-actuator"
+path = "src/test-actuator.rs"
