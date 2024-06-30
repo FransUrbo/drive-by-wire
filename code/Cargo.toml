@@ -43,7 +43,7 @@ rev = "362de7"
 
 [dependencies.actuator]
 git = "https://github.com/FransUrbo/rust-libs-actuator.git"
-rev = "f32ac1c"
+rev = "14d3e80"
 
 # They haven't released the `embassy_time::with_deadline` yet, so need to use the GIT version.
 [dependencies.embassy-embedded-hal]
