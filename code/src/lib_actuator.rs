@@ -1,8 +1,5 @@
 use defmt::{debug, error};
 
-//use embassy_rp::adc::AdcPin;
-//use embassy_rp::gpio::AnyPin;
-
 use embassy_rp::flash::{Async as FlashAsync, Flash};
 use embassy_rp::peripherals::{FLASH, PIN_26};
 use embassy_sync::channel::{Channel, Receiver};
@@ -34,10 +31,10 @@ pub async fn actuator_control(
 ) {
     debug!("Started actuator control task");
 
-    // TODO: Get the real value (in Ω).
+    // Get the real value (in Ω).
     // If we create a command to calibrate the actuator, we can find this value and store it in the config.
     // We already know how many Ω it takes to move the actuator 1mm..
-    static ACTUATOR_START_POSITION: i16 = 1200;
+    static ACTUATOR_START_POSITION: u16 = 30;
 
     loop {
         let button = receiver.receive().await; // Block waiting for data.
@@ -45,17 +42,18 @@ pub async fn actuator_control(
         // Get the current gear from the actuator.
         let current_gear = actuator.find_gear(ACTUATOR_START_POSITION).await;
         debug!(
-            "Found current gear: {:?} (button={:?})",
-            current_gear, button
+            "Button::{}: Found current gear: {:?}",
+            button,
+            Button::from_integer(current_gear as u8)
         );
+        // FAKE: Use the current button selected to calculate the direction and amount to move the actuator
+        let current_gear = unsafe { BUTTON_ENABLED as u8 };
 
         // Calculate the amount of gears and direction to move.
-        // - => Higher gear - BACKWARDS
-        // + => Lower gear  - FORWARD
         let amount: i8 = current_gear as i8 - button as i8;
 
         // Move the actuator.
-        actuator.move_actuator(amount).await;
+        actuator.change_gear_mode(amount).await;
 
         // Now that we're done moving the actuator, Enable reading buttons again.
         unsafe { BUTTONS_BLOCKED = false };
