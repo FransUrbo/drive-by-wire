@@ -35,6 +35,21 @@ pub enum Button {
     D,
     UNSET,
 }
+
+// https://medium.com/@mikecode/rust-conversion-between-enum-and-integer-0e10e613573c
+impl Button {
+    pub fn from_integer(v: u8) -> Self {
+        match v {
+            0 => Self::P,
+            1 => Self::R,
+            2 => Self::N,
+            3 => Self::D,
+            4 => Self::UNSET,
+            _ => panic!("Unknown value: {}", v),
+        }
+    }
+}
+
 pub enum LedStatus {
     On,
     Off,
