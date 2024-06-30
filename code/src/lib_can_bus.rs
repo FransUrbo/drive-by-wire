@@ -1,4 +1,4 @@
-use defmt::{debug, info};
+use defmt::{debug, error, info};
 
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
@@ -10,14 +10,15 @@ pub enum CANMessage {
     FPInitialized,
     InitActuator,
     ActuatorInitialized,
+    ActuatorTestFailed,
     RelaysInitialized,
     ButtonsInitialized,
     ValetMode,
+    EnableValetMode,
+    DisableValetMode,
     StartCar,
     Authorizing,
     Authorized,
-    EnableValetMode,
-    DisableValetMode,
 }
 pub static CHANNEL_CANWRITE: Channel<CriticalSectionRawMutex, CANMessage, 64> = Channel::new();
 
@@ -44,6 +45,9 @@ pub async fn write_can(receiver: Receiver<'static, CriticalSectionRawMutex, CANM
             CANMessage::ActuatorInitialized => {
                 info!("=> 'Actuator initialized'");
             }
+            CANMessage::ActuatorTestFailed => {
+                error!("=> 'Actuator failed to move'");
+            }
             CANMessage::RelaysInitialized => {
                 info!("=> 'Relays initialized");
             }
@@ -53,6 +57,12 @@ pub async fn write_can(receiver: Receiver<'static, CriticalSectionRawMutex, CANM
             CANMessage::ValetMode => {
                 info!("=> 'Valet mode, won't authorize use'");
             }
+            CANMessage::EnableValetMode => {
+                info!("=> 'Valet Mode Enabled'");
+            }
+            CANMessage::DisableValetMode => {
+                info!("=> 'Valet Mode Disabled'");
+            }
             CANMessage::Authorizing => {
                 info!("=> 'Authorizing use'");
             }
@@ -61,12 +71,6 @@ pub async fn write_can(receiver: Receiver<'static, CriticalSectionRawMutex, CANM
             }
             CANMessage::StartCar => {
                 info!("=> 'Sending start signal to car'");
-            }
-            CANMessage::EnableValetMode => {
-                info!("=> 'Valet Mode Enabled'");
-            }
-            CANMessage::DisableValetMode => {
-                info!("=> 'Valet Mode Disabled'");
             }
         }
     }
