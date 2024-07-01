@@ -35,17 +35,17 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
    - [DriveByWire code](#drivebywire-code)
      - [Relays](#relays)
      - [Status LED](#status-led)
-   - [Simulations](#simulations)
-     - [Update Sun 2 May 2024](#update-sun-2-may-2024)
-     - [Update Sun 3 May 2024](#update-sun-3-may-2024)
-     - [Update Sun 4 May 2024](#update-sun-4-may-2024)
-     - [Update Sun 5 May 2024](#update-sun-5-may-2024)
-     - [Update Sun 6 May 2024](#update-sun-6-may-2024)
-     - [Update Sun 8 May 2024](#update-sun-8-may-2024)
-     - [Update Sun 9 May 2024](#update-sun-9-may-2024)
-     - [Update Thu 27 Jun 2024](#update-thu-27-jun-2024)
-     - [Update Sun 30 Jun 2024](#update-sun-30-jun-2024)
-5. [Additional information](#additional-information)
+5. [Updates](#updates)
+   - [Update Sun 2 May 2024](#update-sun-2-may-2024)
+   - [Update Sun 3 May 2024](#update-sun-3-may-2024)
+   - [Update Sun 4 May 2024](#update-sun-4-may-2024)
+   - [Update Sun 5 May 2024](#update-sun-5-may-2024)
+   - [Update Sun 6 May 2024](#update-sun-6-may-2024)
+   - [Update Sun 8 May 2024](#update-sun-8-may-2024)
+   - [Update Sun 9 May 2024](#update-sun-9-may-2024)
+   - [Update Thu 27 Jun 2024](#update-thu-27-jun-2024)
+   - [Update Sun 30 Jun 2024](#update-sun-30-jun-2024)
+6. [Additional information](#additional-information)
 
 ## Fingerprint scanner instead of Start button
 
@@ -64,7 +64,7 @@ HOPEFULLY, I can also send the same trigger signal that the EIS would send from 
 
 # Software function
 
-> At any point, if there is a fail, sett the RED LED blinking and stop further program execution.
+> At any point, if there is a fail, set the RED LED blinking and stop further program execution.
 
 1. Bootup process.
      1. Light status LED (RED).												-> BOOTUP STARTED
@@ -131,7 +131,7 @@ HOPEFULLY, I can also send the same trigger signal that the EIS would send from 
          7. Set NEW drive buttons telltale LED.
 
 Q: How can the DriveByWire, SmartTOP and SprintBooster all be
-   set in valet mode all at the same time?
+   set in valet mode all at the same time?<br>
 Q: Can DriveByWire check CAN for certain buttons around the car
    to be pressed in sequence just like GhostImmobiliser??
 
@@ -164,7 +164,7 @@ LED | GPIO 25
 
 [Olimex RP2040-PICO30-16](https://thepihut.com/products/olimex-rp2040-pico30-16) also exposes GPIO 23-25, 29 by sacrificing four GROUND pins.
 
-The different uses are specifically this way, because I need to consider UARTs/PIOs etc, and which pins they
+The different uses are specifically this way, because I need to consider UARTs/PIOs/ADC etc, and which pins they
 have connected to them. So it's not as .. "pretty" and simple as just throwing them in there and start using
 the ports..
 
@@ -207,8 +207,8 @@ Or those two combined, [buttons and their LEDs and the status LED](https://www.e
 * 1x Actuator (Potentiometer Brush)
 * 1x Actuator (Motor Relay +)
 * 1x Actuator (Motor Relay -)
-* 1x 5V
-* 1x GND
+* 1x ADC 5V
+* 1x ADC GND
 => [5 pin](https://www.ebay.co.uk/itm/174775342997)
 
 ### CAN bus #0
@@ -218,7 +218,7 @@ Or those two combined, [buttons and their LEDs and the status LED](https://www.e
 
 ### Total
 
-31 leads out from system - 24, counting only unique pins (IgnitionSwitch "relay" and CAN#2 not counted, because
+33 leads out from system - 26, counting only unique pins (IgnitionSwitch "relay" and CAN#2 not counted, because
 those shouldn't be anyway).
 
 # Parts
@@ -275,11 +275,9 @@ be better to just stick that out through the box. I'll leave them in here for no
 I want this thing to be as small as possible, easier to hide it somewhere in the car then :). I have yet to
 decide if I want a vertical or a horizontal connector..
 
-The side view with vertical motherboard connector:
+The side view with horizontal motherboard connector:
 ![PCB - Side view (1)](./PCB%20-%20Side%20%281%29.png)
 ![PCB - Side view (2)](./PCB%20-%20Side%20%282%29.png)
-
-The view with horizontal motherboard connector, sticking out of the box (outside the PCB):
 ![PCB - Side (3D - Perspective)](./PCB%20-%20Side%20%283D%20-%20Perspective%29.png)
 
 ## For development
@@ -333,7 +331,8 @@ The Pico is for development. Makes things easier when it's in a bigger format. H
 the actual "production" device. But to get all the GPIO needed, an I2C GPIO expander (see above) would be needed.
 
 Some of the signals I need will probably be to fast for the I2C bus, so those would have to come in through the board GPIO,
-not the I2C GPIOs.
+not the I2C GPIOs. But then, the whole setup will be bigger anyway (because of the expander), so might just stick with the
+Pico anyway. Besides, the whole circuit board is (going to be) about the size of my palm anyway.
 
 | Part | Price | Note
 | :--- | :---  | :---
@@ -344,7 +343,7 @@ not the I2C GPIOs.
 ### Notes about the small footprint controllers
 
 As can be seen from the [pin layout](#pin-layout-for-raspberrypi-3-5-and-pico), I need more than this!
-At the moment, I have ONE GPIO spare of the 26 pins that the RPi's have!
+At the moment, I have TWO GPIO to spare (and two GPIO/ADC) of the 26 pins that the RPi's have!
 
 I might even have to go with the [Olimex RP2040-PICO30-16](https://thepihut.com/products/olimex-rp2040-pico30-16) which
 have an additional four GPIO pins by sacrificing four GROUND pins..
@@ -391,8 +390,7 @@ they are anyway.
 ![PCB - Top (without components)](./PCB%20-%20Top%20%281%29.png)
 ![PCB - Top (with components)](./PCB%20-%20Top%20%282%29.png)
 
-Fusion360 can even generate a 3D object of the PCB! Unfortunately, there's some 3D footprints etc missing, so it's
-not *that* very accurate. But pretty anyway :).
+Fusion360 can even generate a 3D object of the PCB! Very pretty! :D
 
 ![PCB - Bottom (3D)](./PCB%20-%20Bottom%20%283D%29.png)
 ![PCB - Top (3D)](./PCB%20-%20Top%20%283D%29.png)
@@ -406,7 +404,9 @@ not *that* very accurate. But pretty anyway :).
 
 ## Code testing and setup
 
-I've barely started on this, but I have the bare-bones of it in these repos:
+These are my tests of the individual functionality that I wrote leading up to this project.
+I have most of it working, the only major thing that's missing is the CAN-bus code and
+hardware.
 
 * [How to control the LEDs, including the NeoPixel (multi-colour LED)](https://github.com/FransUrbo/pico-rust-test_1-LEDS)
 * [How to read the buttons and control *their* LEDs](https://github.com/FransUrbo/pico-rust-test_2-BUTTONS-LEDS)
@@ -418,8 +418,13 @@ I've barely started on this, but I have the bare-bones of it in these repos:
 ## DriveByWire code
 
 The actual DriveByWire source code is getting underway, it's in [the code directory](./code).
-I verify fingerprint, read buttons, turn on LEDs correctly and I simulate actuator movement with two
-LEDs - RED and GREEN.
+I verify fingerprint, read buttons, turn on LEDs correctly and I move the actuator back and forth.
+
+I do seem to have an issue with the hardware. "Something" is resetting the Pico every now and then.
+It is *likely* "something" to do with the actuator, not sure what. The guess is that it's a spike, a
+feedback from it or that it draws so much power that the power supply I'm using can't take it, drops
+the power to much (or to fast?) that either the DC-DC converter I have or the Pico can't handle it
+and resets.
 
 This was a [recording of the screen](https://www.dropbox.com/scl/fi/bi3qf4g1nu1k6bnatyuem/Screen-Recording-2024-05-03-at-20.10.48.mov?rlkey=vi5vw7pl20p2h9n0wq28tuy4a&st=hylgbs2c&dl=0) while it was running.
 It's a day old, and I've done some modifications to the code since them, but this demostrates it fairly
@@ -449,39 +454,21 @@ problems - if they're "on" and I've turned the car off and walked away, then the
 
 The steady orange (well, it's not very orange, is it!?? :) and then green LED in the top middle is orange =>
 "starting up" (the module) and when it turns green, it means "all is well". Had the fingerprint not matched,
-it and the aura around the fingerprint scanner turned red.
+it and the aura around the fingerprint scanner turns red.
 
-## Simulations
+# Updates
 
-Because I don't yet have all the hardware I need, especially the actuator. Because it's going to be in the
-car, which means freezing temperature up to .. quite hot, I had to order a special version of the one I
-listed above in [Actuation](#actuation). It have a lead time for manufacturing of 13 weeks (!!). Then a
-week or so here to the UK. So probably won't be with me until end of summer. But that's ok, this was going
-to be a winter project anyway. I just got a head start by ordering all these super cheap RPi stuff :).
-
-
-The two blinking LEDs, the red and green to the right of the multi-colour status LED, is the simulation of
-moving the actuator. Green is "move forward" and red is "move backwards". It blinks five times in either
-direction, because that's what I told it to :).
-
-Eventually, when I get the actuator, I'll be able to read the position of the actuator on GPIO26, which is
-set as an Input. Then I can from there calculate how much to move the actuator in either direction to select
-the desired gear.
-
-If I press the same, already selected, drive button, its LED will just blink three times and not do anything
-other than that.
-
-### Update Sun 2 May 2024
+## Update Sun 2 May 2024
 
 As of today, the module will block all button presses while the actuator is moving, to make sure we don't do
 something .. nefarious :).
 
-### Update Sun 3 May 2024
+## Update Sun 3 May 2024
 
 In the meantime, this is now simulated by knowing what button is enabled and substracting the button selected.
 From there, we get a positive or negative value, and we use that to simulate the move of the actuator.
 
-### Update Sun 4 May 2024
+## Update Sun 4 May 2024
 
 Latest code now stores the button (mode) selected after the actuator have finished moving in the flash memory
 that's available in the Pico. There's only 2MB flash, but I only need one byte :D. There might be more that
@@ -490,32 +477,32 @@ I can store there as well in the future.
 This flash value is then read on bootup and the correct (latest, before reboot/shutdown/reset) button/mode
 is then selected automatically.
 
-### Update Sun 5 May 2024
+## Update Sun 5 May 2024
 
 * Add the bare-bones of CAN-bus read and write. Doesn't actually *do* anything yet (since I don't have a CAN-bus
   adapter :), it just logs debug output on what it *would* do.
 * Implement bare-bones actuator test by "moving" (i.e. blink LEDs :) the actuator 1mm backward then forward 1mm.
 * Implement checking valet mode. This is now stored in the flash.
 
-### Update Sun 6 May 2024
+## Update Sun 6 May 2024
 
 * Rewrite the flash code to be "smarter". Actually, easier to use :).
 
-### Update Sun 8 May 2024
+## Update Sun 8 May 2024
 
 * Update the circuit diagram and PCB with a home-made CAN bus adapter, because I can't use the over-the-shelf
   ones.
 * Remove the EIS/SteeringLock "relay". Can't really cut the power to EIS that way. If there's no power to it,
   it won't detect the key, and won't allow me to turn the power to the device on! :).
 
-### Update Sun 9 May 2024
+## Update Sun 9 May 2024
 
 * Update the connectors, get proper CAD drawings and 3D models for them.
 * Change the DEBUG connector to a vertical, 5pin, JST connector.
 * Change all smaller motherboard connectors with one big one. This should then go to ONE big panel/chassis
   connector, which can then be split up into multiple leads to the different parts of the car.
 
-### Update Thu 27 Jun 2024
+## Update Thu 27 Jun 2024
 
 * Need to protect the 5V rail from spikes from the actuator control relay, so add
   a big, fat electrolytic capacitor.
@@ -530,7 +517,7 @@ the case as possible. IF we get an aluminium case, we can even use that as a hea
 shield for the RPi/Pico CPU, but most importantly, for the 5V converter, which if
 it draws "a lot" of power, will get hot.
 
-### Update Sun 30 Jun 2024
+## Update Sun 30 Jun 2024
 
 * Rewrite and get the actuator functionality working. Well, mostly anyway. I might have a
   hardware problem, the Pico just "suddenly" reboots for no apparent reason (no crash etc).
