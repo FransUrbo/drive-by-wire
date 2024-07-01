@@ -17,6 +17,11 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
       - [Actuator](#actuator)
       - [CAN bus](#can-bus-0)
       - [Total](#total)
+      - [Leads](#leads)
+        - [Actuator/Relays Lead](#actuator-relays-lead)
+        - [EIS/Relay Lead](#eis-relays-lead)
+        - [Control Lead](#control-lead)
+        - [CAN-Bus Lead](#can-bus-lead)
    2. [Parts](#parts)
       - [Actuation](#actuation)
       - [Controller](#controller)
@@ -175,13 +180,15 @@ the ports..
 * 4x Buttons (Switch)
 * 4x Button LEDs (Telltale)
 * 1x GND
-=> [ 9 pin](https://www.ebay.co.uk/itm/325261653847)
+
+=> 9-pin
 
 ### Status LED
 
 * 2x Status LED (Data IN+OUT)
 * 1x 3V3
-=> [3 pin](https://www.ebay.co.uk/itm/174775342997).
+
+=> 3-pin
 
 Or those two combined, [buttons and their LEDs and the status LED](https://www.ebay.co.uk/itm/174775342997).
 
@@ -192,7 +199,8 @@ Or those two combined, [buttons and their LEDs and the status LED](https://www.e
 * 1x GND
 * 1x 3V3 (power)
 * 1x 3V3 (touch induction power)
-=> [6 pin](https://www.ebay.co.uk/itm/174775342997)
+
+=> 6-pin
 
 ### EIS Relays
 
@@ -200,7 +208,8 @@ Or those two combined, [buttons and their LEDs and the status LED](https://www.e
 * 1x Control #3 (start signal)
 * 1x 5V
 * 1x GND
-=> [5 pin](https://www.ebay.co.uk/itm/174775342997)
+
+=> 5-pin
 
 ### Actuator
 
@@ -209,17 +218,69 @@ Or those two combined, [buttons and their LEDs and the status LED](https://www.e
 * 1x Actuator (Motor Relay -)
 * 1x ADC 5V
 * 1x ADC GND
-=> [5 pin](https://www.ebay.co.uk/itm/174775342997)
+
+=> 5-pin
 
 ### CAN bus #0
 
 * 1x CAN-L
 * 1x CAN-H
 
+=> 2-pin
+
 ### Total
 
 33 leads out from system - 26, counting only unique pins (IgnitionSwitch "relay" and CAN#2 not counted, because
 those shouldn't be anyway).
+
+### Leads
+
+Pin on the big motherboard connector and where it goes..
+
+#### Actuator/Relays Lead
+*   1: GND				(for Actuator Motor GND)
+*   2: +12V				(for Actuator Motor +12V)
+*   5: ACTUATOR/MOTOR-RELAY_PLUS	(signal control)
+*   6: ACTUATOR/MOTOR-RELAY_MINUS	(signal control)
+*   7: ADC_VREF				(signal)
+*   8: ADC_GND				(signal)
+*   9: ACTUATOR/POTENTIOMETER-BRUSH	(signal control)
+
+=> 8-lead
+
+#### EIS/Relay Lead
+*   1: GND				(for relay GND)
+*   4: +3V				(for relay +3V)
+* 10: EIS/START				(signal control)
+* 11: EIS/STEERING-LOCK			(signal control)
+
+=> 4-lead
+
+#### Control Lead
+*   1: GND				(for status LED and fingerprint scanner GND)
+*   3: +5V				(for status LED +5V)
+*   4: +3V				(for fingerprint scanner +3V)
+* 12: FP/TX				(signal control)
+* 13: FP/RX				(signal control)
+* 14: FP/WAKEUP				(signal control)
+* 15: STATUS_LED/IN			(signal control)
+* 16: STATUS_LED/OUT			(signal control)
+* 17: BUTTON_LED/D			(signal control)
+* 18: BUTTON_LED/N			(signal control)
+* 19: BUTTON_LED/R			(signal control)
+* 20: BUTTON_LED/P			(signal control)
+* 21: BUTTON/D				(signal control)
+* 22: BUTTON/N				(signal control)
+* 23: BUTTON/R				(signal control)
+* 24: BUTTON/P				(signal control)
+
+=> 16-lead
+
+#### CAN-Bus Lead
+* 25: CAN-L				(signal control)
+* 26: CAN-H				(signal control)
+
+=> 2-lead
 
 # Parts
 
