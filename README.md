@@ -50,6 +50,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
    - [Update Sun 9 May 2024](#update-sun-9-may-2024)
    - [Update Thu 27 Jun 2024](#update-thu-27-jun-2024)
    - [Update Sun 30 Jun 2024](#update-sun-30-jun-2024)
+   - [Update Mon 1 Jun 2024(#update-mon-1-jun-2024)
 6. [Additional information](#additional-information)
 
 ## Fingerprint scanner instead of Start button
@@ -320,15 +321,19 @@ Crossed out parts are things I either didn't buy or don't need. Yet. Which is wh
 
 | Part | Price |
 | :--- | :---  |
-| [Motherboard connector - 24pin/vertical](https://www.mouser.co.uk/ProductDetail/538-213227-2410) | £3
-| [Motherboard connector - 24pin/horizontal](https://www.mouser.co.uk/ProductDetail/538-503148-2490) | £3
-| [Headers & Wire Housings - 24pin](https://www.mouser.co.uk/ProductDetail/538-503149-2400) | £0.6
+| ~~[Motherboard connector - 24pin/vertical](https://www.mouser.co.uk/ProductDetail/538-213227-2410)~~ | ~~£3~~
+| ~~[Motherboard connector - 24pin/horizontal](https://www.mouser.co.uk/ProductDetail/538-503148-2490)~~ | ~~£3~~
+| ~~[Motherboard connector - 26pin/vertical](https://www.mouser.co.uk/ProductDetail/538-503148-2690)~~ | ~~£3~~
+| ~~[Headers & Wire Housings - 24pin](https://www.mouser.co.uk/ProductDetail/538-503149-2400)~~ | ~~£0.6~~
+| ~~[Headers & Wire Housings - 26pin](https://www.mouser.co.uk/ProductDetail/538-503149-2600)~~ | ~~£0.8~~
 | ~~[Wire to Motherboard connector - 24pin](https://www.mouser.co.uk/ProductDetail/538-503148-2490)~~ | ~~£3~~
 | ~~[Panel mount connector - 24 pin](https://www.mouser.co.uk/ProductDetail/798-DF51-24DEP-2C)~~ | ~~£1~~
 | ~~[Wire to panel mount connector - 24pin](https://www.mouser.co.uk/ProductDetail/798-DF51-24DS-2C)~~ | ~~£0.3~~
 | ~~[Molex MiniFit Jr Housing - 2x3pin](https://www.mouser.co.uk/ProductDetail/538-39-30-6068)~~ | ~~£1~~
 | [Debug connector - 5pin/vertical](https://www.mouser.co.uk/ProductDetail/538-53398-0567) | £0.6
 | [DC Power Connector](https://www.mouser.co.uk/ProductDetail/502-RASM722X) | £1.3
+| [FPC Connector - 26 pin](https://www.mouser.co.uk/ProductDetail/538-52207-2660) | £2.4
+| [Ribbon cable - 26 core](https://www.mouser.co.uk/ProductDetail/906-100R26-76B) | £2.8
 
 Don't think I'm going to buy the panel and wire to panel connectors. The motherboard connector looks quite big, so it might
 be better to just stick that out through the box. I'll leave them in here for now, because I might change my mind.
@@ -336,10 +341,15 @@ be better to just stick that out through the box. I'll leave them in here for no
 I want this thing to be as small as possible, easier to hide it somewhere in the car then :). I have yet to
 decide if I want a vertical or a horizontal connector..
 
-The side view with horizontal motherboard connector:
+Actually, I found a nice connector on eBay ([IP68 Aviation Plug Socket](https://www.ebay.co.uk/itm/154107555672?var=454247628623)
+for £21 (which is a bit much, but it's nice! :). It's quite big, but think it'll be nice to be able to lock
+the connector tight. It doesn't technically need to be water proof, but it can get moist in the cabin..
+
+For now, I think that's the best option. This allows me to use a ribbon cable between the motherboard
+and that chassis connector, which minimizes the size of the motherboard connector.
+
 ![PCB - Side view (1)](./PCB%20-%20Side%20%281%29.png)
 ![PCB - Side view (2)](./PCB%20-%20Side%20%282%29.png)
-![PCB - Side (3D - Perspective)](./PCB%20-%20Side%20%283D%20-%20Perspective%29.png)
 
 ## For development
 
@@ -585,6 +595,13 @@ it draws "a lot" of power, will get hot.
   MIGHT be a feedback from the actuator, or a dip in voltage/amps when it's moving that the
   power supply can't quite handle (I DID get a very cheap one!), so the Pico doesn't get
   enough power..
+
+## Update Mon 1 Jul 2024
+
+* Change the motherboard connector. AGAIN!! :D
+  The huge connector I've been looking at never *really* sat right with me. But found a fairly
+  nice chassis connector, which means I can use a ribbon cable connector for the motherboard.
+  Saves A LOT (!!) of space.
 
 # Additional information
 
