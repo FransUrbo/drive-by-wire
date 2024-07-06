@@ -1,6 +1,6 @@
 [package]
 name = "drive-by-wire"
-version = "0.3.0"
+version = "0.3.1"
 description = "Provide Drive-by-Wire buttons for the Mercedes-Benz SLK55 AMG 2010 (R171)"
 edition = "2021"
 license = "GPL v3"
@@ -43,7 +43,7 @@ rev = "362de7"
 
 [dependencies.actuator]
 git = "https://github.com/FransUrbo/rust-libs-actuator.git"
-rev = "14d3e80"
+rev = "e4db748"
 
 # They haven't released the `embassy_time::with_deadline` yet, so need to use the GIT version.
 [dependencies.embassy-embedded-hal]
