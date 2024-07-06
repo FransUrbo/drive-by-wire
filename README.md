@@ -34,6 +34,8 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
    3. [Circuit diagram](#circuit-diagram)
       - [Wiring on bread boards](#wiring-on-bread-boards)
       - [Latest wiring on bread boards](#latest-wiring-on-bread-boards)
+      - [CAN-bus circuit diagram](#can-bus-circuit-diagram)
+      - [CAN-bus wiring on bread board](#can-bus-wiring-on-bread-board)
    4. [PCB](#pcb)
 4. [Source code](#source-code)
    - [Code testing and setup](#code-testing-and-setup)
@@ -461,6 +463,18 @@ Also, I'm missing the headers for the fingerprint scanner and the actuator in th
 This what it looks like now. I built a box :D :D.
 
 ![Latest wiring on bread boards](./2024-05-04%2011.09.21.jpg)
+
+### CAN-bus circuit diagram
+
+This is the part of CAN-bus from the big circuit diagram. Still working on it, so not sure if it'll work.
+
+![Circuit Diagram - CAN-bus](./Circuit%20Diagram%20-%20CAN-bus.png)
+
+### CAN-bus wiring on bread board
+
+This is the bread board for the CAN-bus. Still missing a few components, but it's getting there.
+
+![CAN-bus wiring on bread board](./2024-07-06%2019.44.27.jpg)
 
 ## PCB
 
