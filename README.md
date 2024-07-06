@@ -51,6 +51,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
    - [Update Thu 27 Jun 2024](#update-thu-27-jun-2024)
    - [Update Sun 30 Jun 2024](#update-sun-30-jun-2024)
    - [Update Mon 1 Jun 2024(#update-mon-1-jun-2024)
+   - [Update Sat 6 Jul 2024(#update-sat-6-jul-2024)
 6. [Additional information](#additional-information)
 
 ## Fingerprint scanner instead of Start button
@@ -615,6 +616,12 @@ it draws "a lot" of power, will get hot.
   The huge connector I've been looking at never *really* sat right with me. But found a fairly
   nice chassis connector, which means I can use a ribbon cable connector for the motherboard.
   Saves A LOT (!!) of space.
+
+## Update Mon 1 Jul 2024
+
+* Add new relay to control feed power (+5V/+12V) to the actuator to be able to control the
+  speed at which it moves.
+* Fix a small issue with the CAN-bus adapter.
 
 # Additional information
 
