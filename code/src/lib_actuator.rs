@@ -31,29 +31,18 @@ pub async fn actuator_control(
 ) {
     debug!("Started actuator control task");
 
-    // Get the real value (in Ω).
-    // If we create a command to calibrate the actuator, we can find this value and store it in the config.
-    // We already know how many Ω it takes to move the actuator 1mm..
-    static ACTUATOR_START_POSITION: u16 = 30;
-
     loop {
-        let button = receiver.receive().await; // Block waiting for data.
+        // Block waiting for button press.
+        let button = receiver.receive().await;
 
-        // Get the current gear from the actuator.
-        let current_gear = actuator.find_gear(ACTUATOR_START_POSITION).await;
-        debug!(
-            "Button::{}: Found current gear: {:?}",
-            button,
-            Button::from_integer(current_gear as u8)
-        );
-        // FAKE: Use the current button selected to calculate the direction and amount to move the actuator
-        let current_gear = unsafe { BUTTON_ENABLED as u8 };
+        // FAKE: Use the current button selected to calculate the direction and
+        //       amount to move the actuator
+        // TODO: Remove this as soon as the actuator works as intended.
+        let fake = unsafe { BUTTON_ENABLED as u8 } as i8;
 
-        // Calculate the amount of gears and direction to move.
-        let amount: i8 = current_gear as i8 - button as i8;
-
-        // Move the actuator.
-        actuator.change_gear_mode(amount).await;
+        // Move the actuator to the gear mode selected.
+        // TODO: Remove the second param as soon as the actuator works as intended.
+        actuator.change_gear_mode(button as u8, fake).await;
 
         // Now that we're done moving the actuator, Enable reading buttons again.
         unsafe { BUTTONS_BLOCKED = false };
@@ -63,6 +52,7 @@ pub async fn actuator_control(
 
         // .. and write it to flash.
         {
+            // Read the existing values from the flash.
             let mut flash = flash.lock().await;
             let mut config = match DbwConfig::read(&mut flash) {
                 // Read the old/current values.
@@ -72,7 +62,11 @@ pub async fn actuator_control(
                     lib_config::resonable_defaults()
                 }
             };
-            config.active_button = button; // Set new value.
+
+            // Set new value.
+            config.active_button = button;
+
+            // Write the config to flash.
             lib_config::write_flash(&mut flash, config).await;
         }
     }
