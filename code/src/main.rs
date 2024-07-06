@@ -69,6 +69,10 @@ async fn main(spawner: Spawner) {
 
     info!("Start");
 
+    let name = env!("CARGO_PKG_NAME");
+    let version = env!("CARGO_PKG_VERSION");
+    info!("Application: {}, v{}", name, version);
+
     // =====
     //  2. Initialize the built-in LED and turn it on. Just for completness.
     let _builtin_led = Output::new(p.PIN_25, Level::High);
@@ -122,7 +126,14 @@ async fn main(spawner: Spawner) {
     // =====
     //  8. Initialize and test the actuator.
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
-    let mut actuator = Actuator::new(p.PIN_10.into(), p.PIN_11.into(), p.PIN_26, p.ADC, Irqs);
+    let mut actuator = Actuator::new(
+        p.PIN_10.into(),
+        p.PIN_11.into(),
+        p.PIN_12.into(),
+        p.PIN_26,
+        p.ADC,
+        Irqs,
+    );
 
     // Test actuator control.
     if !actuator.test_actuator().await {

@@ -21,7 +21,14 @@ bind_interrupts!(struct Irqs {
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
-    let mut actuator = Actuator::new(p.PIN_10.into(), p.PIN_11.into(), p.PIN_26, p.ADC, Irqs);
+    let mut actuator = Actuator::new(
+        p.PIN_10.into(),
+        p.PIN_11.into(),
+        p.PIN_12.into(),
+        p.PIN_26,
+        p.ADC,
+        Irqs,
+    );
 
     //let move_time = (THROW_TIME_PER_1MM as u64) * 10;
     let move_time = 5000;

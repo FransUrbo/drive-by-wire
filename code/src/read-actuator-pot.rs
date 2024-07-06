@@ -21,7 +21,14 @@ bind_interrupts!(struct Irqs {
 async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
 
-    let mut actuator = Actuator::new(p.PIN_10.into(), p.PIN_11.into(), p.PIN_26, p.ADC, Irqs);
+    let mut actuator = Actuator::new(
+        p.PIN_10.into(),
+        p.PIN_11.into(),
+        p.PIN_12.into(),
+        p.PIN_26,
+        p.ADC,
+        Irqs,
+    );
     info!(
         "Actuator potentiometer value: {}Ω",
         actuator.read_pot().await

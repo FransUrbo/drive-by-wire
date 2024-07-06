@@ -36,7 +36,14 @@ async fn main(_spawner: Spawner) {
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
     // Initialize the actuator.
-    let mut actuator = Actuator::new(p.PIN_10.into(), p.PIN_11.into(), p.PIN_26, p.ADC, Irqs);
+    let mut actuator = Actuator::new(
+        p.PIN_10.into(),
+        p.PIN_11.into(),
+        p.PIN_12.into(),
+        p.PIN_26,
+        p.ADC,
+        Irqs,
+    );
 
     // 5s should be enough to move it from one end to another..
     let move_distance = 5000; // ms

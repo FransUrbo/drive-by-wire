@@ -160,8 +160,8 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 |  13 | GND     | *[GPIO 29]*                  |-| 28  | GND      | *[GPIO 23]*                    |
 |  14 | GPIO 10 | Actuator - Motor Relay (#1)  |-| 27  | GPIO 21  | CAN #0 (RX)                    |
 |  15 | GPIO 11 | Actuator - Motor Relay (#2)  |-| 26  | GPIO 20  | CAN #0 (TX)                    |
-|  16 | GPIO 12 |                              |-| 25  | GPIO 19  |                                |
-|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP) |-| 24  | GPIO 18  | EIS Relay (#1 - steering lock) |
+|  16 | GPIO 12 | Actuator - +5V/+12V select   |-| 25  | GPIO 19  | EIS Relay (#1 - steering lock) |
+|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP) |-| 24  | GPIO 18  |                                |
 |  18 | GND     | *[GPIO 25]*                  |-| 23  | GND      | *[GPIO 24]*                    |
 |  19 | GPIO 14 | Status LED (Data OUT)        |-| 22  | GPIO 17  | Fingerprint Scanner (TX)       |
 |  20 | GPIO 15 | Status LED (Data IN)         |-| 21  | GPIO 16  | Fingerprint Scanner (RX)       |
@@ -239,53 +239,59 @@ those shouldn't be anyway).
 Pin on the big motherboard connector and where it goes..
 
 #### Actuator/Relays Lead
-*   1: GND				(for Actuator Motor GND)
-*   2: +12V				(for Actuator Motor +12V)
-*   5: ACTUATOR/MOTOR-RELAY_PLUS	(signal control)
-*   6: ACTUATOR/MOTOR-RELAY_MINUS	(signal control)
-*   7: ADC_VREF				(signal)
-*   8: ADC_GND				(signal)
-*   9: ACTUATOR/POTENTIOMETER-BRUSH	(signal control)
+*  2: GND					(for Actuator Motor GND)
+*  4: +12V					(for Actuator Motor +12V)
+*  6: +5V					(for Actuator Motor +5V)
+* 10: ACTUATOR/MOTOR-RELAY_PLUS			(signal control)
+* 12: ACTUATOR/MOTOR-RELAY_MINUS		(signal control)
+* 14: ADC_VREF					(signal)
+* 16: ADC_GND					(signal)
+* 18: ACTUATOR/POTENTIOMETER-BRUSH		(signal control)
+* 20: ACTUATOR/VOLTAGE-RELAY_SELECT (+5V/+12V)	(signal control)
 
-=> 8-lead
+=> 10-lead
 
 #### EIS/Relay Lead
-*   1: GND				(for relay GND)
-*   4: +3V				(for relay +3V)
-* 10: EIS/START				(signal control)
-* 11: EIS/STEERING-LOCK			(signal control)
+*  2: GND					(for relay GND)
+*  8: +3V					(for relay +3V)
+* 22: EIS/START					(signal control)
+* 24: EIS/STEERING-LOCK				(signal control)
 
 => 4-lead
 
 #### Control Lead
-*   1: GND				(for status LED and fingerprint scanner GND)
-*   3: +5V				(for status LED +5V)
-*   4: +3V				(for fingerprint scanner +3V)
-* 12: FP/TX				(signal control)
-* 13: FP/RX				(signal control)
-* 14: FP/WAKEUP				(signal control)
-* 15: STATUS_LED/IN			(signal control)
-* 16: STATUS_LED/OUT			(signal control)
-* 17: BUTTON_LED/D			(signal control)
-* 18: BUTTON_LED/N			(signal control)
-* 19: BUTTON_LED/R			(signal control)
-* 20: BUTTON_LED/P			(signal control)
-* 21: BUTTON/D				(signal control)
-* 22: BUTTON/N				(signal control)
-* 23: BUTTON/R				(signal control)
-* 24: BUTTON/P				(signal control)
+*  2: GND					(for status LED and fingerprint scanner GND)
+*  4: +12V					(for button locate LEDs)
+*  6: +5V					(for status LED +5V)
+*  8: +3V					(for fingerprint scanner +3V)
+* 26: FP/TX					(signal control)
+* 23: FP/RX					(signal control)
+* 17: FP/WAKEUP					(signal control)
+* 21: STATUS_LED/IN				(signal control)
+* 19: STATUS_LED/OUT				(signal control)
+* 15: BUTTON_LED/D				(signal control)
+* 13: BUTTON_LED/N				(signal control)
+* 11: BUTTON_LED/R				(signal control)
+*  9: BUTTON_LED/P				(signal control)
+*  7: BUTTON/D					(signal control)
+*  5: BUTTON/N					(signal control)
+*  3: BUTTON/R					(signal control)
+*  1: BUTTON/P					(signal control)
 
 => 16-lead
 
 #### CAN-Bus Lead
-* 25: CAN-L				(signal control)
-* 26: CAN-H				(signal control)
+* 27: CAN-L					(signal control)
+* 25: CAN-H					(signal control)
 
 => 2-lead
 
 # Parts
 
 Crossed out parts are things I either didn't buy or don't need. Yet. Which is why I'm leaving them, but cross them out.
+
+I'm saving the list of [components for the PCB](https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=d9a3d6382c)
+in a project list at Mouser. It's still a work in progress, so not quite correct yet.
 
 ## Actuation
 
@@ -431,6 +437,13 @@ This is still work in progress, but this looks about right. That's what I've wir
 This is the diagram for the Aston Martin drive button. I only use the one switch within the button (SW2).
 
 ![AstonMartin Button Diagram](./AstonMartin%20Button%20Diagram.png)
+
+The latest version of the [ciruit diagram](https://a360.co/3L8P7J7) and the [PCB](https://a360.co/3XMMkwH) can be accessed
+on the Fusion360 site. It's not very pretty (the web viewer have .. issues :). I always try to keep this repo updated with
+the very latest by using screenshots, but it's also available online. I'm using a free subscription, and can't enable downloads,
+so it's unfortunately view-only..
+
+My [components library](https://a360.co/4cwNAcc) can also be found on that site. Not sure how usefull it is though..
 
 ## Wiring on bread boards
 
