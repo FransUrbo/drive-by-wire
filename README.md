@@ -52,8 +52,8 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
    - [Update Sun 9 May 2024](#update-sun-9-may-2024)
    - [Update Thu 27 Jun 2024](#update-thu-27-jun-2024)
    - [Update Sun 30 Jun 2024](#update-sun-30-jun-2024)
-   - [Update Mon 1 Jun 2024(#update-mon-1-jun-2024)
-   - [Update Sat 6 Jul 2024(#update-sat-6-jul-2024)
+   - [Update Mon 1 Jun 2024](#update-mon-1-jun-2024)
+   - [Update Sat 13 Jul 2024](#update-sat-13-jul-2024)
 6. [Additional information](#additional-information)
 
 ## Fingerprint scanner instead of Start button
@@ -146,28 +146,28 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 
 # Pin layout for RaspberryPI 3-5, and Pico
 
-| Pin | Port    | Use                          |-| Pin | Port     | Use
-| --: | :------ | :--------------------------- |-| --: | :------- | :----------------------------- |
-|   1 | GPIO  0 | Button (Switch - N)          |-| 40  | VBUS     |                                |
-|   2 | GPIO  1 | Button (Switch - D)          |-| 39  | VSYS     |                                |
-|   3 | GND     |                              |-| 38  | GND      |                                |
-|   4 | GPIO  2 | Button (Switch - P)          |-| 37  | 3V3_EN   |                                |
-|   5 | GPIO  3 | Button (Switch - R)          |-| 36  | 3V3_OUT  |                                |
-|   6 | GPIO  4 | Debug (TX)                   |-| 35  | ADC_VREF | Actuator - +5V                 |
-|   7 | GPIO  5 | Debug (RX)                   |-| 34  | ADC2     |                                |
-|   8 | GND     |                              |-| 33  | AGND     | Actuator - GND                 |
-|   9 | GPIO  6 | Button (Telltale - P)        |-| 32  | ADC1     |                                |
-|  10 | GPIO  7 | Button (Telltale - R)        |-| 31  | ADC0     | Actuator - Potentiometer Brush |
-|  11 | GPIO  8 | Button (Telltale - N)        |-| 30  | RUN      |                                |
-|  12 | GPIO  9 | Button (Telltale - D)        |-| 29  | GPIO 22  | EIS Relay (#3 - start)         |
-|  13 | GND     | *[GPIO 29]*                  |-| 28  | GND      | *[GPIO 23]*                    |
-|  14 | GPIO 10 | Actuator - Motor Relay (#1)  |-| 27  | GPIO 21  | CAN #0 (RX)                    |
-|  15 | GPIO 11 | Actuator - Motor Relay (#2)  |-| 26  | GPIO 20  | CAN #0 (TX)                    |
-|  16 | GPIO 12 | Actuator - +5V/+12V select   |-| 25  | GPIO 19  | EIS Relay (#1 - steering lock) |
-|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP) |-| 24  | GPIO 18  |                                |
-|  18 | GND     | *[GPIO 25]*                  |-| 23  | GND      | *[GPIO 24]*                    |
-|  19 | GPIO 14 | Status LED (Data OUT)        |-| 22  | GPIO 17  | Fingerprint Scanner (TX)       |
-|  20 | GPIO 15 | Status LED (Data IN)         |-| 21  | GPIO 16  | Fingerprint Scanner (RX)       |
+| Pin | Port    | Use                          | Pin | Port         | Use
+| --: | :------ | :--------------------------- | --: | :----------- | :----------------------------- |
+|   1 | GPIO  0 | Button (Switch - N)          | 40  | VBUS         |                                |
+|   2 | GPIO  1 | Button (Switch - D)          | 39  | VSYS         |                                |
+|   3 | GND     |                              | 38  | GND          |                                |
+|   4 | GPIO  2 | Button (Switch - P)          | 37  | 3V3_EN       |                                |
+|   5 | GPIO  3 | Button (Switch - R)          | 36  | 3V3_OUT      |                                |
+|   6 | GPIO  4 | Debug (TX)                   | 35  | ADC_VREF     | Actuator - +5V                 |
+|   7 | GPIO  5 | Debug (RX)                   | 34  | GPIO 28<br>ADC2  |                                |
+|   8 | GND     |                              | 33  | GND<br>AGND     | Actuator - GND                 |
+|   9 | GPIO  6 | Button (Telltale - P)        | 32  | GPIO 27<br>ADC1 |                                |
+|  10 | GPIO  7 | Button (Telltale - R)        | 31  | GPIO 26<br>ADC0 | Actuator - Potentiometer Brush |
+|  11 | GPIO  8 | Button (Telltale - N)        | 30  | RUN          |                                |
+|  12 | GPIO  9 | Button (Telltale - D)        | 29  | GPIO 22      | EIS Relay (#3 - start)         |
+|  13 | GND     | *[GPIO 29]*                  | 28  | GND          | *[GPIO 23]*                    |
+|  14 | GPIO 10 | Actuator - Motor Relay (#1)  | 27  | GPIO 21      | CAN #0 (RX)                    |
+|  15 | GPIO 11 | Actuator - Motor Relay (#2)  | 26  | GPIO 20      | CAN #0 (TX)                    |
+|  16 | GPIO 12 | Actuator - +5V/+12V select   | 25  | GPIO 19      | EIS Relay (#1 - steering lock) |
+|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP) | 24  | GPIO 18      |                                |
+|  18 | GND     | *[GPIO 25]*                  | 23  | GND          | *[GPIO 24]*                    |
+|  19 | GPIO 14 | ~~Status LED (Data OUT)~~        | 22  | GPIO 17      | Fingerprint Scanner (TX)       |
+|  20 | GPIO 15 | Status LED (Data IN)         | 21  | GPIO 16      | Fingerprint Scanner (RX)       |
 
 LED | GPIO 25
 
@@ -176,6 +176,9 @@ LED | GPIO 25
 The different uses are specifically this way, because I need to consider UARTs/PIOs/ADC etc, and which pins they
 have connected to them. So it's not as .. "pretty" and simple as just throwing them in there and start using
 the ports..
+
+Not exactly sure what to use the `Data OUT` on the NeoPixel (Status LED) for, so have crossed out that
+pin for now. I'm not using it in the code..
 
 ## External contacts
 
@@ -189,10 +192,11 @@ the ports..
 
 ### Status LED
 
-* 2x Status LED (Data IN+OUT)
+* 1x Status LED (Data IN)
+* ~~1x Status LED (Data OUT)~~
 * 1x 3V3
 
-=> 3-pin
+=> 2-pin
 
 Or those two combined, [buttons and their LEDs and the status LED](https://www.ebay.co.uk/itm/174775342997).
 
@@ -296,6 +300,12 @@ Crossed out parts are things I either didn't buy or don't need. Yet. Which is wh
 I'm saving the list of [components for the PCB](https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=d9a3d6382c)
 in a project list at Mouser. It's still a work in progress, so not quite correct yet.
 
+They don't have *everything* we need for a build. These are the parts that needs to be sourced from elsewhere. I'm using
+ThePieHut, but feel free to get the parts from wherever you feel most confortable with.
+
+* [DFRobot - DC-DC Buck Converter 7-24V to 5V 4A](https://thepihut.com/products/dc-dc-buck-converter-7-24v-to-5v-4a?variant=39865627607235)
+* [BCRobotics - 2 Channel Isolated Relay Breakout – 5V](https://thepihut.com/products/2-channel-isolated-relay-breakout-5v?variant=42529923924163)
+
 ## Actuation
 
 | Part | Price |
@@ -370,14 +380,14 @@ and that chassis connector, which minimizes the size of the motherboard connecto
 | [Half-Size Breadboard](https://thepihut.com/products/breadboard-400-point-clear?variant=31986026381374) | £3 * 3
 | [Breadboard for Pico](https://thepihut.com/products/breadboard-for-pico?variant=39819276386499) | £4
 | [Short Plug Headers](https://thepihut.com/products/short-plug-headers-for-raspberry-pi-pico-2-x-20-pin-male?variant=42182974505155) | £1
-| [Tactile Switch Buttons](https://thepihut.com/products/tactile-switch-buttons-6mm-tall-x-10-pack?variant=27739414097) | £3
+| ~~[Tactile Switch Buttons](https://thepihut.com/products/tactile-switch-buttons-6mm-tall-x-10-pack?variant=27739414097)~~ | ~~£3~~
 | [Breakout for 6-pin JST SH-Style Connector - Side Entry](https://thepihut.com/products/breakout-for-6-pin-jst-sh-style-connector-side-entry?variant=42438253871299) | £1
 | [Extra-long break-away 0.1" 16-pin strip male header (5 pieces)](https://thepihut.com/products/extra-long-break-away-0-1-16-pin-strip-male-header-5-pieces?variant=27740420881) | £3
 | [220V Power Supply Adapter (12V/10A)](https://www.ebay.co.uk/itm/234147120198?var=533767190848) | £21
-| [DB9 Breakout Board PCB – Male](https://thepihut.com/products/db9-breakout-board-pcb-male?variant=41727856148675) | £2
+| ~~[DB9 Breakout Board PCB – Male](https://thepihut.com/products/db9-breakout-board-pcb-male?variant=41727856148675)~~ | ~~£2~~
 | [Breadboard-friendly 2.1mm DC barrel jack](https://thepihut.com/products/breadboard-friendly-2-1mm-dc-barrel-jack?variant=27740417489) | £1
 | [In-line power switch for 2.1mm barrel jack](https://thepihut.com/products/in-line-power-switch-for-2-1mm-barrel-jack?variant=27739226065) | £2
-| [DB9 Right Angle MALE Connector - PCB Mount D-SUB](https://www.ebay.co.uk/itm/325261653847) | £3
+| ~~[DB9 Right Angle MALE Connector - PCB Mount D-SUB](https://www.ebay.co.uk/itm/325261653847)~~ | ~~£3~~
 | [Dupont Jump Wire F-F Jumper Breadboard Cable Lead -  6pin](https://www.ebay.co.uk/itm/275827705804?var=577580216871) | £2
 | [Dupont Jump Wire F-F Jumper Breadboard Cable Lead - 10pin](https://www.ebay.co.uk/itm/275827705804?var=577580216855) | £2
 | [Dupont Jump Wire M-M Jumper Breadboard Cable Lead - 10cm](https://www.ebay.co.uk/itm/275268807202?var=575537821821) | £8
@@ -473,8 +483,10 @@ This is the part of CAN-bus from the big circuit diagram. Still working on it, s
 ### CAN-bus wiring on bread board
 
 This is the bread board for the CAN-bus. Still missing a few components, but it's getting there.
+The red wires are just there to show and remind me where I need to put the capacitors. Also, the resonator
+is missing, but should be with me "shortly".
 
-![CAN-bus wiring on bread board](./2024-07-06%2019.44.27.jpg)
+![CAN-bus wiring on bread board](./2024-07-13%2011.41.02.jpg)
 
 ## PCB
 
@@ -513,6 +525,7 @@ hardware.
 * [How to read, write and verify fingerprint with the fingerprint scanner](https://github.com/FransUrbo/pico-rust-test_3-FP_SCANNER)
 * [How to control the three MOSFET "relays"](https://github.com/FransUrbo/pico-rust-test_4-MOSFET_RELAYS)
 * [How to setup and trigger the built-in watchdog on the RPi](https://github.com/FransUrbo/pico-rust-test_6-WATCHDOG-LED)
+* [How to read and write to the CAN-bus and the display](https://github.com/FransUrbo/pico-rust-test_7-CAN_BUS)
 
 ## DriveByWire code
 
@@ -530,24 +543,30 @@ It's a day old, and I've done some modifications to the code since them, but thi
 well.
 
 And this is what it [looked like in action](https://www.dropbox.com/scl/fi/nsdj958atposke2wdfzk9/2024-05-03-20.12.23.mov?rlkey=e7vu1sx3g0xffbefloeaspzul&st=kw81bt22&dl=0).
-They where to big for GitHub, so had to put them on my Dropbox account.
+They where to big for GitHub, so had to put them on my Dropbox account. This was before I got the actuator,
+so it's only triggering the LEDs (which won't be in the final design).
+
+I have since got the actuator, but haven't made a video on controlling it, because I can't get it to be
+stable enough. Still working on that..
 
 ### Relays
 
 The yellow LED in the upper left corner of the box, that's connected to the MOSFET "relay", is "start the car".
 I *THINK* it is enough to send +12V to the ECU (**E**ngine **C**ontrol **U**nit) on the "start position" pin.
-We'll see, have to do some experimentation. In this car, I only have to trigger it for the ECU to take over and
-start the car. So I'm only turning on the MOSFET "relay" for a second. Should be more than enough.
+We'll see, have to do some experimentation. In this car, I only have to trigger it for half a second or so
+(just go to position 3 and quickly release) for the ECU to take over and start the car. So I'm only turning on
+the MOSFET "relay" for a second. Should be more than enough.
 
 **NOTE**: There might be an issue with the "blue" (the steering lock on/off) and the "green" (ignition switch
 on/off) relays. I'm not sure what happens if (when!?) power is lost to the device, OR if it crashes and the
 watchdog reboots it - for a few seconds those relays will be "off"! What happens if I'm driving and the igntion
 switch is disabled and the steering lock is enabled!?? The former might not be a problem, although the ECU
-might .. get confused. But the latter, the steering lock, if that's enabled,
-as in locks the steering wheel from turning, that will be **BAD**!!!
+might .. get confused. But the latter, the steering lock, if that's enabled, as in locks the steering wheel
+from turning, that will be **BAD**!!!
 
 I've considered using relays that stays in position and need a trigger to switch, but that might also cause
-problems - if they're "on" and I've turned the car off and walked away, then they'll do no good!
+problems - if they're "on" and I've turned the car (ignition) off (which will instantly cut power to the system)
+and walked away, then they'll do no good!
 
 ### Status LED
 
@@ -636,6 +655,17 @@ it draws "a lot" of power, will get hot.
 * Add new relay to control feed power (+5V/+12V) to the actuator to be able to control the
   speed at which it moves.
 * Fix a small issue with the CAN-bus adapter.
+
+## Update Sat 13 Jul 2024
+
+* Moved all the CAN bus components to the TOP side of the board. There's plenty of space there,
+  because the DC-DC converter isn't actually residing directly on the board, that's just the bad
+  3D model that I made :). So the resistors and capacitors for the CAN-bus can reside under there.
+  It also doesn't make the board any .. "prettier", but..
+* The CAN-bus controller is getting under way. Got it almost completely wired up on the breadboard,
+  I'm just missing the 16MHz resonator, which should be with me in a few days.
+  Still need to do the coding for it, which will initially be in a different project. See [Code testing and setup](#code-testing-and-setup).
+  It's currently empty, but as soon as the resonator arrives, I'll start working on that part.
 
 # Additional information
 
