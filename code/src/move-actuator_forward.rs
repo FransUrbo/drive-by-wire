@@ -9,8 +9,7 @@ use embassy_executor::Spawner;
 use embassy_rp::adc::InterruptHandler;
 use embassy_rp::bind_interrupts;
 
-#[allow(unused_imports)]
-use actuator::{Actuator, Direction, THROW_TIME_PER_1MM};
+use actuator::{Actuator, Direction, TIME_THROW_TOTAL};
 
 use {defmt_rtt as _, panic_probe as _};
 
@@ -30,14 +29,13 @@ async fn main(_spawner: Spawner) {
         Irqs,
     );
 
-    //let move_time = (THROW_TIME_PER_1MM as u64) * 10;
-    let move_time = 5000;
-
     info!(
         "Actuator potentiometer value (#1): {}Ω",
         actuator.read_pot().await
     );
-    actuator.move_actuator(move_time, Direction::Forward).await;
+    actuator
+        .move_actuator(TIME_THROW_TOTAL, Direction::Forward)
+        .await;
     info!(
         "Actuator potentiometer value (#2): {}Ω",
         actuator.read_pot().await
