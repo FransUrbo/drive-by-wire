@@ -13,11 +13,13 @@ rustflags = [
   "-C", "link-arg=-Tlink-rp.x",
   "-C", "link-arg=-Tdefmt.x",
 
+  # => the `Z` options is only accepted on the nightly compiler
   # Code-size optimizations.
   #   trap unreachable can save a lot of space, but requires nightly compiler.
   #   uncomment the next line if you wish to enable it
   # "-Z", "trap-unreachable=no",
-  "-C", "inline-threshold=5",
+  # "-Z", "unstable-options", # error: the `-Z unstable-options` flag must also be passed to enable the flag `check-cfg`
+  # "-C", "inline-threshold=5", # deprecated
   "-C", "no-vectorize-loops",
 ]
 
