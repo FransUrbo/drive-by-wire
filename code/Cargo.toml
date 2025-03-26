@@ -1,6 +1,6 @@
 [package]
 name = "drive-by-wire"
-version = "0.3.1"
+version = "0.3.3"
 description = "Provide Drive-by-Wire buttons for the Mercedes-Benz SLK55 AMG 2010 (R171)"
 edition = "2021"
 license = "GPL v3"
@@ -14,66 +14,67 @@ homepage = "https://github.com/FransUrbo/drive-by-wire"
 [dependencies]
 defmt = "0.3"
 defmt-rtt = "0.4"
+fixed = "1.23.1"
+fixed-macro = "1.2"
 
-critical-section = "1.1"
+critical-section = "1.2.0"
 embedded-hal = "0.2.7"
 
 cortex-m = { version = "0.7.6", features = ["inline-asm"] }
 cortex-m-rt = "0.7.0"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 
-portable-atomic = { version = "1.5", features = ["critical-section"] }
+portable-atomic = { version = "1.10.0", features = ["critical-section"] }
 static_cell = "2.1.0"
 
 [dependencies.defmt-serial]
-git = "https://github.com/gauteh/defmt-serial.git"
-rev = "bafdc3f"
+version = "0.10.0"
 
 [dependencies.ws2812]
 git = "https://github.com/FransUrbo/rust-libs-ws2812.git"
-rev = "ab5831"
+version = "0.1.1"
 
 [dependencies.r503]
 git = "https://github.com/FransUrbo/rust-libs-r503.git"
-version = "0.2.0"
+version = "0.2.1"
 
-[dependencies.debounce]
+[dependencies.debounce] # Duplicate lib name!
 git = "https://github.com/FransUrbo/rust-libs-debounce.git"
-rev = "362de7"
+version = "0.1.1"
 
 [dependencies.actuator]
-git = "https://github.com/FransUrbo/rust-libs-actuator.git"
-rev = "e4db748"
+#git = "https://github.com/FransUrbo/rust-libs-actuator.git"
+#version = "0.3.3"
+path = "/Users/turbo/src/Mercedes SLK Drive Selector/rust-libs-actuator"
 
-# They haven't released the `embassy_time::with_deadline` yet, so need to use the GIT version.
 [dependencies.embassy-embedded-hal]
-git = "https://github.com/embassy-rs/embassy.git"
-rev = "5af0fe8"
 features = ["defmt"]
+git = "https://github.com/embassy-rs/embassy.git"
+rev = "9edf5b7"
 
 [dependencies.embassy-executor]
+features = ["task-arena-size-32768", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt"] #, "integrated-timers"]
 git = "https://github.com/embassy-rs/embassy.git"
-rev = "5af0fe8"
-features = ["task-arena-size-32768", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers"]
+rev = "9edf5b7"
 
 [dependencies.embassy-time-driver]
 git = "https://github.com/embassy-rs/embassy.git"
-rev = "5af0fe8"
+rev = "9edf5b7"
 
 [dependencies.embassy-time]
-git = "https://github.com/embassy-rs/embassy.git"
-rev = "5af0fe8"
 features = ["defmt", "defmt-timestamp-uptime"]
+git = "https://github.com/embassy-rs/embassy.git"
+rev = "9edf5b7"
 
 [dependencies.embassy-rp]
+features = ["defmt", "unstable-pac", "time-driver", "critical-section-impl", "rp2040"]
 git = "https://github.com/embassy-rs/embassy.git"
-rev = "5af0fe8"
-features = ["defmt", "unstable-pac", "time-driver", "critical-section-impl"]
+rev = "9edf5b7"
 
 [dependencies.embassy-sync]
-git = "https://github.com/embassy-rs/embassy.git"
-rev = "5af0fe8"
 features = ["defmt"]
+git = "https://github.com/embassy-rs/embassy.git"
+rev = "9edf5b7"
 
 # =====
 # https://doc.rust-lang.org/cargo/reference/profiles.html
