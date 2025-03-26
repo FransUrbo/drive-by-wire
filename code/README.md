@@ -1,8 +1,6 @@
 # Setup environment
 
 ``` shell
-brew tap probe-rs/probe-rs
-brew install arm-none-eabi-gdb openocd expect probe-rs
 rustup-init
 cargo install thumbv6m-none-eabi cargo-binutils cargo-generate defmt-print flip-link \
       probe-run elf2uf2-rs
