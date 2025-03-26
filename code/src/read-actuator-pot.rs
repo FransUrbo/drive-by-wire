@@ -1,5 +1,4 @@
 //! Connect to the actuator and read the feedback potentiometer.
-
 #![no_std]
 #![no_main]
 
@@ -8,6 +7,7 @@ use defmt::info;
 use embassy_executor::Spawner;
 use embassy_rp::adc::InterruptHandler;
 use embassy_rp::bind_interrupts;
+use embassy_time::Timer;
 
 use actuator::Actuator;
 
@@ -29,11 +29,13 @@ async fn main(_spawner: Spawner) {
         p.ADC,
         Irqs,
     );
-    info!(
-        "Actuator potentiometer value: {}Ω",
-        actuator.read_pot().await
-    );
 
-    #[allow(clippy::empty_loop)]
-    loop {}
+    loop {
+        info!(
+            "Actuator potentiometer value: {}Ω",
+            actuator.read_pot().await
+        );
+
+        Timer::after_secs(5).await;
+    }
 }
