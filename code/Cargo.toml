@@ -43,9 +43,9 @@ git = "https://github.com/FransUrbo/rust-libs-debounce.git"
 version = "0.1.1"
 
 [dependencies.actuator]
-#git = "https://github.com/FransUrbo/rust-libs-actuator.git"
-#version = "0.3.3"
-path = "/Users/turbo/src/Mercedes SLK Drive Selector/rust-libs-actuator"
+git = "https://github.com/FransUrbo/rust-libs-actuator.git"
+version = "0.3.3"
+#path = "/Users/turbo/src/Mercedes SLK Drive Selector/rust-libs-actuator"
 
 [dependencies.embassy-embedded-hal]
 features = ["defmt"]
