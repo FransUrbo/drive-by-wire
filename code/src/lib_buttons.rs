@@ -48,6 +48,20 @@ impl Button {
             _ => panic!("Unknown value: {}", v),
         }
     }
+
+    pub fn from_button(v: Self) -> u8 {
+        match v {
+            Self::P => 0,
+            Self::R => 1,
+            Self::N => 2,
+            Self::D => 3,
+            _ => 4, // UNSET
+        }
+    }
+
+    pub fn iterator() -> impl Iterator<Item = Button> {
+        [Self::P, Self::R, Self::N, Self::D].iter().copied()
+    }
 }
 
 pub enum LedStatus {
