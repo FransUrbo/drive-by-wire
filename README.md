@@ -2,7 +2,7 @@
 
 This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it is for my Mercedes-Benz SLK55 AMG.
 
-![drive-by-wire buttons](./AstonMartin%20Drive%20Buttons.jpg)
+![drive-by-wire buttons](./images/AstonMartin%20Drive%20Buttons.jpg)
 
 ## Page index
 
@@ -367,8 +367,8 @@ the connector tight. It doesn't technically need to be water proof, but it can g
 For now, I think that's the best option. This allows me to use a ribbon cable between the motherboard
 and that chassis connector, which minimizes the size of the motherboard connector.
 
-![PCB - Side view (1)](./PCB%20-%20Side%20%281%29.png)
-![PCB - Side view (2)](./PCB%20-%20Side%20%282%29.png)
+![PCB - Side view (1)](./images/PCB%20-%20Side%20%281%29.png)
+![PCB - Side view (2)](./images/PCB%20-%20Side%20%282%29.png)
 
 ## For development
 
@@ -445,11 +445,11 @@ Don't know which ones to get yet, still work in progres.
 
 This is still work in progress, but this looks about right. That's what I've wired on the breadboard.
 
-![Circuit diagram](./Circuit%20Diagram.png)
+![Circuit diagram](./images/Circuit%20Diagram.png)
 
 This is the diagram for the Aston Martin drive button. I only use the one switch within the button (SW2).
 
-![AstonMartin Button Diagram](./AstonMartin%20Button%20Diagram.png)
+![AstonMartin Button Diagram](./images/AstonMartin%20Button%20Diagram.png)
 
 The latest version of the [ciruit diagram](https://a360.co/3L8P7J7) and the [PCB](https://a360.co/3XMMkwH) can be accessed
 on the Fusion360 site. It's not very pretty (the web viewer have .. issues :). I always try to keep this repo updated with
@@ -466,21 +466,21 @@ figure something out..
 
 Also, I'm missing the headers for the fingerprint scanner and the actuator in the upper right breadboard.
 
-![Initial wiring on bread boards](./2024-04-20%2021.50.37.jpg)
+![Initial wiring on bread boards](./images/2024-04-20%2021.50.37.jpg)
 
 ### Latest wiring on bread boards
 
 This what it looks like now. I built a box :D :D.
 
-![Latest wiring on bread boards](./2024-05-04%2011.09.21.jpg)
+![Latest wiring on bread boards](./images/2024-05-04%2011.09.21.jpg)
 
-![With the buttons folded away](./2024-06-24%2011.22.03.jpg)
+![With the buttons folded away](./images/2024-06-24%2011.22.03.jpg)
 
 ### CAN-bus circuit diagram
 
 This is the part of CAN-bus from the big circuit diagram. Still working on it, so not sure if it'll work.
 
-![Circuit Diagram - CAN-bus](./Circuit%20Diagram%20-%20CAN-bus.png)
+![Circuit Diagram - CAN-bus](./images/Circuit%20Diagram%20-%20CAN-bus.png)
 
 ### CAN-bus wiring on bread board
 
@@ -488,7 +488,7 @@ This is the bread board for the CAN-bus. Still missing a few components, but it'
 The red wires are just there to show and remind me where I need to put the capacitors. Also, the resonator
 is missing, but should be with me "shortly".
 
-![CAN-bus wiring on bread board](./2024-07-13%2011.41.02.jpg)
+![CAN-bus wiring on bread board](./images/2024-07-13%2011.41.02.jpg)
 
 ## PCB
 
@@ -498,20 +498,20 @@ managed to create a PCB layout.
 It'll probably won't be the last, and I'm not sure if it's valid (not sure about all these signal lines!), but here
 they are anyway.
 
-![PCB - Bottom (without components)](./PCB%20-%20Bottom%20%281%29.png)
-![PCB - Bottom (with components)](./PCB%20-%20Bottom%20%282%29.png)
-![PCB - Top (without components)](./PCB%20-%20Top%20%281%29.png)
-![PCB - Top (with components)](./PCB%20-%20Top%20%282%29.png)
+![PCB - Bottom (without components)](./images/PCB%20-%20Bottom%20%281%29.png)
+![PCB - Bottom (with components)](./images/PCB%20-%20Bottom%20%282%29.png)
+![PCB - Top (without components)](./images/PCB%20-%20Top%20%281%29.png)
+![PCB - Top (with components)](./images/PCB%20-%20Top%20%282%29.png)
 
 Fusion360 can even generate a 3D object of the PCB! Very pretty! :D
 
-![PCB - Bottom (3D)](./PCB%20-%20Bottom%20%283D%29.png)
-![PCB - Top (3D)](./PCB%20-%20Top%20%283D%29.png)
+![PCB - Bottom (3D)](./images/PCB%20-%20Bottom%20%283D%29.png)
+![PCB - Top (3D)](./images/PCB%20-%20Top%20%283D%29.png)
 
 .. and the perspective view.
 
-![PCB - Bottom (3D - Perspective)](./PCB%20-%20Bottom%20%283D%20-%20Perspective%29.png)
-![PCB - Top (3D - Perspective)](./PCB%20-%20Top%20%283D%20-%20Perspective%29.png)
+![PCB - Bottom (3D - Perspective)](./images/PCB%20-%20Bottom%20%283D%20-%20Perspective%29.png)
+![PCB - Top (3D - Perspective)](./images/PCB%20-%20Top%20%283D%20-%20Perspective%29.png)
 
 # Source code
 
