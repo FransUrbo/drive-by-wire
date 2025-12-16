@@ -474,6 +474,8 @@ This what it looks like now. I built a box :D :D.
 
 ![Latest wiring on bread boards](./2024-05-04%2011.09.21.jpg)
 
+![With the buttons folded away](./2024-06-24%2011.22.03.jpg)
+
 ### CAN-bus circuit diagram
 
 This is the part of CAN-bus from the big circuit diagram. Still working on it, so not sure if it'll work.
@@ -538,16 +540,16 @@ feedback from it or that it draws so much power that the power supply I'm using 
 the power to much (or to fast?) that either the DC-DC converter I have or the Pico can't handle it
 and resets.
 
-This was a [recording of the screen](https://www.dropbox.com/scl/fi/bi3qf4g1nu1k6bnatyuem/Screen-Recording-2024-05-03-at-20.10.48.mov?rlkey=vi5vw7pl20p2h9n0wq28tuy4a&st=hylgbs2c&dl=0) while it was running.
+This was a [recording of the screen](https://www.idrive.com/idrive/sh/sh/c9u3n6z4o6) while it was running.
 It's a day old, and I've done some modifications to the code since them, but this demostrates it fairly
 well.
 
-And this is what it [looked like in action](https://www.dropbox.com/scl/fi/nsdj958atposke2wdfzk9/2024-05-03-20.12.23.mov?rlkey=e7vu1sx3g0xffbefloeaspzul&st=kw81bt22&dl=0).
-They where to big for GitHub, so had to put them on my Dropbox account. This was before I got the actuator,
+And this is what it [looked like in action](https://www.idrive.com/idrive/sh/sh?k=g1d9y9q2f1).
+They where to big for GitHub, so had to put them on my iDrive account. This was before I got the actuator,
 so it's only triggering the LEDs (which won't be in the final design).
 
-I have since got the actuator, but haven't made a video on controlling it, because I can't get it to be
-stable enough. Still working on that..
+With [all the hardware](https://www.idrive.com/idrive/sh/sh?k=o9h3k2p6u2) (except the CAN bus), this is what
+it looks like, and [another view of it](https://www.idrive.com/idrive/sh/sh?k=e0v4p5h5u5).
 
 ### Relays
 
