@@ -1,6 +1,21 @@
 name: Drive By Wire
 
-on: [push]
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+      - "feature/**"
+      - "hotfix/**"
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - edited
+      - synchronize
+  release:
+    types:
+      - released
 
 env:
   CARGO_TERM_COLOR: always
@@ -8,6 +23,7 @@ env:
 
 jobs:
   check:
+    name: Code check
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -39,6 +55,7 @@ jobs:
         run: cargo fmt --check 2>&1 | tee _check-fmt.log
 
   build:
+    name: Build apps
     needs: check
     runs-on: ubuntu-latest
     strategy:
