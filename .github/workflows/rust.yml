@@ -41,6 +41,12 @@ jobs:
   build:
     needs: check
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - dev
+          - release
+          - release-dev
     defaults:
       run:
         working-directory: ./code
@@ -61,32 +67,24 @@ jobs:
       - name: Add rust target for thumbv6m
         run: rustup target add thumbv6m-none-eabi
 
-      - name: Build Debug
-        run: cargo build --verbose --profile dev
-
-      - name: Build Release w/ debug logging
-        run: cargo build --verbose --profile release-dev
-
-      - name: Build Release
-        run: cargo build --verbose --profile release
+      - name: Build ${{ matrix.target }}
+        run: cargo build --verbose --profile ${{ matrix.target }}
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts
+          name: artifacts-${{ matrix.target }}
           path: |
-            code/target/thumbv6m-none-eabi/debug/drive-by-wire
-            code/target/thumbv6m-none-eabi/release-dev/drive-by-wire
-            code/target/thumbv6m-none-eabi/release/drive-by-wire
-            code/target/thumbv6m-none-eabi/release/move-actuator_backward
-            code/target/thumbv6m-none-eabi/release/move-actuator_forward
-            code/target/thumbv6m-none-eabi/release/prepare-flash
-            code/target/thumbv6m-none-eabi/release/read-actuator-pot
-            code/target/thumbv6m-none-eabi/release/read_config
-            code/target/thumbv6m-none-eabi/release/set-fingerprint
-            code/target/thumbv6m-none-eabi/release/set-password
-            code/target/thumbv6m-none-eabi/release/set-valet-mode
-            code/target/thumbv6m-none-eabi/release/test-actuator
-            code/target/thumbv6m-none-eabi/release/unset-valet-mode
+            code/target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/drive-by-wire
+            code/target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/move-actuator_backward
+            code/target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/move-actuator_forward
+            code/target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/prepare-flash
+            code/target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/read-actuator-pot
+            code/target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/read_config
+            code/target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/set-fingerprint
+            code/target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/set-password
+            code/target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/set-valet-mode
+            code/target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/test-actuator
+            code/target/thumbv6m-none-eabi/${{ matrix.target == 'dev' && 'debug' || matrix.target }}/unset-valet-mode
             code/_check-package.log
             code/_check-fmt.log
