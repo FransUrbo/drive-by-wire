@@ -7,7 +7,7 @@ use embassy_executor::Spawner;
 use embassy_rp::adc::InterruptHandler as ADCInterruptHandler;
 use embassy_rp::bind_interrupts;
 use embassy_rp::flash::{Async as FlashAsync, Flash};
-use embassy_rp::gpio::{Level, Output, Pin};
+use embassy_rp::gpio::{Level, Output};
 use embassy_rp::peripherals::{FLASH, PIO1, UART0, UART1};
 use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
 use embassy_rp::uart::{
@@ -18,7 +18,7 @@ use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer};
 
 type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SIZE>>;
-type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static, UART0>>;
+type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 
 use static_cell::StaticCell;
 
@@ -64,7 +64,7 @@ async fn main(spawner: Spawner) {
     // =====
     //  1. Initialize the serial UART for debug/log output.
     let uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, UartConfig::default()); // => 115200/8N1
-    static SERIAL: StaticCell<UartTx<'_, UART1, Blocking>> = StaticCell::new();
+    static SERIAL: StaticCell<UartTx<'static, Blocking>> = StaticCell::new();
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
     info!("Start");
@@ -90,17 +90,13 @@ async fn main(spawner: Spawner) {
     //  4. Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
     let mut watchdog = Watchdog::new(p.WATCHDOG);
     watchdog.start(Duration::from_millis(1_050));
-    spawner
-        .spawn(feed_watchdog(CHANNEL_WATCHDOG.receiver(), watchdog))
-        .unwrap();
+    spawner.spawn(feed_watchdog(CHANNEL_WATCHDOG.receiver(), watchdog).unwrap());
     info!("Initialized the Watchdog timer");
 
     // =====
     //  5. TODO: Initialize the CAN bus. Needs to come third, so we can talk to the IC.
-    spawner.spawn(read_can()).unwrap();
-    spawner
-        .spawn(write_can(CHANNEL_CANWRITE.receiver()))
-        .unwrap();
+    spawner.spawn(read_can().unwrap());
+    spawner.spawn(write_can(CHANNEL_CANWRITE.receiver()).unwrap());
 
     // Send message to IC: "Starting Drive-By-Wire system".
     CHANNEL_CANWRITE.send(CANMessage::Starting).await;
@@ -145,13 +141,7 @@ async fn main(spawner: Spawner) {
     }
 
     // Actuator works. Spawn off the actuator control task.
-    spawner
-        .spawn(actuator_control(
-            CHANNEL_ACTUATOR.receiver(),
-            flash,
-            actuator,
-        ))
-        .unwrap();
+    spawner.spawn(actuator_control(CHANNEL_ACTUATOR.receiver(), flash, actuator).unwrap());
     CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
 
     // =====
@@ -203,46 +193,50 @@ async fn main(spawner: Spawner) {
     // =====
     // 10. Spawn off one button reader per button. They will then spawn off a LED controller each so that
     //     each button can control their "own" LED.
-    spawner
-        .spawn(read_button(
+    spawner.spawn(
+        read_button(
             spawner,
             flash,
             fp_scanner,
             Button::P,
-            p.PIN_2.degrade(),
-            p.PIN_6.degrade(),
-        ))
-        .unwrap(); // button/P
-    spawner
-        .spawn(read_button(
+            p.PIN_2.into(),
+            p.PIN_6.into(),
+        )
+        .unwrap(),
+    ); // button/P
+    spawner.spawn(
+        read_button(
             spawner,
             flash,
             fp_scanner,
             Button::R,
-            p.PIN_3.degrade(),
-            p.PIN_7.degrade(),
-        ))
-        .unwrap(); // button/R
-    spawner
-        .spawn(read_button(
+            p.PIN_3.into(),
+            p.PIN_7.into(),
+        )
+        .unwrap(),
+    ); // button/R
+    spawner.spawn(
+        read_button(
             spawner,
             flash,
             fp_scanner,
             Button::N,
-            p.PIN_0.degrade(),
-            p.PIN_8.degrade(),
-        ))
-        .unwrap(); // button/N
-    spawner
-        .spawn(read_button(
+            p.PIN_0.into(),
+            p.PIN_8.into(),
+        )
+        .unwrap(),
+    ); // button/N
+    spawner.spawn(
+        read_button(
             spawner,
             flash,
             fp_scanner,
             Button::D,
-            p.PIN_1.degrade(),
-            p.PIN_9.degrade(),
-        ))
-        .unwrap(); // button/D
+            p.PIN_1.into(),
+            p.PIN_9.into(),
+        )
+        .unwrap(),
+    ); // button/D
     CHANNEL_CANWRITE.send(CANMessage::ButtonsInitialized).await;
 
     // =====

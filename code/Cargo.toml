@@ -1,6 +1,6 @@
 [package]
 name = "drive-by-wire"
-version = "0.3.6"
+version = "0.3.8"
 description = "Provide Drive-by-Wire buttons for the Mercedes-Benz SLK55 AMG 2010 (R171)"
 readme = "README.md"
 edition = "2021"
@@ -18,8 +18,8 @@ categories = [
 # =====
 
 [dependencies]
-defmt = "0.3"
-defmt-rtt = "0.4"
+defmt = "1.0.1"
+defmt-rtt = "1.1.0"
 fixed = "1.23.1"
 fixed-macro = "1.2"
 
@@ -34,49 +34,54 @@ portable-atomic = { version = "1.10.0", features = ["critical-section"] }
 static_cell = "2.1.0"
 
 [dependencies.defmt-serial]
-version = "0.10.0"
+# The released one (v1.0.1) is missing features for new Embassy.
+git = "https://github.com/gauteh/defmt-serial"
+rev = "411ae7fa909b4fd2667885aff687e009b9108190"
 
 [dependencies.ws2812]
-git = "https://github.com/FransUrbo/rust-libs-ws2812.git"
-version = "0.1.2"
+#git = "https://github.com/FransUrbo/rust-libs-ws2812.git"
+#version = "0.1.3"
+path = "/Users/turbo/src/Mercedes SLK Drive Selector/rust-libs-ws2812"
 
 [dependencies.r503]
-git = "https://github.com/FransUrbo/rust-libs-r503.git"
-version = "0.2.2"
+#git = "https://github.com/FransUrbo/rust-libs-r503.git"
+#version = "0.2.3"
+path = "/Users/turbo/src/Mercedes SLK Drive Selector/rust-libs-r503"
 
 [dependencies.debounce] # Duplicate lib name!
-git = "https://github.com/FransUrbo/rust-libs-debounce.git"
-version = "0.1.2"
+#git = "https://github.com/FransUrbo/rust-libs-debounce.git"
+#version = "0.1.3"
+path = "/Users/turbo/src/Mercedes SLK Drive Selector/rust-libs-debounce"
 
 [dependencies.actuator]
-git = "https://github.com/FransUrbo/rust-libs-actuator.git"
-version = "0.3.6"
-#path = "/Users/turbo/src/Mercedes SLK Drive Selector/rust-libs-actuator"
+#git = "https://github.com/FransUrbo/rust-libs-actuator.git"
+#version = "0.3.7"
+path = "/Users/turbo/src/Mercedes SLK Drive Selector/rust-libs-actuator"
 
 [dependencies.embassy-embedded-hal]
 features = ["defmt"]
 git = "https://github.com/embassy-rs/embassy.git"
-rev = "9edf5b7"
+rev = "ef01e2e"
 
 [dependencies.embassy-executor]
-features = ["task-arena-size-32768", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt"]
+features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt"]
 git = "https://github.com/embassy-rs/embassy.git"
-rev = "9edf5b7"
+rev = "ef01e2e"
 
 [dependencies.embassy-time]
 features = ["defmt", "defmt-timestamp-uptime"]
 git = "https://github.com/embassy-rs/embassy.git"
-rev = "9edf5b7"
+rev = "ef01e2e"
 
 [dependencies.embassy-rp]
 features = ["defmt", "unstable-pac", "time-driver", "critical-section-impl", "rp2040"]
 git = "https://github.com/embassy-rs/embassy.git"
-rev = "9edf5b7"
+rev = "ef01e2e"
 
 [dependencies.embassy-sync]
 features = ["defmt"]
 git = "https://github.com/embassy-rs/embassy.git"
-rev = "9edf5b7"
+rev = "ef01e2e"
 
 # =====
 # https://doc.rust-lang.org/cargo/reference/profiles.html

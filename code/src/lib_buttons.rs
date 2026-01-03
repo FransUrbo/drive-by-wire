@@ -3,7 +3,8 @@ use defmt::{debug, error, info, trace, Format};
 use embassy_executor::Spawner;
 use embassy_rp::flash::{Async, Flash};
 use embassy_rp::gpio::{AnyPin, Input, Level, Output, Pull};
-use embassy_rp::peripherals::{FLASH, UART0};
+use embassy_rp::peripherals::FLASH;
+use embassy_rp::Peri;
 use embassy_sync::channel::{Channel, Receiver};
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex, blocking_mutex::raw::NoopRawMutex, mutex::Mutex,
@@ -11,7 +12,7 @@ use embassy_sync::{
 use embassy_time::{with_deadline, Duration, Instant, Timer};
 
 type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
-type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static, UART0>>;
+type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 
 use debounce;
 
@@ -86,7 +87,7 @@ pub static mut BUTTONS_BLOCKED: bool = false;
 #[embassy_executor::task(pool_size = 4)]
 async fn set_led(
     receiver: Receiver<'static, CriticalSectionRawMutex, LedStatus, 64>,
-    led_pin: AnyPin,
+    led_pin: Peri<'static, AnyPin>,
     button: Button,
 ) {
     debug!("Button::{}: Started button LED control task", button);
@@ -109,8 +110,8 @@ pub async fn read_button(
     flash: &'static FlashMutex,
     fp_scanner: &'static ScannerMutex,
     button: Button,
-    btn_pin: AnyPin,
-    led_pin: AnyPin,
+    btn_pin: Peri<'static, AnyPin>,
+    led_pin: Peri<'static, AnyPin>,
 ) {
     // Initialize the button listener.
     let mut btn =
@@ -119,18 +120,10 @@ pub async fn read_button(
     // Spawn off a LED driver for this button.
     match button {
         Button::UNSET => (), // Should be impossible, but just to make the compiler happy.
-        Button::P => spawner
-            .spawn(set_led(CHANNEL_P.receiver(), led_pin, button))
-            .unwrap(),
-        Button::N => spawner
-            .spawn(set_led(CHANNEL_N.receiver(), led_pin, button))
-            .unwrap(),
-        Button::R => spawner
-            .spawn(set_led(CHANNEL_R.receiver(), led_pin, button))
-            .unwrap(),
-        Button::D => spawner
-            .spawn(set_led(CHANNEL_D.receiver(), led_pin, button))
-            .unwrap(),
+        Button::P => spawner.spawn(set_led(CHANNEL_P.receiver(), led_pin, button).unwrap()),
+        Button::N => spawner.spawn(set_led(CHANNEL_N.receiver(), led_pin, button).unwrap()),
+        Button::R => spawner.spawn(set_led(CHANNEL_R.receiver(), led_pin, button).unwrap()),
+        Button::D => spawner.spawn(set_led(CHANNEL_D.receiver(), led_pin, button).unwrap()),
     };
     debug!("Button::{}: Started button control task", button);
 

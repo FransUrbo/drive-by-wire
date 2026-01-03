@@ -15,8 +15,9 @@ use embassy_rp::uart::{
 };
 use embassy_time::Timer;
 
-use actuator::{Actuator, Direction, GearModes, TIME_THROW_1MM, TIME_THROW_TOTAL};
 use static_cell::StaticCell;
+
+use actuator::{Actuator, Direction, GearModes, TIME_THROW_1MM, TIME_THROW_TOTAL};
 
 // External "defines". All because we need the `Button` define!!
 pub mod lib_actuator;
@@ -39,7 +40,7 @@ async fn main(_spawner: Spawner) {
 
     // Initialize the serial UART for debug/log output.
     let uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, UartConfig::default()); // => 115200/8N1
-    static SERIAL: StaticCell<UartTx<'_, UART1, Blocking>> = StaticCell::new();
+    static SERIAL: StaticCell<UartTx<'_, Blocking>> = StaticCell::new();
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
     // Initialize the actuator.
@@ -67,94 +68,94 @@ async fn main(_spawner: Spawner) {
     //    b. Move the actuator 2mm backward.
 
     //loop {
-//    let mut direction: Direction = Direction::Forward;
+    //    let mut direction: Direction = Direction::Forward;
     for mut direction in [Direction::Backward, Direction::Forward] {
-	// ===== 1. Move the actuator to the end position before we begin.
-	info!("1a. Move actuator to the end position before we begin");
-	actuator
+        // ===== 1. Move the actuator to the end position before we begin.
+        info!("1a. Move actuator to the end position before we begin");
+        actuator
             .move_actuator(TIME_THROW_TOTAL + 50, direction)
             .await;
 
-	// Read the start position value.
-	debug!(
+        // Read the start position value.
+        debug!(
             "Actuator potentiometer value (#1): {}Ω",
             actuator.read_pot().await
-	);
-	Timer::after_secs(3).await;
+        );
+        Timer::after_secs(3).await;
 
-	// ----- Reverse the direction - go forward-most endpoint.
-	if direction == Direction::Forward {
-	    direction = Direction::Backward;
-	} else {
-	    direction = Direction::Forward;
-	}
+        // ----- Reverse the direction - go forward-most endpoint.
+        if direction == Direction::Forward {
+            direction = Direction::Backward;
+        } else {
+            direction = Direction::Forward;
+        }
 
-	info!("1b. Move actuator to the other end position");
-	actuator
-	    .move_actuator(TIME_THROW_TOTAL + 50, direction)
-	    .await;
+        info!("1b. Move actuator to the other end position");
+        actuator
+            .move_actuator(TIME_THROW_TOTAL + 50, direction)
+            .await;
 
-	// Read the end position value.
-	debug!(
-	    "Actuator potentiometer value (#2): {}Ω",
-	    actuator.read_pot().await
-	);
-	Timer::after_secs(3).await;
+        // Read the end position value.
+        debug!(
+            "Actuator potentiometer value (#2): {}Ω",
+            actuator.read_pot().await
+        );
+        Timer::after_secs(3).await;
 
-	// ----- Reverse the direction - go forward-most endpoint.
-	if direction == Direction::Forward {
-	    direction = Direction::Backward;
-	} else {
-	    direction = Direction::Forward;
-	}
+        // ----- Reverse the direction - go forward-most endpoint.
+        if direction == Direction::Forward {
+            direction = Direction::Backward;
+        } else {
+            direction = Direction::Forward;
+        }
 
-	// ===== 2. Move the actuator 10mm at a time
-	info!("2.  Move actuator backward 10mm at a time, 10 times");
-	for i in 1..=10 {
-	    info!("    Move={}", i);
+        // ===== 2. Move the actuator 10mm at a time
+        info!("2.  Move actuator backward 10mm at a time, 10 times");
+        for i in 1..=10 {
+            info!("    Move={}", i);
 
-	    actuator
-		.move_actuator((TIME_THROW_1MM as u64) * 10, direction)
-		.await;
+            actuator
+                .move_actuator((TIME_THROW_1MM as u64) * 10, direction)
+                .await;
 
-	    debug!(
-		"Actuator potentiometer value (#3/{}): {}Ω",
-		i,
-		actuator.read_pot().await
-	    );
+            debug!(
+                "Actuator potentiometer value (#3/{}): {}Ω",
+                i,
+                actuator.read_pot().await
+            );
 
-	    Timer::after_secs(1).await;
+            Timer::after_secs(1).await;
 
-	    // ----- a+b. Run the actuator test (move back and forth 2mm).
-	    actuator.test_actuator().await;
+            // ----- a+b. Run the actuator test (move back and forth 2mm).
+            actuator.test_actuator().await;
 
-	    Timer::after_secs(1).await;
-	}
-	Timer::after_secs(3).await;
+            Timer::after_secs(1).await;
+        }
+        Timer::after_secs(3).await;
 
-	// ===== 3. Move the actuator one gear mode at a time, starting with `P`.
-	info!("3.  Move actuator to specific gear modes");
-	for mode in Button::iterator() {
-	    info!("Mode={}", mode);
+        // ===== 3. Move the actuator one gear mode at a time, starting with `P`.
+        info!("3.  Move actuator to specific gear modes");
+        for mode in Button::iterator() {
+            info!("Mode={}", mode);
 
-	    actuator
-		.change_gear_mode(GearModes::from(Button::from_button(mode)))
-		.await;
+            actuator
+                .change_gear_mode(GearModes::from(Button::from_button(mode)))
+                .await;
 
-	    // Read the gear position value.
-	    debug!(
-		"Actuator potentiometer value (#4): {}Ω",
-		actuator.read_pot().await
-	    );
+            // Read the gear position value.
+            debug!(
+                "Actuator potentiometer value (#4): {}Ω",
+                actuator.read_pot().await
+            );
 
-	    Timer::after_secs(1).await;
+            Timer::after_secs(1).await;
 
-	    // ----- a+b. Run the actuator test (move back and forth 2mm).
-	    actuator.test_actuator().await;
+            // ----- a+b. Run the actuator test (move back and forth 2mm).
+            actuator.test_actuator().await;
 
-	    Timer::after_secs(1).await;
-	}
-	Timer::after_secs(2).await;
+            Timer::after_secs(1).await;
+        }
+        Timer::after_secs(2).await;
     }
     //}
 }

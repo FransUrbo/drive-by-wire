@@ -1,7 +1,7 @@
 use defmt::{debug, error};
 
 use embassy_rp::flash::{Async as FlashAsync, Flash};
-use embassy_rp::peripherals::{FLASH, PIN_26};
+use embassy_rp::peripherals::FLASH;
 use embassy_sync::channel::{Channel, Receiver};
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex, blocking_mutex::raw::NoopRawMutex, mutex::Mutex,
@@ -28,7 +28,7 @@ type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SI
 pub async fn actuator_control(
     receiver: Receiver<'static, CriticalSectionRawMutex, Button, 64>,
     flash: &'static FlashMutex,
-    mut actuator: Actuator<'static, PIN_26>,
+    mut actuator: Actuator<'static>,
 ) {
     debug!("Started actuator control task");
 
