@@ -13,6 +13,7 @@ use embassy_time::Timer;
 use {defmt_rtt as _, panic_probe as _};
 
 use r503::Status;
+use ws2812::{Colour, Ws2812};
 
 bind_interrupts!(pub struct Irqs {
     PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
@@ -44,29 +45,29 @@ async fn main(_spawner: Spawner) {
     let Pio {
         mut common, sm0, ..
     } = Pio::new(p.PIO1, Irqs);
-    let mut ws2812 = ws2812::Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
+    let mut ws2812 = Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
 
     debug!("NeoPixel OFF");
-    ws2812.write(&[(0, 0, 0).into()]).await;
+    ws2812.set_colour(Colour::BLACK).await;
     Timer::after_secs(1).await;
 
     debug!("NeoPixel ON");
-    ws2812.write(&[(0, 0, 255).into()]).await; // BLUE
+    ws2812.set_colour(Colour::BLUE).await;
     Timer::after_secs(1).await;
 
     // First verify the old passwor - "login" as it where.
     match r503.VfyPwd(r503.password).await {
         Status::CmdExecComplete => {
             info!("Fingerprint scanner password matches");
-            ws2812.write(&[(0, 255, 0).into()]).await; // GREEN
+            ws2812.set_colour(Colour::GREEN).await;
         }
         Status::ErrorReceivePackage => {
             error!("Package receive");
-            ws2812.write(&[(255, 130, 0).into()]).await; // ORANGE
+            ws2812.set_colour(Colour::ORANGE).await;
         }
         Status::ErrorPassword => {
             error!("Wrong password");
-            ws2812.write(&[(255, 0, 0).into()]).await; // RED
+            ws2812.set_colour(Colour::RED).await;
         }
         stat => {
             info!("ERROR: code='{=u8:#04x}'", stat as u8);
@@ -77,18 +78,19 @@ async fn main(_spawner: Spawner) {
     match r503.SetPwd(new_pw).await {
         Status::CmdExecComplete => {
             info!("Fingerprint scanner password set");
-            ws2812.write(&[(0, 255, 0).into()]).await; // GREEN
+            ws2812.set_colour(Colour::GREEN).await;
         }
         Status::ErrorReceivePackage => {
             error!("package receive");
-            ws2812.write(&[(255, 130, 0).into()]).await; // ORANGE
+            ws2812.set_colour(Colour::ORANGE).await;
         }
         Status::ErrorPassword => {
             error!("Wrong password");
-            ws2812.write(&[(255, 0, 0).into()]).await; // RED
+            ws2812.set_colour(Colour::RED).await;
         }
         stat => {
             error!("code='{=u8:#04x}'", stat as u8);
+            ws2812.set_colour(Colour::RED).await;
         }
     }
 }

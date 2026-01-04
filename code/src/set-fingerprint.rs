@@ -14,6 +14,8 @@ use embassy_time::Timer;
 
 use {defmt_rtt as _, panic_probe as _};
 
+use ws2812::{Colour, Ws2812};
+
 bind_interrupts!(pub struct Irqs {
     PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
     UART0_IRQ  => UARTInterruptHandler<UART0>;	// Fingerprint scanner
@@ -42,27 +44,27 @@ async fn main(_spawner: Spawner) {
     let Pio {
         mut common, sm0, ..
     } = Pio::new(p.PIO1, Irqs);
-    let mut ws2812 = ws2812::Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
+    let mut ws2812 = Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
 
     debug!("NeoPixel OFF");
-    ws2812.write(&[(0, 0, 0).into()]).await;
+    ws2812.set_colour(Colour::BLACK).await;
     Timer::after_secs(1).await;
 
     debug!("NeoPixel ON");
-    ws2812.write(&[(0, 0, 255).into()]).await; // BLUE
+    ws2812.set_colour(Colour::BLUE).await;
     Timer::after_secs(1).await;
 
     // =====
 
-    if r503.Wrapper_Enrole_Fingerprint().await {
+    if ! r503.Wrapper_Enrole_Fingerprint().await {
         error!("Can't enrole fingerprint");
 
         debug!("NeoPixel RED");
-        ws2812.write(&[(255, 0, 0).into()]).await; // RED
+        ws2812.set_colour(Colour::RED).await;
     } else {
         info!("Fingerprint enrolled");
 
         debug!("NeoPixel GREEN");
-        ws2812.write(&[(0, 255, 0).into()]).await; // GREEN
+        ws2812.set_colour(Colour::GREEN).await;
     }
 }
