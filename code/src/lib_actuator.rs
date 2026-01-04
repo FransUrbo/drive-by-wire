@@ -16,8 +16,7 @@ use crate::lib_config;
 use crate::DbwConfig;
 use crate::FLASH_SIZE;
 
-use actuator::Actuator;
-use actuator::GearModes;
+use actuator::{Actuator, GearModes};
 
 pub static CHANNEL_ACTUATOR: Channel<CriticalSectionRawMutex, Button, 64> = Channel::new();
 type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SIZE>>;

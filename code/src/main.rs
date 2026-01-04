@@ -23,6 +23,7 @@ type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 use static_cell::StaticCell;
 
 use actuator::Actuator;
+use ws2812::*;
 
 use {defmt_serial as _, panic_probe as _};
 
@@ -82,9 +83,9 @@ async fn main(spawner: Spawner) {
     let Pio {
         mut common, sm0, ..
     } = Pio::new(p.PIO1, Irqs);
-    let mut neopixel = ws2812::Ws2812::new(&mut common, sm0, p.DMA_CH2, p.PIN_15);
+    let mut neopixel = Ws2812::new(&mut common, sm0, p.DMA_CH2, p.PIN_15);
     info!("Initialized the NeoPixel LED");
-    neopixel.write(&[(255, 100, 0).into()]).await; // ORANGE -> starting
+    neopixel.set_colour(Colour::ORANGE).await;
 
     // =====
     //  4. Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
@@ -137,7 +138,7 @@ async fn main(spawner: Spawner) {
         CHANNEL_CANWRITE.send(CANMessage::ActuatorTestFailed).await;
 
         // Stop feeding the watchdog, resulting in a reset.
-        //CHANNEL_WATCHDOG.send(StopWatchdog::Yes).await;
+        CHANNEL_WATCHDOG.send(StopWatchdog::Yes).await;
     }
 
     // Actuator works. Spawn off the actuator control task.
@@ -165,16 +166,20 @@ async fn main(spawner: Spawner) {
 
     // Verify fingerprint.
     if config.valet_mode {
-        neopixel.write(&[(0, 0, 255).into()]).await; // BLUE to indicate valet mode.
+	info!("Running in VALET mode, won't authorize");
+	neopixel.set_colour(Colour::WHITE).await;
         CHANNEL_CANWRITE.send(CANMessage::ValetMode).await;
     } else {
+	// Loop until we get a successful fingerprint match.
         loop {
+	    neopixel.set_colour(Colour::BLUE).await;
+
             let mut fp_scanner = fp_scanner.lock().await;
-            if fp_scanner.Wrapper_Verify_Fingerprint().await {
+            if ! fp_scanner.Wrapper_Verify_Fingerprint().await {
                 error!("Can't match fingerprint - retrying");
 
                 debug!("NeoPixel RED");
-                neopixel.write(&[(255, 0, 0).into()]).await; // RED
+		neopixel.set_colour(Colour::RED).await;
 
                 // Give it five seconds before we retry.
                 Timer::after_secs(5).await;
@@ -182,17 +187,18 @@ async fn main(spawner: Spawner) {
                 info!("Fingerprint matches, use authorized");
                 break;
             }
+
             fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
         }
 
         // Send message to IC: "Use authorized".
-        neopixel.write(&[(0, 255, 0).into()]).await; // GREEN
+	neopixel.set_colour(Colour::GREEN).await;
         CHANNEL_CANWRITE.send(CANMessage::Authorized).await;
     }
 
     // =====
-    // 10. Spawn off one button reader per button. They will then spawn off a LED controller each so that
-    //     each button can control their "own" LED.
+    // 10. Spawn off one button reader per button. They will then spawn off a LED controller each
+    //     so thateach button can control their "own" LED.
     spawner.spawn(
         read_button(
             spawner,
@@ -241,8 +247,8 @@ async fn main(spawner: Spawner) {
 
     // =====
     // 11. TODO: Find out what gear the car is in.
-    //     NOTE: Need to do this *after* we've verified that the actuator works. It will tell us what position it
-    //           is in, and from there we can extrapolate the gear.
+    //     NOTE: Need to do this *after* we've verified that the actuator works. It will tell us
+    //           what position it is in, and from there we can extrapolate the gear.
     //     FAKE: Read what button (gear) was enabled when last it changed from the flash.
     match config.active_button {
         Button::P => {
@@ -304,9 +310,11 @@ async fn main(spawner: Spawner) {
     }
 
     // =====
-    // 14. TODO: Not sure how we avoid stopping the program here, the button presses are done in separate tasks!
+    // 14. TODO: Not sure how we avoid stopping the program here, the button presses are done in
+    //           separate tasks!
     info!("Main function complete, control handed over to subtasks.");
     loop {
-        Timer::after_secs(600).await; // Nothing to do, just sleep as long as we can, but 10 minutes should do it.
+	// Nothing to do, just sleep as long as we can, but 10 minutes should do it, then just loop.
+        Timer::after_secs(600).await;
     }
 }
