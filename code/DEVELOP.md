@@ -19,9 +19,9 @@
 1. Link the binary `ln -sf target/thumbv6m-none-eabi/<profile>/<binary> target.elf`
    Binaries: prepare-flash, read_config, set-valet-mode,
              unset-valet-mode, set-password, set-fingerprint,
-	     read-actuator-pot, move-actuator_forward,
-	     move-actuator_backward, test-actuator,
-	     drive-by-wire
+             read-actuator-pot, move-actuator_forward,
+             move-actuator_backward, test-actuator,
+             drive-by-wire
 2. Write the binary to the RaspberryPi Pico.
    ```
    openocd -f interface/cmsis-dap.cfg \
@@ -31,8 +31,10 @@
    I have this function defined in my `${HOME}/.bashrc`:
    ```
    picoload() {
+       target="${1:-target.elf}"
+       [ "${target}" != "target.elf" ] && ln -sf "${target}" "target.elf"
        openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c 'adapter speed 5000' \
-   	    -c "program \"${1:-target.elf}\" verify reset exit"
+            -c "program \"${target}\" verify reset exit"
    }
    ```
    That way, I can run `picoload` or `picoload target/thumbv6m-none-eabi/debug/drive-by-wire`
