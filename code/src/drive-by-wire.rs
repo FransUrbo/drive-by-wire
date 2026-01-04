@@ -69,10 +69,8 @@ async fn main(spawner: Spawner) {
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
     info!("Start");
-
-    let name = env!("CARGO_PKG_NAME");
-    let version = env!("CARGO_PKG_VERSION");
-    info!("Application: {}, v{}", name, version);
+    info!("Application: {}, v{}/{}",
+          env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"), env!("GIT_HASH"));
 
     // =====
     //  2. Initialize the built-in LED and turn it on. Just for completness.
