@@ -23,7 +23,7 @@ type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 use static_cell::StaticCell;
 
 use actuator::Actuator;
-use ws2812::*;
+use ws2812::{Colour, Ws2812};
 
 use {defmt_serial as _, panic_probe as _};
 
