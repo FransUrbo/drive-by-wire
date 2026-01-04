@@ -43,6 +43,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Relays](#relays)
      - [Status LED](#status-led)
 5. [Updates](#updates)
+   - [Update Sun 4 Jan 2026](#update-sun-2-may-2026)
    - [Update Sun 2 May 2024](#update-sun-2-may-2024)
    - [Update Sun 3 May 2024](#update-sun-3-may-2024)
    - [Update Sun 4 May 2024](#update-sun-4-may-2024)
@@ -577,6 +578,14 @@ The steady orange (well, it's not very orange, is it!?? :) and then green LED in
 it and the aura around the fingerprint scanner turns red.
 
 # Updates
+
+## Update Sun 4 Jan 2026
+
+Updated all dependencies to latest versions (which caused some problems, because `embassy-rp` have done some breaking changes) and cleanup the dependency tree in Drive-By-Wire, and all my own libs it depends on.
+
+Other than that cleanup, there's been no code changes to speak of. I'm still having problems with the actuator "somehow" resetting the controller. Not sure what to do, I need a better actuator anyway, can't rely on a linear one, which is controlled by the amount of time it is running - which varies (quite a bit!) depending on exactly how much current it is provided with.
+
+I still haven't found one that's PWM controlled, that have the required attributes. BUT, I might have a solution in the works, that uses an ordinary PWM controlled motor and some gears.
 
 ## Update Sun 2 May 2024
 

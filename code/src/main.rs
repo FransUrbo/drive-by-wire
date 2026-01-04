@@ -7,7 +7,7 @@ use embassy_executor::Spawner;
 use embassy_rp::adc::InterruptHandler as ADCInterruptHandler;
 use embassy_rp::bind_interrupts;
 use embassy_rp::flash::{Async as FlashAsync, Flash};
-use embassy_rp::gpio::{Level, Output, Pin};
+use embassy_rp::gpio::{Level, Output};
 use embassy_rp::peripherals::{FLASH, PIO1, UART0, UART1};
 use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
 use embassy_rp::uart::{
@@ -18,11 +18,12 @@ use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex};
 use embassy_time::{Duration, Timer};
 
 type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SIZE>>;
-type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static, UART0>>;
+type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 
 use static_cell::StaticCell;
 
 use actuator::Actuator;
+use ws2812::*;
 
 use {defmt_serial as _, panic_probe as _};
 
@@ -64,7 +65,7 @@ async fn main(spawner: Spawner) {
     // =====
     //  1. Initialize the serial UART for debug/log output.
     let uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, UartConfig::default()); // => 115200/8N1
-    static SERIAL: StaticCell<UartTx<'_, UART1, Blocking>> = StaticCell::new();
+    static SERIAL: StaticCell<UartTx<'static, Blocking>> = StaticCell::new();
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
     info!("Start");
@@ -82,25 +83,21 @@ async fn main(spawner: Spawner) {
     let Pio {
         mut common, sm0, ..
     } = Pio::new(p.PIO1, Irqs);
-    let mut neopixel = ws2812::Ws2812::new(&mut common, sm0, p.DMA_CH2, p.PIN_15);
+    let mut neopixel = Ws2812::new(&mut common, sm0, p.DMA_CH2, p.PIN_15);
     info!("Initialized the NeoPixel LED");
-    neopixel.write(&[(255, 100, 0).into()]).await; // ORANGE -> starting
+    neopixel.set_colour(Colour::ORANGE).await;
 
     // =====
     //  4. Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
     let mut watchdog = Watchdog::new(p.WATCHDOG);
     watchdog.start(Duration::from_millis(1_050));
-    spawner
-        .spawn(feed_watchdog(CHANNEL_WATCHDOG.receiver(), watchdog))
-        .unwrap();
+    spawner.spawn(feed_watchdog(CHANNEL_WATCHDOG.receiver(), watchdog).unwrap());
     info!("Initialized the Watchdog timer");
 
     // =====
     //  5. TODO: Initialize the CAN bus. Needs to come third, so we can talk to the IC.
-    spawner.spawn(read_can()).unwrap();
-    spawner
-        .spawn(write_can(CHANNEL_CANWRITE.receiver()))
-        .unwrap();
+    spawner.spawn(read_can().unwrap());
+    spawner.spawn(write_can(CHANNEL_CANWRITE.receiver()).unwrap());
 
     // Send message to IC: "Starting Drive-By-Wire system".
     CHANNEL_CANWRITE.send(CANMessage::Starting).await;
@@ -141,17 +138,11 @@ async fn main(spawner: Spawner) {
         CHANNEL_CANWRITE.send(CANMessage::ActuatorTestFailed).await;
 
         // Stop feeding the watchdog, resulting in a reset.
-        //CHANNEL_WATCHDOG.send(StopWatchdog::Yes).await;
+        CHANNEL_WATCHDOG.send(StopWatchdog::Yes).await;
     }
 
     // Actuator works. Spawn off the actuator control task.
-    spawner
-        .spawn(actuator_control(
-            CHANNEL_ACTUATOR.receiver(),
-            flash,
-            actuator,
-        ))
-        .unwrap();
+    spawner.spawn(actuator_control(CHANNEL_ACTUATOR.receiver(), flash, actuator).unwrap());
     CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
 
     // =====
@@ -175,16 +166,20 @@ async fn main(spawner: Spawner) {
 
     // Verify fingerprint.
     if config.valet_mode {
-        neopixel.write(&[(0, 0, 255).into()]).await; // BLUE to indicate valet mode.
+	info!("Running in VALET mode, won't authorize");
+	neopixel.set_colour(Colour::WHITE).await;
         CHANNEL_CANWRITE.send(CANMessage::ValetMode).await;
     } else {
+	// Loop until we get a successful fingerprint match.
         loop {
+	    neopixel.set_colour(Colour::BLUE).await;
+
             let mut fp_scanner = fp_scanner.lock().await;
-            if fp_scanner.Wrapper_Verify_Fingerprint().await {
+            if ! fp_scanner.Wrapper_Verify_Fingerprint().await {
                 error!("Can't match fingerprint - retrying");
 
                 debug!("NeoPixel RED");
-                neopixel.write(&[(255, 0, 0).into()]).await; // RED
+		neopixel.set_colour(Colour::RED).await;
 
                 // Give it five seconds before we retry.
                 Timer::after_secs(5).await;
@@ -192,63 +187,68 @@ async fn main(spawner: Spawner) {
                 info!("Fingerprint matches, use authorized");
                 break;
             }
+
             fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
         }
 
         // Send message to IC: "Use authorized".
-        neopixel.write(&[(0, 255, 0).into()]).await; // GREEN
+	neopixel.set_colour(Colour::GREEN).await;
         CHANNEL_CANWRITE.send(CANMessage::Authorized).await;
     }
 
     // =====
-    // 10. Spawn off one button reader per button. They will then spawn off a LED controller each so that
-    //     each button can control their "own" LED.
-    spawner
-        .spawn(read_button(
+    // 10. Spawn off one button reader per button. They will then spawn off a LED controller each
+    //     so thateach button can control their "own" LED.
+    spawner.spawn(
+        read_button(
             spawner,
             flash,
             fp_scanner,
             Button::P,
-            p.PIN_2.degrade(),
-            p.PIN_6.degrade(),
-        ))
-        .unwrap(); // button/P
-    spawner
-        .spawn(read_button(
+            p.PIN_2.into(),
+            p.PIN_6.into(),
+        )
+        .unwrap(),
+    ); // button/P
+    spawner.spawn(
+        read_button(
             spawner,
             flash,
             fp_scanner,
             Button::R,
-            p.PIN_3.degrade(),
-            p.PIN_7.degrade(),
-        ))
-        .unwrap(); // button/R
-    spawner
-        .spawn(read_button(
+            p.PIN_3.into(),
+            p.PIN_7.into(),
+        )
+        .unwrap(),
+    ); // button/R
+    spawner.spawn(
+        read_button(
             spawner,
             flash,
             fp_scanner,
             Button::N,
-            p.PIN_0.degrade(),
-            p.PIN_8.degrade(),
-        ))
-        .unwrap(); // button/N
-    spawner
-        .spawn(read_button(
+            p.PIN_0.into(),
+            p.PIN_8.into(),
+        )
+        .unwrap(),
+    ); // button/N
+    spawner.spawn(
+        read_button(
             spawner,
             flash,
             fp_scanner,
             Button::D,
-            p.PIN_1.degrade(),
-            p.PIN_9.degrade(),
-        ))
-        .unwrap(); // button/D
+            p.PIN_1.into(),
+            p.PIN_9.into(),
+        )
+        .unwrap(),
+    ); // button/D
     CHANNEL_CANWRITE.send(CANMessage::ButtonsInitialized).await;
 
     // =====
     // 11. TODO: Find out what gear the car is in.
-    //     NOTE: Need to do this *after* we've verified that the actuator works. It will tell us what position it
-    //           is in, and from there we can extrapolate the gear.
+    //     NOTE: Need to do this *after* we've verified that the actuator works. It will tell us
+    //           what position it is in, and from there we can extrapolate the gear.
     //     FAKE: Read what button (gear) was enabled when last it changed from the flash.
     match config.active_button {
         Button::P => {
@@ -310,9 +310,11 @@ async fn main(spawner: Spawner) {
     }
 
     // =====
-    // 14. TODO: Not sure how we avoid stopping the program here, the button presses are done in separate tasks!
+    // 14. TODO: Not sure how we avoid stopping the program here, the button presses are done in
+    //           separate tasks!
     info!("Main function complete, control handed over to subtasks.");
     loop {
-        Timer::after_secs(600).await; // Nothing to do, just sleep as long as we can, but 10 minutes should do it.
+	// Nothing to do, just sleep as long as we can, but 10 minutes should do it, then just loop.
+        Timer::after_secs(600).await;
     }
 }
