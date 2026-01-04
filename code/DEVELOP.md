@@ -7,6 +7,7 @@
 3. Install linker: `cargo install flip-link`.
 4. Install 'serial [port] pretty printer': `cargo install defmt-print`.
 5. Set default toolchains: `rustup default stable`
+6. Install `cargo-outdated` to check for updated dependencies.
 
 # Build apps
 
@@ -34,6 +35,9 @@
    	    -c "program \"${1:-target.elf}\" verify reset exit"
    }
    ```
+   That way, I can run `picoload` or `picoload target/thumbv6m-none-eabi/debug/drive-by-wire`
+   to write the program to the pico.
 
 3. Listen on the serial port for debug messages and communications.
    `bin/listen-serial.sh`
+   NOTE: `socat` is broken under MacOS, and can't be used for this.
