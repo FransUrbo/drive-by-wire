@@ -119,6 +119,7 @@ async fn main(spawner: Spawner) {
         let mut flash = flash.lock().await;
         DbwConfig::read(&mut flash).unwrap()
     };
+    debug!("{:?}", config);
 
     // =====
     //  8. Initialize and test the actuator.

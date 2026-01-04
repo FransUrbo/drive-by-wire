@@ -129,8 +129,10 @@ HOPEFULLY, I can also send the same trigger signal that the EIS would send from 
 3. LOOP: Wait for drive button press.
      1. If moving:
          - If true:  ignore button press (restart loop).
-     2. If break pedal is pressed:
+           NOTE: We can't change gear mode while car is moving.
+     2. If brak pedal is pressed:
          - If false: ignore button press (restart loop).
+           NOTE: We must have the brake pedal depressed to be able to change gear mode.
      3. If NEW button != CURRENT button.
          1. Get current position of actuator.
          2. Blink NEW drive button telltale LED.
@@ -139,6 +141,12 @@ HOPEFULLY, I can also send the same trigger signal that the EIS would send from 
          5. Check that "before change" and "current position" have changed.
          6. Turn off CURRENT drive button telltale LED.
          7. Set NEW drive buttons telltale LED.
+     4. If in 'P' *and* both 'P' and 'N' buttons pressed at the same time:
+        1. Turn on both button LEDs.
+        2. Check fingerprint:
+           1. If valid fingerprint:
+              1. Toggle Valet Mode.
+              2. Turn off the 'N' button LED, leaving the 'P' button LED still on.
 
 Q: How can the DriveByWire, SmartTOP and SprintBooster all be
    set in valet mode all at the same time?<br>
