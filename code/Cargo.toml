@@ -138,6 +138,10 @@ opt-level = 3
 # =====
 
 [[bin]]
+name = "drive-by-wire"
+path = "src/drive-by-wire.rs"
+
+[[bin]]
 name = "prepare-flash"
 path = "src/prepare-flash.rs"
 
