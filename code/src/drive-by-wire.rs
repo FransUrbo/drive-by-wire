@@ -82,7 +82,7 @@ async fn main(spawner: Spawner) {
         mut common, sm0, ..
     } = Pio::new(p.PIO1, Irqs);
     let mut neopixel = Ws2812::new(&mut common, sm0, p.DMA_CH2, p.PIN_15);
-    info!("Initialized the NeoPixel LED");
+    info!("NeoPixel LED initialized");
     neopixel.set_colour(Colour::ORANGE).await;
 
     // =====
@@ -90,24 +90,25 @@ async fn main(spawner: Spawner) {
     let mut watchdog = Watchdog::new(p.WATCHDOG);
     watchdog.start(Duration::from_millis(1_050));
     spawner.spawn(feed_watchdog(CHANNEL_WATCHDOG.receiver(), watchdog).unwrap());
-    info!("Initialized the Watchdog timer");
+    info!("Watchdog timer initialized");
 
     // =====
-    //  5. TODO: Initialize the CAN bus. Needs to come third, so we can talk to the IC.
+    //  5. Initialize the CAN bus. Needs to come third, so we can talk to the IC.
     spawner.spawn(read_can().unwrap());
     spawner.spawn(write_can(CHANNEL_CANWRITE.receiver()).unwrap());
-
-    // Send message to IC: "Starting Drive-By-Wire system".
+    info!("CAN bus communicators initialized");
     CHANNEL_CANWRITE.send(CANMessage::Starting).await;
 
     // =====
     //  6. Initialize the MOSFET relays.
     let mut eis_steering_lock = Output::new(p.PIN_18, Level::Low); // EIS/steering lock
     let mut eis_start = Output::new(p.PIN_22, Level::Low); // EIS/start
+    info!("EIS relays initialized");
     CHANNEL_CANWRITE.send(CANMessage::RelaysInitialized).await;
 
     // =====
     //  7. Initialize the flash drive where we store some config values across reboots.
+    info!("Initializing the flash drive");
     let flash = Flash::<_, FlashAsync, FLASH_SIZE>::new(p.FLASH, p.DMA_CH3);
     static FLASH: StaticCell<FlashMutex> = StaticCell::new();
     let flash = FLASH.init(Mutex::new(flash));
@@ -117,10 +118,11 @@ async fn main(spawner: Spawner) {
         let mut flash = flash.lock().await;
         DbwConfig::read(&mut flash).unwrap()
     };
-    debug!("{:?}", config);
+    info!("{:?}", config);
 
     // =====
     //  8. Initialize and test the actuator.
+    info!("Initializing actuator");
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
     let mut actuator = Actuator::new(
         p.PIN_10.into(),
@@ -134,6 +136,7 @@ async fn main(spawner: Spawner) {
     // Test actuator control.
     if !actuator.test_actuator().await {
         // ERROR: Actuator have not moved.
+        error!("Actuator failed to move - resetting");
         CHANNEL_CANWRITE.send(CANMessage::ActuatorTestFailed).await;
 
         // Stop feeding the watchdog, resulting in a reset.
@@ -142,10 +145,12 @@ async fn main(spawner: Spawner) {
 
     // Actuator works. Spawn off the actuator control task.
     spawner.spawn(actuator_control(CHANNEL_ACTUATOR.receiver(), flash, actuator).unwrap());
+    info!("Actuator initialized");
     CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
 
     // =====
     //  9. Initialize the fingerprint scanner.
+    info!("Initializing the fingerprint scanner");
     CHANNEL_CANWRITE.send(CANMessage::InitFP).await;
     let fp_scanner = r503::R503::new(
         p.UART0,
@@ -158,15 +163,16 @@ async fn main(spawner: Spawner) {
     );
     static FP_SCANNER: StaticCell<ScannerMutex> = StaticCell::new();
     let fp_scanner = FP_SCANNER.init(Mutex::new(fp_scanner));
+    info!("Fingerprint scanner initialized");
     CHANNEL_CANWRITE.send(CANMessage::FPInitialized).await;
 
-    // Send message to IC: "Authorizing use".
-    CHANNEL_CANWRITE.send(CANMessage::Authorizing).await;
-
     // Verify fingerprint.
+    info!("Authorizing use");
+    CHANNEL_CANWRITE.send(CANMessage::Authorizing).await;
     if config.valet_mode {
-	info!("Running in VALET mode, won't authorize");
 	neopixel.set_colour(Colour::WHITE).await;
+
+	info!("Running in VALET mode, won't authorize");
         CHANNEL_CANWRITE.send(CANMessage::ValetMode).await;
     } else {
 	// Loop until we get a successful fingerprint match.
@@ -190,14 +196,15 @@ async fn main(spawner: Spawner) {
             fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
         }
 
-        // Send message to IC: "Use authorized".
 	neopixel.set_colour(Colour::GREEN).await;
+        info!("Use authorized");
         CHANNEL_CANWRITE.send(CANMessage::Authorized).await;
     }
 
     // =====
     // 10. Spawn off one button reader per button. They will then spawn off a LED controller each
     //     so thateach button can control their "own" LED.
+    info!("Initializing drive buttons");
     spawner.spawn(
         read_button(
             spawner,
@@ -242,16 +249,17 @@ async fn main(spawner: Spawner) {
         )
         .unwrap(),
     ); // button/D
+    info!("Drive buttons initialized");
     CHANNEL_CANWRITE.send(CANMessage::ButtonsInitialized).await;
 
     // =====
-    // 11. TODO: Find out what gear the car is in.
+    // 11. TODO: Find out what gear mode the car is in.
     //     NOTE: Need to do this *after* we've verified that the actuator works. It will tell us
     //           what position it is in, and from there we can extrapolate the gear.
     //     FAKE: Read what button (gear) was enabled when last it changed from the flash.
     match config.active_button {
         Button::P => {
-            debug!("Setting enabled button to P");
+            info!("Setting enabled button to P");
             CHANNEL_P.send(LedStatus::On).await;
             CHANNEL_R.send(LedStatus::Off).await;
             CHANNEL_N.send(LedStatus::Off).await;
@@ -260,7 +268,7 @@ async fn main(spawner: Spawner) {
             unsafe { BUTTON_ENABLED = Button::P };
         }
         Button::R => {
-            debug!("Setting enabled button to R");
+            info!("Setting enabled button to R");
             CHANNEL_P.send(LedStatus::Off).await;
             CHANNEL_R.send(LedStatus::On).await;
             CHANNEL_N.send(LedStatus::Off).await;
@@ -269,7 +277,7 @@ async fn main(spawner: Spawner) {
             unsafe { BUTTON_ENABLED = Button::R };
         }
         Button::N => {
-            debug!("Setting enabled button to N");
+            info!("Setting enabled button to N");
             CHANNEL_P.send(LedStatus::Off).await;
             CHANNEL_R.send(LedStatus::Off).await;
             CHANNEL_N.send(LedStatus::On).await;
@@ -278,7 +286,7 @@ async fn main(spawner: Spawner) {
             unsafe { BUTTON_ENABLED = Button::N };
         }
         Button::D => {
-            debug!("Setting enabled button to D");
+            info!("Setting enabled button to D");
             CHANNEL_P.send(LedStatus::Off).await;
             CHANNEL_R.send(LedStatus::Off).await;
             CHANNEL_N.send(LedStatus::Off).await;
@@ -292,13 +300,14 @@ async fn main(spawner: Spawner) {
     // =====
     // 12. Turn on the ignition switch.
     eis_steering_lock.set_high();
+    info!("Turning on the EIS");
 
     // =====
     // 13. Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
     if !config.valet_mode {
         // Sleep here three seconds to allow the car to "catch up".
         // Sometime, it takes a while for the car to "wake up". Not sure why..
-        debug!("Waiting 3s to wakeup the car");
+        info!("Waiting 3s to wakeup the car");
         Timer::after_secs(3).await;
 
         CHANNEL_CANWRITE.send(CANMessage::StartCar).await;

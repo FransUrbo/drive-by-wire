@@ -27,7 +27,7 @@ impl DbwConfig {
 
         match flash.blocking_read(ADDR_OFFSET + ERASE_SIZE as u32, &mut read_buf) {
             Ok(_) => {
-                debug!("Flash read successful");
+                info!("Flash read successful");
 
                 // Translate the u8's.
                 let active_button = match read_buf[0] {

@@ -1,4 +1,4 @@
-use defmt::{debug, error};
+use defmt::{info, error};
 
 use embassy_rp::flash::{Async as FlashAsync, Flash};
 use embassy_rp::peripherals::FLASH;
@@ -29,7 +29,7 @@ pub async fn actuator_control(
     flash: &'static FlashMutex,
     mut actuator: Actuator<'static>,
 ) {
-    debug!("Started actuator control task");
+    info!("Started actuator control task");
 
     loop {
         // Block waiting for button press.
