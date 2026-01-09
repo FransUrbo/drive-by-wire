@@ -28,7 +28,6 @@ jobs:
     defaults:
       run:
         working-directory: ./code
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -54,9 +53,28 @@ jobs:
       - name: Check formating
         run: cargo fmt --check 2>&1 | tee _check-fmt.log
 
+  setup-env-vars:
+    name: Setup environment variables for build
+    runs-on: ubuntu-latest
+    outputs:
+      DEFMT_LOG_info: ${{ steps.set-env-vars.outputs.DEFMT_LOG_info }}
+      DEFMT_LOG_trace: ${{ steps.set-env-vars.outputs.DEFMT_LOG_trace }}
+    steps:
+      - name: Set env variable
+        id: set-env-vars
+        run: |
+          DEFMT_LOG_info=info
+          DEFMT_LOG_trace=trace
+
+          echo "DEFMT_LOG_info=${DEFMT_LOG_info}"
+          echo "DEFMT_LOG_info=${DEFMT_LOG_info}" >> $GITHUB_OUTPUT
+
+          echo "DEFMT_LOG_trace=${DEFMT_LOG_trace}"
+          echo "DEFMT_LOG_trace=${DEFMT_LOG_trace}" >> $GITHUB_OUTPUT
+
   build:
     name: Build apps
-    needs: check
+    needs: [check, setup-env-vars]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -67,7 +85,6 @@ jobs:
     defaults:
       run:
         working-directory: ./code
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -86,6 +103,9 @@ jobs:
 
       - name: Build ${{ matrix.target }}
         run: cargo build --verbose --profile ${{ matrix.target }}
+        env:
+          DEFMT_LOG: ${{ matrix.target == 'release' && needs.setup-env-vars.outputs.DEFMT_LOG_info || needs.setup-env-vars.outputs.DEFMT_LOG_trace }}
+          
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
