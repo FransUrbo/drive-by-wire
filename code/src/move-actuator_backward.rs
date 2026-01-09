@@ -34,7 +34,7 @@ async fn main(_spawner: Spawner) {
         actuator.read_pot().await
     );
     actuator
-        .move_actuator((TIME_THROW_1MM * 10) as u64, Direction::Backward)
+        .move_actuator(TIME_THROW_1MM * 10.0, Direction::Backward)
         .await;
     info!(
         "Actuator potentiometer value (#2): {}Ω",

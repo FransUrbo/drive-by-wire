@@ -73,7 +73,7 @@ async fn main(_spawner: Spawner) {
         // ===== 1. Move the actuator to the end position before we begin.
         info!("1a. Move actuator to the end position before we begin");
         actuator
-            .move_actuator(TIME_THROW_TOTAL + 50, direction)
+            .move_actuator((TIME_THROW_TOTAL + 50) as f32, direction)
             .await;
 
         // Read the start position value.
@@ -92,7 +92,7 @@ async fn main(_spawner: Spawner) {
 
         info!("1b. Move actuator to the other end position");
         actuator
-            .move_actuator(TIME_THROW_TOTAL + 50, direction)
+            .move_actuator((TIME_THROW_TOTAL + 50) as f32, direction)
             .await;
 
         // Read the end position value.
@@ -115,7 +115,7 @@ async fn main(_spawner: Spawner) {
             info!("    Move={}", i);
 
             actuator
-                .move_actuator((TIME_THROW_1MM as u64) * 10, direction)
+                .move_actuator(TIME_THROW_1MM * 10.0, direction)
                 .await;
 
             debug!(
