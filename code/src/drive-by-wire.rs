@@ -101,8 +101,8 @@ async fn main(spawner: Spawner) {
 
     // =====
     //  6. Initialize the MOSFET relays.
-    let mut eis_steering_lock = Output::new(p.PIN_18, Level::Low); // EIS/steering lock
-    let mut eis_start = Output::new(p.PIN_22, Level::Low); // EIS/start
+    let mut eis_steering_lock = Output::new(p.PIN_19, Level::Low); // EIS/Steering lock (GREEN)
+    let mut eis_start = Output::new(p.PIN_22, Level::Low); // EIS/Start (YELLOW)
     info!("EIS relays initialized");
     CHANNEL_CANWRITE.send(CANMessage::RelaysInitialized).await;
 
@@ -212,7 +212,7 @@ async fn main(spawner: Spawner) {
             fp_scanner,
             Button::P,
             p.PIN_2.into(),
-            p.PIN_6.into(),
+            p.PIN_14.into(),
         )
         .unwrap(),
     ); // button/P
@@ -223,7 +223,7 @@ async fn main(spawner: Spawner) {
             fp_scanner,
             Button::R,
             p.PIN_3.into(),
-            p.PIN_7.into(),
+            p.PIN_18.into(),
         )
         .unwrap(),
     ); // button/R

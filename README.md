@@ -43,6 +43,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Relays](#relays)
      - [Status LED](#status-led)
 5. [Updates](#updates)
+   - [Update Sun 9 Jan 2026](#update-sun-9-may-2026)
    - [Update Sun 4 Jan 2026](#update-sun-2-may-2026)
    - [Update Sun 2 May 2024](#update-sun-2-may-2024)
    - [Update Sun 3 May 2024](#update-sun-3-may-2024)
@@ -155,7 +156,7 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 
 # Pin layout for RaspberryPI 3-5, and Pico
 
-| Pin | Port    | Use                          | Pin | Port         | Use
+| <div style="width:25px">Pin</div> | <div style="width:75px">Port</div> | <div style="width:280px">Use</div> | <div style="width:25px">Pin</div> | <div style="width:75px">Port</div> | <div style="width:280px">Use</div>
 | --: | :------ | :--------------------------- | --: | :----------- | :----------------------------- |
 |   1 | GPIO  0 | Button (Switch - N)          | 40  | VBUS         |                                |
 |   2 | GPIO  1 | Button (Switch - D)          | 39  | VSYS         |                                |
@@ -163,19 +164,19 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 |   4 | GPIO  2 | Button (Switch - P)          | 37  | 3V3_EN       |                                |
 |   5 | GPIO  3 | Button (Switch - R)          | 36  | 3V3_OUT      |                                |
 |   6 | GPIO  4 | Debug (TX)                   | 35  | ADC_VREF     | Actuator - +5V                 |
-|   7 | GPIO  5 | Debug (RX)                   | 34  | GPIO 28<br>ADC2  |                                |
-|   8 | GND     |                              | 33  | GND<br>AGND     | Actuator - GND                 |
-|   9 | GPIO  6 | Button (Telltale - P)        | 32  | GPIO 27<br>ADC1 |                                |
-|  10 | GPIO  7 | Button (Telltale - R)        | 31  | GPIO 26<br>ADC0 | Actuator - Potentiometer Brush |
+|   7 | GPIO  5 | Debug (RX)                   | 34  | GPIO 28<br>ADC2 |                             |
+|   8 | GND     |                              | 33  | GND<br>AGND     | Actuator - GND              |
+|   9 | GPIO  6 | Power monitor (SDA)          | 32  | GPIO 27<br>ADC1 |                             |
+|  10 | GPIO  7 | Power monitor (SCL)          | 31  | GPIO 26<br>ADC0 | Actuator - Potentiometer Brush |
 |  11 | GPIO  8 | Button (Telltale - N)        | 30  | RUN          |                                |
-|  12 | GPIO  9 | Button (Telltale - D)        | 29  | GPIO 22      | EIS Relay (#3 - start)         |
+|  12 | GPIO  9 | Button (Telltale - D)        | 29  | GPIO 22      | EIS Relay (#3 - start) (YELLOW)|
 |  13 | GND     | *[GPIO 29]*                  | 28  | GND          | *[GPIO 23]*                    |
 |  14 | GPIO 10 | Actuator - Motor Relay (#1)  | 27  | GPIO 21      | CAN #0 (RX)                    |
 |  15 | GPIO 11 | Actuator - Motor Relay (#2)  | 26  | GPIO 20      | CAN #0 (TX)                    |
-|  16 | GPIO 12 | Actuator - +5V/+12V select   | 25  | GPIO 19      | EIS Relay (#1 - steering lock) |
-|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP) | 24  | GPIO 18      |                                |
+|  16 | GPIO 12 | Actuator - +5V/+12V select   | 25  | GPIO 19      | EIS Relay (#1 - steering lock) (GREEN) |
+|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP) | 24  | GPIO 18      | Button (Telltale - R)          |
 |  18 | GND     | *[GPIO 25]*                  | 23  | GND          | *[GPIO 24]*                    |
-|  19 | GPIO 14 | ~~Status LED (Data OUT)~~        | 22  | GPIO 17      | Fingerprint Scanner (TX)       |
+|  19 | GPIO 14 | Button (Telltale - P)        | 22  | GPIO 17      | Fingerprint Scanner (TX)       |
 |  20 | GPIO 15 | Status LED (Data IN)         | 21  | GPIO 16      | Fingerprint Scanner (RX)       |
 
 LED | GPIO 25
@@ -586,6 +587,12 @@ The steady orange (well, it's not very orange, is it!?? :) and then green LED in
 it and the aura around the fingerprint scanner turns red.
 
 # Updates
+
+## Update Fri 9 Jan 2026
+
+Move some pins around. Need to clear Pin 9 and 10 (GPIO 6 and 7) for my new UPS module. Realised, that it's
+probably a good idea to keep the controller running for .. say a minute after turning the ignition off (which
+would cut power to the controller).
 
 ## Update Sun 4 Jan 2026
 
