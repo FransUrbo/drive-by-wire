@@ -1,6 +1,6 @@
 [package]
 name = "drive-by-wire"
-version = "0.3.8"
+version = "0.3.9"
 description = "Provide Drive-by-Wire buttons for the Mercedes-Benz SLK55 AMG 2010 (R171)"
 readme = "README.md"
 edition = "2021"
@@ -35,9 +35,8 @@ git = "https://github.com/FransUrbo/rust-libs-ws2812.git"
 rev = "dfb9b98"
 
 [dependencies.r503]
-#git = "https://github.com/FransUrbo/rust-libs-r503.git"
-#rev = "e548d89"
-path = "/Users/turbo/src/Mercedes SLK Drive Selector/rust-libs-r503"
+git = "https://github.com/FransUrbo/rust-libs-r503.git"
+version = "0.2.4"
 
 [dependencies.debounce] # Duplicate lib name!
 git = "https://github.com/FransUrbo/rust-libs-debounce.git"
