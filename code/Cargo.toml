@@ -36,7 +36,7 @@ rev = "dfb9b98"
 
 [dependencies.r503]
 git = "https://github.com/FransUrbo/rust-libs-r503.git"
-rev = "dbaac28"
+rev = "e548d89"
 
 [dependencies.debounce] # Duplicate lib name!
 git = "https://github.com/FransUrbo/rust-libs-debounce.git"
