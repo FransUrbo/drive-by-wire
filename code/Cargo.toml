@@ -35,8 +35,9 @@ git = "https://github.com/FransUrbo/rust-libs-ws2812.git"
 rev = "dfb9b98"
 
 [dependencies.r503]
-git = "https://github.com/FransUrbo/rust-libs-r503.git"
-rev = "e548d89"
+#git = "https://github.com/FransUrbo/rust-libs-r503.git"
+#rev = "e548d89"
+path = "/Users/turbo/src/Mercedes SLK Drive Selector/rust-libs-r503"
 
 [dependencies.debounce] # Duplicate lib name!
 git = "https://github.com/FransUrbo/rust-libs-debounce.git"
@@ -160,3 +161,7 @@ path = "src/move-actuator_backward.rs"
 [[bin]]
 name = "test-actuator"
 path = "src/test-actuator.rs"
+
+[[bin]]
+name = "set-security-level"
+path = "src/set-security-level.rs"
