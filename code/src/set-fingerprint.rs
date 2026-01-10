@@ -16,6 +16,10 @@ use {defmt_rtt as _, panic_probe as _};
 
 use ws2812::{Colour, Ws2812};
 
+// For our commented out 'Empty()' below, in case we need it again.
+#[allow(unused_imports)]
+use r503::Status;
+
 bind_interrupts!(pub struct Irqs {
     PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
     UART0_IRQ  => UARTInterruptHandler<UART0>;	// Fingerprint scanner
@@ -50,21 +54,33 @@ async fn main(_spawner: Spawner) {
     ws2812.set_colour(Colour::BLACK).await;
     Timer::after_secs(1).await;
 
-    debug!("NeoPixel ON");
-    ws2812.set_colour(Colour::BLUE).await;
-    Timer::after_secs(1).await;
+    //match r503.Empty().await {
+    //    Status::CmdExecComplete => {
+    //        info!("Library emptied");
+    //    }
+    //    stat => {
+    //        info!("Return code: '{=u8:#04x}'", stat as u8);
+    //    }
+    //}
 
     // =====
+    loop {
+        debug!("NeoPixel BLUE");
+        ws2812.set_colour(Colour::BLUE).await;
 
-    if ! r503.Wrapper_Enrole_Fingerprint().await {
-        error!("Can't enrole fingerprint");
+        if ! r503.Wrapper_Enrole_Fingerprint(0x0002).await {
+            error!("Can't enrole fingerprint");
 
-        debug!("NeoPixel RED");
-        ws2812.set_colour(Colour::RED).await;
-    } else {
-        info!("Fingerprint enrolled");
+            debug!("NeoPixel RED");
+            ws2812.set_colour(Colour::RED).await;
 
-        debug!("NeoPixel GREEN");
-        ws2812.set_colour(Colour::GREEN).await;
+            Timer::after_secs(5).await;
+        } else {
+            info!("Fingerprint enrolled");
+
+            debug!("NeoPixel GREEN");
+            ws2812.set_colour(Colour::GREEN).await;
+            return;
+        }
     }
 }
