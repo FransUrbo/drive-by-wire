@@ -32,11 +32,11 @@ rev = "411ae7fa909b4fd2667885aff687e009b9108190"
 
 [dependencies.ws2812]
 git = "https://github.com/FransUrbo/rust-libs-ws2812.git"
-rev = "dfb9b98"
+version = "1.0.0"
 
 [dependencies.r503]
 git = "https://github.com/FransUrbo/rust-libs-r503.git"
-rev = "084502c"
+version = "1.0.0"
 
 [dependencies.debounce] # Duplicate lib name!
 git = "https://github.com/FransUrbo/rust-libs-debounce.git"
