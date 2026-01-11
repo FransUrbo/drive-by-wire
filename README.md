@@ -43,8 +43,9 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Relays](#relays)
      - [Status LED](#status-led)
 5. [Updates](#updates)
-   - [Update Sun 9 Jan 2026](#update-sun-9-may-2026)
-   - [Update Sun 4 Jan 2026](#update-sun-2-may-2026)
+   - [Update Sat 10 Jan 2026](#update-sat-10-Jan-2026)
+   - [Update Fri 9 Jan 2026](#update-fri-9-jan-2026)
+   - [Update Sun 4 Jan 2026](#update-sun-4-jan-2026)
    - [Update Sun 2 May 2024](#update-sun-2-may-2024)
    - [Update Sun 3 May 2024](#update-sun-3-may-2024)
    - [Update Sun 4 May 2024](#update-sun-4-may-2024)
@@ -587,6 +588,13 @@ The steady orange (well, it's not very orange, is it!?? :) and then green LED in
 it and the aura around the fingerprint scanner turns red.
 
 # Updates
+
+## Update Sat 10 Jan 2026
+
+I added a binary to set the security level on the fingerprint scanner. Default is *3* (between *1* - lowest -
+and *5* - highest), which caused it to be *REALLY* sensitive!
+
+Instead, set it to level *1* with the binary.
 
 ## Update Fri 9 Jan 2026
 
