@@ -24,6 +24,7 @@ use static_cell::StaticCell;
 
 use actuator::Actuator;
 use ws2812::{Colour, Ws2812};
+use r503::R503;
 
 use {defmt_serial as _, panic_probe as _};
 
@@ -152,7 +153,7 @@ async fn main(spawner: Spawner) {
     //  9. Initialize the fingerprint scanner.
     info!("Initializing the fingerprint scanner");
     CHANNEL_CANWRITE.send(CANMessage::InitFP).await;
-    let fp_scanner = r503::R503::new(
+    let fp_scanner = R503::new(
         p.UART0,
         Irqs,
         p.PIN_16,
