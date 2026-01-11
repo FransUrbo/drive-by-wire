@@ -90,13 +90,13 @@ async fn main(spawner: Spawner) {
     //  4. Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
     let mut watchdog = Watchdog::new(p.WATCHDOG);
     watchdog.start(Duration::from_millis(1_050));
-    spawner.spawn(feed_watchdog(CHANNEL_WATCHDOG.receiver(), watchdog).unwrap());
+    spawner.must_spawn(feed_watchdog(CHANNEL_WATCHDOG.receiver(), watchdog));
     info!("Watchdog timer initialized");
 
     // =====
     //  5. Initialize the CAN bus. Needs to come third, so we can talk to the IC.
-    spawner.spawn(read_can().unwrap());
-    spawner.spawn(write_can(CHANNEL_CANWRITE.receiver()).unwrap());
+    spawner.must_spawn(read_can());
+    spawner.must_spawn(write_can(CHANNEL_CANWRITE.receiver()));
     info!("CAN bus communicators initialized");
     CHANNEL_CANWRITE.send(CANMessage::Starting).await;
 
@@ -145,7 +145,7 @@ async fn main(spawner: Spawner) {
     }
 
     // Actuator works. Spawn off the actuator control task.
-    spawner.spawn(actuator_control(CHANNEL_ACTUATOR.receiver(), flash, actuator).unwrap());
+    spawner.must_spawn(actuator_control(CHANNEL_ACTUATOR.receiver(), flash, actuator));
     info!("Actuator initialized");
     CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
 
@@ -206,7 +206,7 @@ async fn main(spawner: Spawner) {
     // 10. Spawn off one button reader per button. They will then spawn off a LED controller each
     //     so thateach button can control their "own" LED.
     info!("Initializing drive buttons");
-    spawner.spawn(
+    spawner.must_spawn(
         read_button(
             spawner,
             flash,
@@ -214,10 +214,9 @@ async fn main(spawner: Spawner) {
             Button::P,
             p.PIN_2.into(),
             p.PIN_14.into(),
-        )
-        .unwrap(),
+        ),
     ); // button/P
-    spawner.spawn(
+    spawner.must_spawn(
         read_button(
             spawner,
             flash,
@@ -225,10 +224,9 @@ async fn main(spawner: Spawner) {
             Button::R,
             p.PIN_3.into(),
             p.PIN_18.into(),
-        )
-        .unwrap(),
+        ),
     ); // button/R
-    spawner.spawn(
+    spawner.must_spawn(
         read_button(
             spawner,
             flash,
@@ -236,10 +234,9 @@ async fn main(spawner: Spawner) {
             Button::N,
             p.PIN_0.into(),
             p.PIN_8.into(),
-        )
-        .unwrap(),
+        ),
     ); // button/N
-    spawner.spawn(
+    spawner.must_spawn(
         read_button(
             spawner,
             flash,
@@ -247,8 +244,7 @@ async fn main(spawner: Spawner) {
             Button::D,
             p.PIN_1.into(),
             p.PIN_9.into(),
-        )
-        .unwrap(),
+        ),
     ); // button/D
     info!("Drive buttons initialized");
     CHANNEL_CANWRITE.send(CANMessage::ButtonsInitialized).await;

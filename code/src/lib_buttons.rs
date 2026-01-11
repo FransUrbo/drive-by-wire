@@ -120,10 +120,10 @@ pub async fn read_button(
     // Spawn off a LED driver for this button.
     match button {
         Button::UNSET => (), // Should be impossible, but just to make the compiler happy.
-        Button::P => spawner.spawn(set_led(CHANNEL_P.receiver(), led_pin, button).unwrap()),
-        Button::N => spawner.spawn(set_led(CHANNEL_N.receiver(), led_pin, button).unwrap()),
-        Button::R => spawner.spawn(set_led(CHANNEL_R.receiver(), led_pin, button).unwrap()),
-        Button::D => spawner.spawn(set_led(CHANNEL_D.receiver(), led_pin, button).unwrap()),
+        Button::P => spawner.must_spawn(set_led(CHANNEL_P.receiver(), led_pin, button)),
+        Button::N => spawner.must_spawn(set_led(CHANNEL_N.receiver(), led_pin, button)),
+        Button::R => spawner.must_spawn(set_led(CHANNEL_R.receiver(), led_pin, button)),
+        Button::D => spawner.must_spawn(set_led(CHANNEL_D.receiver(), led_pin, button)),
     };
     debug!("Button::{}: Started button control task", button);
 
