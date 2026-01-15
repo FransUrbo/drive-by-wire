@@ -43,7 +43,9 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Relays](#relays)
      - [Status LED](#status-led)
 5. [Updates](#updates)
-   - [Update Sat 10 Jan 2026](#update-sat-10-Jan-2026)
+   - [Update Thu 15 Jan 2026](#update-thu-15-jan-2026)
+   - [Update Wed 14 Jan 2026](#update-wed-14-jan-2026)
+   - [Update Sat 10 Jan 2026](#update-sat-10-jan-2026)
    - [Update Fri 9 Jan 2026](#update-fri-9-jan-2026)
    - [Update Sun 4 Jan 2026](#update-sun-4-jan-2026)
    - [Update Sun 2 May 2024](#update-sun-2-may-2024)
@@ -55,7 +57,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
    - [Update Sun 9 May 2024](#update-sun-9-may-2024)
    - [Update Thu 27 Jun 2024](#update-thu-27-jun-2024)
    - [Update Sun 30 Jun 2024](#update-sun-30-jun-2024)
-   - [Update Mon 1 Jun 2024](#update-mon-1-jun-2024)
+   - [Update Mon 1 Jul 2024](#update-mon-1-jul-2024)
    - [Update Sat 13 Jul 2024](#update-sat-13-jul-2024)
 6. [Additional information](#additional-information)
 
@@ -588,6 +590,42 @@ The steady orange (well, it's not very orange, is it!?? :) and then green LED in
 it and the aura around the fingerprint scanner turns red.
 
 # Updates
+
+## Update Thu 15 Jan 2026
+
+Turns out I had a MOSFET driver lying around that I can use for switching between 12V and 5V drive for the
+actuator which I'm working on now (need to do some soldering and wiring on the boards), should have an update
+in the next few days.
+
+I've also been working on getting the "Move to drive position" working. It is *mostly* working, but the Pico
+resets. Not sure why, because the test (move +/- 5mm) works flawlessly!
+
+Although, sometimes it works for several seconds, more than enough to move from 'P', to 'R', to 'N', to 'D',
+and then back to 'P' where it starts over.
+
+It can work for serveral loops, but then all of a sudden it crashes. Or rather, *resets*! There's no crash
+in the log, the Pico just restarts :(.
+
+So "as usual", it doesn't seem to be anything wrong with the software, but I'm not skilled enough with hardware
+to figure out exactly what the problem is..
+
+I'm *thinking*, that the relay is sending a spike. MAYBE because I'm trying to switch them on and off to quickly?
+I've tried to increase the sleep between "things", but results are inconclusive.
+
+## Update Wed 14 Jan 2026
+
+*FINALLY* got the Actuator to move without problems (or crashing)!
+Rewrote the move function to instead of move in miliseconds (which was obvious from very early on not to be
+even close to accurate enough), it now moves in Ohm distance by reading the feedback pot on the Actuator
+to figure out "where" it is - in Ohm - then calculate how far - how many Ohms - it needs to move, and in what
+direction.
+
+It runs in a loop, finds the current resistance value (it seems to be accurate to within 5Ω which seems to be
+fine), when it gets close (+/- 10mm), it switches to 5V drive (which, turns out, I have not connected!!), then
+keeps moving until it's within 2mm (2x16Ω) and then stops.
+
+The Actuator tests now succeeds every time - it moves 5mm one way, then 5mm the other and checks the results.
+This should be good enough, but I'll finetune that when I get it in the car.
 
 ## Update Sat 10 Jan 2026
 
