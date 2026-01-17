@@ -1,0 +1,23 @@
+[default.general]
+chip = "RP2040"
+
+[default.probe]
+protocol = "Swd"
+
+[default.rtt]
+enabled = true
+log_enabled = true
+log_path = "./logs"
+
+[default.flashing]
+enabled = true
+do_chip_erase = false
+verify = true
+
+[default.reset]
+enabled = true
+halt_afterwards = false
+
+[default.gdb]
+enabled = true
+gdb_connection_string = "127.0.0.1:1337"
