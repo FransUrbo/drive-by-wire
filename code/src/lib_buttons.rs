@@ -50,7 +50,7 @@ impl Button {
         }
     }
 
-    pub fn from_button(v: Self) -> u8 {
+    pub fn from(v: Self) -> u8 {
         match v {
             Self::P => 0,
             Self::R => 1,
@@ -139,7 +139,7 @@ pub async fn read_button(
         if unsafe { BUTTONS_BLOCKED } {
             debug!("Button::{}: Buttons blocked", button);
 
-	    // NOTE: Must be in 'P', then press both 'P' and 'N' at the same time for this to work.
+            // NOTE: Must be in 'P', then press both 'P' and 'N' at the same time for this to work.
             if unsafe { BUTTON_ENABLED == Button::P } && button == Button::N {
                 debug!(
                     "Button::{}: Both 'P' and 'N' pressed - toggling Valet Mode",
@@ -148,12 +148,12 @@ pub async fn read_button(
 
                 {
                     // Turn on the 'P' and 'N' LEDs, to indicate that both have been pressed.
-		    CHANNEL_P.send(LedStatus::On).await;
-		    CHANNEL_N.send(LedStatus::On).await;
+                    CHANNEL_P.send(LedStatus::On).await;
+                    CHANNEL_N.send(LedStatus::On).await;
 
                     // Verify with a valid fingerprint that we're authorized to change Valet Mode.
                     let mut fp_scanner = fp_scanner.lock().await;
-                    if ! fp_scanner.Wrapper_Verify_Fingerprint().await {
+                    if !fp_scanner.Wrapper_Verify_Fingerprint().await {
                         error!("Can't match fingerprint, will not toggle Valet Mode");
 
                         // Give it five seconds before we retry.
@@ -162,8 +162,8 @@ pub async fn read_button(
                         // Turn off the aura.
                         fp_scanner.Wrapper_AuraSet_Off().await;
 
-			// Turn off the 'N' LED.
-			CHANNEL_N.send(LedStatus::Off).await;
+                        // Turn off the 'N' LED.
+                        CHANNEL_N.send(LedStatus::Off).await;
 
                         // Restart loop.
                         continue;
@@ -179,20 +179,20 @@ pub async fn read_button(
                         };
 
                         // Toggle Valet Mode.
-			debug!("Config (before toggle): {:?}", config);
+                        debug!("Config (before toggle): {:?}", config);
                         if config.valet_mode {
-			    info!("Disabling Valet mode");
+                            info!("Disabling Valet mode");
                             CHANNEL_CANWRITE.send(CANMessage::DisableValetMode).await;
                             config.valet_mode = false;
                         } else {
-			    info!("Enabling Valet mode");
+                            info!("Enabling Valet mode");
                             CHANNEL_CANWRITE.send(CANMessage::EnableValetMode).await;
                             config.valet_mode = true;
                         }
                         lib_config::write_flash(&mut flash, config).await;
 
-			// Turn off the 'N' LED.
-			CHANNEL_N.send(LedStatus::Off).await;
+                        // Turn off the 'N' LED.
+                        CHANNEL_N.send(LedStatus::Off).await;
                     }
                 }
 
@@ -202,18 +202,18 @@ pub async fn read_button(
                 unsafe { BUTTONS_BLOCKED = false };
             }
 
-	    let mut cnt = 1;
+            let mut cnt = 1;
             while unsafe { BUTTONS_BLOCKED } {
                 // Block here while we wait for it to be unblocked.
                 debug!("Button::{}: Waiting for unblock", button);
                 Timer::after_secs(1).await;
 
-		if cnt >= 5 {
-		    unsafe { BUTTONS_BLOCKED = false };
-		    break;
-		}
+                if cnt >= 5 {
+                    unsafe { BUTTONS_BLOCKED = false };
+                    break;
+                }
 
-		cnt += 1;
+                cnt += 1;
             }
 
             continue;
