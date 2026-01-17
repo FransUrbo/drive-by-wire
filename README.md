@@ -43,6 +43,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Relays](#relays)
      - [Status LED](#status-led)
 5. [Updates](#updates)
+   - [Update Sat 17 Jan 2026](#update-sat-17-jan-2026)
    - [Update Thu 15 Jan 2026](#update-thu-15-jan-2026)
    - [Update Wed 14 Jan 2026](#update-wed-14-jan-2026)
    - [Update Sat 10 Jan 2026](#update-sat-10-jan-2026)
@@ -590,6 +591,17 @@ The steady orange (well, it's not very orange, is it!?? :) and then green LED in
 it and the aura around the fingerprint scanner turns red.
 
 # Updates
+
+## Update Sat 17 Jan 2026
+
+Simply the move actuator function. We don't really need to know how much to move, and in what direction.
+Instead, just tell it *where* to go (in Ohm), and it can figure out in what direction to go. The amount
+is really only needed to know if we should switch between 12V or 5V drive. WHICH, it turns out isn't necessary,
+because I'm perfectly able to get within less than 1mm of the destination!
+
+Rewrite the `test-actuator` program to run through the tests more efficiently. They now pass for several
+minutes, until the microcontroller gets resets. I still think it's a hardware problem, but I *have* managed
+to improve the reliability quite a bit! :)
 
 ## Update Thu 15 Jan 2026
 
