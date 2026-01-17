@@ -13,8 +13,8 @@ use embassy_rp::uart::InterruptHandler as UARTInterruptHandler;
 
 use {defmt_rtt as _, panic_probe as _};
 
+use r503::{Parameters, SecurityLevels, Status, R503};
 use ws2812::{Colour, Ws2812};
-use r503::{R503, Parameters, SecurityLevels, Status};
 
 bind_interrupts!(pub struct Irqs {
     PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
@@ -56,7 +56,10 @@ async fn main(_spawner: Spawner) {
         error!("Can't setup scanner");
         return;
     } else {
-        match r503.SetSysPara(Parameters::SecurityLevel as u8, SecurityLevels::One as u8).await {
+        match r503
+            .SetSysPara(Parameters::SecurityLevel as u8, SecurityLevels::One as u8)
+            .await
+        {
             Status::CmdExecComplete => {
                 info!("Security level set");
 
@@ -76,7 +79,10 @@ async fn main(_spawner: Spawner) {
                 return;
             }
             stat => {
-                error!("Unknown return code='{=u8:#04x}': Wrapper_Setup()/SetSysPara()", stat as u8);
+                error!(
+                    "Unknown return code='{=u8:#04x}': Wrapper_Setup()/SetSysPara()",
+                    stat as u8
+                );
 
                 debug!("NeoPixel RED");
                 ws2812.set_colour(Colour::RED).await;

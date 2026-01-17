@@ -68,7 +68,7 @@ async fn main(_spawner: Spawner) {
         debug!("NeoPixel BLUE");
         ws2812.set_colour(Colour::BLUE).await;
 
-        if ! r503.Wrapper_Enrole_Fingerprint(0x0002).await {
+        if !r503.Wrapper_Enrole_Fingerprint(0x0002).await {
             error!("Can't enrole fingerprint");
 
             debug!("NeoPixel RED");

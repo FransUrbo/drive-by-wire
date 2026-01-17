@@ -23,8 +23,8 @@ type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 use static_cell::StaticCell;
 
 use actuator::Actuator;
-use ws2812::{Colour, Ws2812};
 use r503::R503;
+use ws2812::{Colour, Ws2812};
 
 use {defmt_serial as _, panic_probe as _};
 
@@ -70,8 +70,12 @@ async fn main(spawner: Spawner) {
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
     info!("Start");
-    info!("Application: {}, v{}/{}",
-          env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"), env!("GIT_HASH"));
+    info!(
+        "Application: {}, v{}/{}",
+        env!("CARGO_PKG_NAME"),
+        env!("CARGO_PKG_VERSION"),
+        env!("GIT_HASH")
+    );
 
     // =====
     //  2. Initialize the built-in LED and turn it on. Just for completness.
@@ -126,10 +130,10 @@ async fn main(spawner: Spawner) {
     info!("Initializing actuator");
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
     let mut actuator = Actuator::new(
-        p.PIN_10.into(),
-        p.PIN_11.into(),
-        p.PIN_12.into(),
-        p.PIN_26,
+        p.PIN_10.into(), // pin_motor_plus
+        p.PIN_11.into(), // pin_motor_minus
+        p.PIN_12.into(), // pin_volt_select
+        p.PIN_26,        // pin_pot
         p.ADC,
         Irqs,
     );
@@ -171,21 +175,21 @@ async fn main(spawner: Spawner) {
     info!("Authorizing use");
     CHANNEL_CANWRITE.send(CANMessage::Authorizing).await;
     if config.valet_mode {
-	neopixel.set_colour(Colour::WHITE).await;
+        neopixel.set_colour(Colour::WHITE).await;
 
-	info!("Running in VALET mode, won't authorize");
+        info!("Running in VALET mode, won't authorize");
         CHANNEL_CANWRITE.send(CANMessage::ValetMode).await;
     } else {
-	// Loop until we get a successful fingerprint match.
+        // Loop until we get a successful fingerprint match.
         loop {
-	    neopixel.set_colour(Colour::BLUE).await;
+            neopixel.set_colour(Colour::BLUE).await;
 
             let mut fp_scanner = fp_scanner.lock().await;
-            if ! fp_scanner.Wrapper_Verify_Fingerprint().await {
+            if !fp_scanner.Wrapper_Verify_Fingerprint().await {
                 error!("Can't match fingerprint - retrying");
 
                 debug!("NeoPixel RED");
-		neopixel.set_colour(Colour::RED).await;
+                neopixel.set_colour(Colour::RED).await;
 
                 // Give it five seconds before we retry.
                 Timer::after_secs(5).await;
@@ -197,7 +201,7 @@ async fn main(spawner: Spawner) {
             fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
         }
 
-	neopixel.set_colour(Colour::GREEN).await;
+        neopixel.set_colour(Colour::GREEN).await;
         info!("Use authorized");
         CHANNEL_CANWRITE.send(CANMessage::Authorized).await;
     }
@@ -323,7 +327,7 @@ async fn main(spawner: Spawner) {
     //           separate tasks!
     info!("Main function complete, control handed over to subtasks.");
     loop {
-	// Nothing to do, just sleep as long as we can, but 10 minutes should do it, then just loop.
+        // Nothing to do, just sleep as long as we can, but 10 minutes should do it, then just loop.
         Timer::after_secs(600).await;
     }
 }

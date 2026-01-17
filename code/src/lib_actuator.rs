@@ -1,4 +1,4 @@
-use defmt::{info, error};
+use defmt::{error, info};
 
 use embassy_rp::flash::{Async as FlashAsync, Flash};
 use embassy_rp::peripherals::FLASH;
@@ -36,9 +36,7 @@ pub async fn actuator_control(
         let button = receiver.receive().await;
 
         // Move the actuator to the gear mode selected.
-        actuator
-            .change_gear_mode(GearModes::from(Button::from_button(button)))
-            .await;
+        actuator.change_gear_mode(GearModes::from(Button::from(button))).await;
 
         // Now that we're done moving the actuator, Enable reading buttons again.
         unsafe { BUTTONS_BLOCKED = false };

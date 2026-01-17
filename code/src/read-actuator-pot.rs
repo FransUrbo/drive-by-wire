@@ -22,19 +22,16 @@ async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
 
     let mut actuator = Actuator::new(
-        p.PIN_10.into(),
-        p.PIN_11.into(),
-        p.PIN_12.into(),
-        p.PIN_26,
+        p.PIN_10.into(), // pin_motor_plus
+        p.PIN_11.into(), // pin_motor_minus
+        p.PIN_12.into(), // pin_volt_select
+        p.PIN_26,        // pin_pot
         p.ADC,
         Irqs,
     );
 
     loop {
-        info!(
-            "Actuator potentiometer value: {}Ω",
-            actuator.read_pot().await
-        );
+        info!("Actuator potentiometer value: {}Ω", actuator.read_pot().await);
 
         Timer::after_secs(5).await;
     }
