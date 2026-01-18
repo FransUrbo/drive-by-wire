@@ -327,10 +327,15 @@ ThePieHut, but feel free to get the parts from wherever you feel most confortabl
 
 ## Actuation
 
-| Part | Price |
-| :--- | :---  |
+| Part | Price | Notes
+| :--- | :---  | :---
 | [Actuator w/ feedback (potentiometer)](https://www.progressiveautomations.com/products/linear-actuator-with-potentiometer?variant=18277322424387) | £115 ($145) |
 | [Aston Martin drive select buttons](https://www.ebay.co.uk/sch/i.html?_dkr=1&iconV2Request=true&_blrs=recall_filtering&_ssn=hillsmotors&store_name=hillsmotors&_oac=1&_nkw=gear%20select%20switch) | £35	(*4 = £140) |
+| [2 Channel Isolated Relay Breakout -  5v](https://thepihut.com/products/2-channel-isolated-relay-breakout-5v) | £13 | To drive the actuator backwards or forwards
+| ~~[9A/28V SPDT MOSFET Switch](https://thepihut.com/products/moswitch-9a-28v-spdt-mosfet-switch)~~ | ~~£5~~ | ~~To switch the actuator drive between 12V or 5V~~
+
+Might not need that 12V/5V drive switch, I seem to be perfectly capable of getting within less than +/-1mm on 12V. The
+code is there, I just haven't put the switch in place.
 
 ## Controller
 
@@ -342,6 +347,11 @@ ThePieHut, but feel free to get the parts from wherever you feel most confortabl
 | [MOSFET Power Controller](https://thepihut.com/products/gravity-mosfet-power-controller) | £4 * 3 |
 | [NeoPixel Diffused 5mm LED](https://thepihut.com/products/neopixel-diffused-5mm-through-hole-led-5-pack?variant=27739696529) | £5 |
 | [LED holder 5mm](https://thepihut.com/products/5mm-plastic-flat-led-holder-pack-of-5?variant=27739774353) | £1 |
+| [UPS Module for Raspberry Pi Pico](https://thepihut.com/products/ups-module-for-raspberry-pi-pico-with-600mah-lipo-battery?variant=40195823042755) | £14 | -
+
+I have the UPS module, I just can't use it at the moment (it won't clear the breadboard, or PCB). I'll need
+a [Stacking Header Set](https://thepihut.com/products/stacking-header-set-for-raspberry-pi-pico) to lift it
+up a little - the Pico goes *on top* of the UPS module unfortunately.
 
 ## CAN bus
 
@@ -423,10 +433,8 @@ These aren't things needed, but maybe I'll have a need for them one day..
 | [2 Channel Relay Breakout - 12v](https://thepihut.com/products/2-channel-relay-breakout-12v) | £8 |
 | [2 Channel Relay Breakout -  5v](https://thepihut.com/products/2-channel-relay-breakout-5v) | £7 |
 | [2 Channel Isolated Relay Breakout - 12v](https://thepihut.com/products/2-channel-isolated-relay-breakout-12v) | £12 |
-| [2 Channel Isolated Relay Breakout -  5v](https://thepihut.com/products/2-channel-isolated-relay-breakout-5v) | £13 |
 | [4 Channel Relay Breakout](https://thepihut.com/products/4-channel-relay-breakout-12v) | £16 |
 | [2 Channel Latching Relay - 5V](https://thepihut.com/products/grove-2-coil-latching-relay) | £7 |
-| [9A/28V SPDT MOSFET Switch](https://thepihut.com/products/moswitch-9a-28v-spdt-mosfet-switch) | £5 |
 | [DC-DC Buck-Mode Power Module (8-28V to 5V 1.6A)](https://thepihut.com/products/dc-dc-buck-mode-power-module-8-28v-to-5v-1-6a) | £3 |
 | [DC-DC Buck-Mode Power Module (5.5-28V to 3.3V 2.4A)](https://thepihut.com/products/dc-dc-buck-mode-power-module-5-5-28v-to-3-3v-2-4a) | £3 |
 | [5V Buck Converter Unit (ME3116AM6G)](https://thepihut.com/products/5v-buck-converter-unit-me3116am6g) | £4 |
@@ -434,7 +442,6 @@ These aren't things needed, but maybe I'll have a need for them one day..
 | [I2C GPIO Expander](https://thepihut.com/products/adafruit-pcf8574-i2c-gpio-expander-breakout-stemma-qt-qwiic) | £5 | 8 GPIO pins
 | [I2C GPIO Expander](https://thepihut.com/products/adafruit-mcp23017-i2c-gpio-expander-breakout-stemma-qt-qwiic) | £6 | 16 GPIO pins
 | [MRK CAN Shield Arduino](https://www.pcbway.com/project/shareproject/MRK_CAN_Shield_Arduino_133f7666.html) | - |
-| [UPS Module for Raspberry Pi Pico](https://thepihut.com/products/ups-module-for-raspberry-pi-pico-with-600mah-lipo-battery?variant=40195823042755) | £14 | -
 
 ## Small footprint controllers
 
