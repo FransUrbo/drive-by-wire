@@ -498,11 +498,10 @@ This is the part of CAN-bus from the big circuit diagram. Still working on it, s
 
 ### CAN-bus wiring on bread board
 
-This is the bread board for the CAN-bus. Still missing a few components, but it's getting there.
-The red wires are just there to show and remind me where I need to put the capacitors. Also, the resonator
-is missing, but should be with me "shortly".
+This is the bread board for the CAN-bus. Haven't tested it, so no idea if it works. But the design DO work, a [friend
+is using it in his project](https://github.com/konne88/slk).
 
-![CAN-bus wiring on bread board](./images/2024-07-13%2011.41.02.jpg)
+![CAN-bus wiring on bread board](./images/CAN-bus%20adapter%20-%20Wired%20on%20Breadboard.jpg)
 
 ## PCB
 
