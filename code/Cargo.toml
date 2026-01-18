@@ -44,7 +44,7 @@ version = "0.1.3"
 
 [dependencies.actuator]
 git = "https://github.com/FransUrbo/rust-libs-actuator.git"
-rev = "42b5496"
+rev = "911abb7"
 
 [dependencies.embassy-executor]
 features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt"]
