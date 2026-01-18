@@ -188,12 +188,23 @@ LED | GPIO 25
 
 [Olimex RP2040-PICO30-16](https://thepihut.com/products/olimex-rp2040-pico30-16) also exposes GPIO 23-25, 29 by sacrificing four GROUND pins.
 
+Then there's the [Olimex PICO2-XL](https://thepihut.com/products/olimex-pico2-xl-rp2350-board-with-48-gpio) and
+[Olimex PICO2-XXL](https://thepihut.com/products/olimex-pico2-xxl-rp2350-board-with-48-gpio) that exposes all the
+48 GPIO ports of the RP2350 chip. Now, THAT would be cool :). Won't need 16MB external flash in the XXL. The 2MB
+flash in the XL is more than enough. I only need a few bits..
+
+The RP2350 is faster, obviously, but also have some [other nice features](https://news.sparkfun.com/11692) that
+could be nice to have.
+
+I'll see if I'll upgrade at some point. The RP2040 do feel a bit .. slughish, but on the other hand I'm only
+using one of the two cores, which I'll rectify "soonish".
+
 The different uses are specifically this way, because I need to consider UARTs/PIOs/ADC etc, and which pins they
 have connected to them. So it's not as .. "pretty" and simple as just throwing them in there and start using
 the ports..
 
-Not exactly sure what to use the `Data OUT` on the NeoPixel (Status LED) for, so have crossed out that
-pin for now. I'm not using it in the code..
+Not exactly sure what to use the `Data OUT` on the NeoPixel (Status LED) for, so haven't connected that anywhere.
+I'm not using it in the code.
 
 ## External contacts
 
