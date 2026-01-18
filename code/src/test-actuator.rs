@@ -57,7 +57,7 @@ async fn main(_spawner: Spawner) {
         p.PIN_10.into(), // pin_motor_plus
         p.PIN_11.into(), // pin_motor_minus
         p.PIN_12.into(), // pin_volt_select
-        p.PIN_26,        // pin_pot
+        p.PIN_28,        // pin_pot
         p.ADC,
         Irqs,
     );

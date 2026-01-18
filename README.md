@@ -43,6 +43,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Relays](#relays)
      - [Status LED](#status-led)
 5. [Updates](#updates)
+   - [Update Sun 18 Jan 2026](#update-sun-18-jan-2026)
    - [Update Sat 17 Jan 2026](#update-sat-17-jan-2026)
    - [Update Thu 15 Jan 2026](#update-thu-15-jan-2026)
    - [Update Wed 14 Jan 2026](#update-wed-14-jan-2026)
@@ -161,27 +162,27 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 # Pin layout for RaspberryPI 3-5, and Pico
 
 | <div style="width:25px">Pin</div> | <div style="width:75px">Port</div> | <div style="width:280px">Use</div> | <div style="width:25px">Pin</div> | <div style="width:75px">Port</div> | <div style="width:280px">Use</div>
-| --: | :------ | :--------------------------- | --: | :----------- | :----------------------------- |
-|   1 | GPIO  0 | Button (Switch - N)          | 40  | VBUS         |                                |
-|   2 | GPIO  1 | Button (Switch - D)          | 39  | VSYS         |                                |
-|   3 | GND     |                              | 38  | GND          |                                |
-|   4 | GPIO  2 | Button (Switch - P)          | 37  | 3V3_EN       |                                |
-|   5 | GPIO  3 | Button (Switch - R)          | 36  | 3V3_OUT      |                                |
-|   6 | GPIO  4 | Debug (TX)                   | 35  | ADC_VREF     | Actuator - +5V                 |
-|   7 | GPIO  5 | Debug (RX)                   | 34  | GPIO 28<br>ADC2 |                             |
-|   8 | GND     |                              | 33  | GND<br>AGND     | Actuator - GND              |
-|   9 | GPIO  6 | Power monitor (SDA)          | 32  | GPIO 27<br>ADC1 |                             |
-|  10 | GPIO  7 | Power monitor (SCL)          | 31  | GPIO 26<br>ADC0 | Actuator - Potentiometer Brush |
-|  11 | GPIO  8 | Button (Telltale - N)        | 30  | RUN          |                                |
-|  12 | GPIO  9 | Button (Telltale - D)        | 29  | GPIO 22      | EIS Relay (#3 - start) (YELLOW)|
-|  13 | GND     | *[GPIO 29]*                  | 28  | GND          | *[GPIO 23]*                    |
-|  14 | GPIO 10 | Actuator - Motor Relay (#1)  | 27  | GPIO 21      | CAN #0 (RX)                    |
-|  15 | GPIO 11 | Actuator - Motor Relay (#2)  | 26  | GPIO 20      | CAN #0 (TX)                    |
-|  16 | GPIO 12 | Actuator - +5V/+12V select   | 25  | GPIO 19      | EIS Relay (#1 - steering lock) (GREEN) |
-|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP) | 24  | GPIO 18      | Button (Telltale - R)          |
-|  18 | GND     | *[GPIO 25]*                  | 23  | GND          | *[GPIO 24]*                    |
-|  19 | GPIO 14 | Button (Telltale - P)        | 22  | GPIO 17      | Fingerprint Scanner (TX)       |
-|  20 | GPIO 15 | Status LED (Data IN)         | 21  | GPIO 16      | Fingerprint Scanner (RX)       |
+| --: | :------ | :----------------------------- | --: | :----------------- | :------------------------------------- |
+|   1 | GPIO  0 | Button (Switch - N)            | 40  | VBUS               |                                        |
+|   2 | GPIO  1 | Button (Switch - D)            | 39  | VSYS               |                                        |
+|   3 | GND     |                                | 38  | GND                |                                        |
+|   4 | GPIO  2 | Button (Switch - P)            | 37  | 3V3_EN             |                                        |
+|   5 | GPIO  3 | Button (Switch - R)            | 36  | 3V3_OUT            |                                        |
+|   6 | GPIO  4 | Debug (TX)                     | 35  | ADC_VREF           | Actuator Feedback - +5V                |
+|   7 | GPIO  5 | Debug (RX)                     | 34  | GPIO 28<br>ADC2    | Actuator Feedback - Brush              |
+|   8 | GND     |                                | 33  | GND<br>AGND        | Actuator Feedback - GND                |
+|   9 | GPIO  6<br>I2C/SDA | Power monitor (SDA) | 32  | GPIO 27<br>I2C/SCL | ~~Future Use~~                         |
+|  10 | GPIO  7<br>I2C/SCL | Power monitor (SCL) | 31  | GPIO 26<br>I2C/SDA | ~~Future Use~~                         |
+|  11 | GPIO  8 | Button (Telltale - N)          | 30  | RUN                |                                        |
+|  12 | GPIO  9 | Button (Telltale - D)          | 29  | GPIO 22            | EIS Relay (#3 - start) (YELLOW)        |
+|  13 | GND     | ~~*[GPIO 29]*~~                | 28  | GND                | ~~*[GPIO 23]*~~                        |
+|  14 | GPIO 10 | Actuator - Motor Relay (#1)    | 27  | GPIO 21            | CAN #0 (RX)                            |
+|  15 | GPIO 11 | Actuator - Motor Relay (#2)    | 26  | GPIO 20            | CAN #0 (TX)                            |
+|  16 | GPIO 12 | Actuator - +5V/+12V select     | 25  | GPIO 19            | EIS Relay (#1 - steering lock) (GREEN) |
+|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP)   | 24  | GPIO 18            | Button (Telltale - R)                  |
+|  18 | GND     | ~~*[GPIO 25]*~~                | 23  | GND                | ~~*[GPIO 24]*~~                        |
+|  19 | GPIO 14 | Button (Telltale - P)          | 22  | GPIO 17            | Fingerprint Scanner (TX)               |
+|  20 | GPIO 15 | Status LED (Data IN)           | 21  | GPIO 16            | Fingerprint Scanner (RX)               |
 
 LED | GPIO 25
 
@@ -590,6 +591,25 @@ The steady orange (well, it's not very orange, is it!?? :) and then green LED in
 it and the aura around the fingerprint scanner turns red.
 
 # Updates
+
+## Update Sun 18 Jan 2026
+
+I saw a need for a future I2C network (GPIO Externer most notably).
+
+I did clear Pin#9 and Pin#10 a few days ago for my UPS, which uses it, but maybe better to have a separate one?
+Not sure how I2C works.. So figured I'd move Pin#31 (GPIO#26) to Pin#34 (GPIO#28), to clear Pin#31 (GPIO#26, I2C/SDA)
+and Pin#32 (GPIO#27, I2C/SCL).
+
+HOWEVER, in the process mucking about moving cables around on the breadboard, I accidentally pulled that one (Pin#31).
+Trying to figure out where it came from (there's cables everywere, GOING everywhere!! :), I got confused as to where
+I had put the actuator feedback +5V and GND! They weren't where they were supposed to be!! :). Or, rather, where I
+*thought* they should be.
+
+Fifteen, twenty minutes or so later, after going over my diagram, my notes etc etc, I decided to put them where I
+have them now. Where they were SUPPOSED to be - on the ADC_VREF and AGND!!
+
+And loo and behold, everything works much better now! Been running for almost twenty minutes now, and not a single
+reset!!
 
 ## Update Sat 17 Jan 2026
 
