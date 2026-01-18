@@ -65,45 +65,35 @@ async fn main(_spawner: Spawner) {
 
     // -----
 
-    // 1. Move the actuator to end position.
-    //    a. Move the actuator all the way to an endpoint.
-    //    b. Move the actuator all the way to other endpoint.
-    // 2. Move the actuator 10mm at a time, 10 times.
-    //    a. Move the actuator 10mm backward 10 times.
-    //    a. Move the actuator 10mm forward 10 times.
-    // 3. Move the actuator to each of the gear modes.
+    // 0. Before we do anything, we move the actuator to fully retracted.
+    // LOOP:
+    // 1. Move the actuator to fully extended.
+    // 2. Move the actuator 10mm backward 10 times.
+    // 3. Move the actuator 10mm forward 10 times.
+    // 4. Move the actuator to fully retracted.
+    // 5. Move the actuator to each of the gear modes (from 'P' to 'D').
+    // 6. Move the actuator back to 'P'.
 
     // TODO: What do we do if the actuator haven't moved?
 
     let mut position: u16;
+
+    // Move to the fully retracted position.
+    // NOTE: Just so we start from somewhere :).
+    position = RESISTANCE_THROW_MIN + (RESISTANCE_THROW_1MM * 3);
+    info!("0.Move actuator to the MIN end position: {:04}Ω", position);
+    actuator.move_actuator(position).await;
+    Timer::after_secs(3).await;
+
     loop {
-        // Move to the fully retracted position.
-        position = RESISTANCE_THROW_MIN + (RESISTANCE_THROW_1MM * 3);
-        info!("1.Move actuator to the MIN end position: {:04}Ω", position);
-        actuator.move_actuator(position).await;
-        Timer::after_secs(3).await;
-
-        // Move forward 10mm at a time, 10 times.
-        info!("2.Move actuator forward 10mm at a time, 10 times");
-        for i in 1..=10 {
-            let position_now: u16 = actuator.read_pot().await;
-            position = position_now + (RESISTANCE_THROW_1MM * 10);
-
-            info!("    Move forward 10mm/{:02}: {}Ω", i, position);
-            actuator.move_actuator(position).await;
-
-            Timer::after_secs(1).await;
-        }
-        Timer::after_secs(2).await;
-
         // Move to the fully extended position.
         position = RESISTANCE_THROW_MAX - (RESISTANCE_THROW_1MM * 3);
-        info!("3.Move actuator to the MAX end position: {:04}Ω", position);
+        info!("1.Move actuator to the MAX end position: {:04}Ω", position);
         actuator.move_actuator(position).await;
         Timer::after_secs(3).await;
 
         // Move backward 10mm at a time, 10 times
-        info!("4.Move actuator backward 10mm at a time, 10 times");
+        info!("2.Move actuator backward 10mm at a time, 10 times");
         for i in 1..=10 {
             let position_now: u16 = actuator.read_pot().await;
             position = position_now - (RESISTANCE_THROW_1MM * 10);
@@ -115,19 +105,44 @@ async fn main(_spawner: Spawner) {
         }
         Timer::after_secs(2).await;
 
+        // Move forward 10mm at a time, 10 times.
+        info!("3.Move actuator forward 10mm at a time, 10 times");
+        for i in 1..=10 {
+            let position_now: u16 = actuator.read_pot().await;
+            position = position_now + (RESISTANCE_THROW_1MM * 10);
+
+            info!("    Move forward 10mm/{:02}: {}Ω", i, position);
+            actuator.move_actuator(position).await;
+
+            Timer::after_secs(1).await;
+        }
+        Timer::after_secs(2).await;
+
+        // Move to the fully retracted position.
+        position = RESISTANCE_THROW_MIN + (RESISTANCE_THROW_1MM * 3);
+        info!("4.Move actuator to the MIN end position: {:04}Ω", position);
+        actuator.move_actuator(position).await;
+        Timer::after_secs(3).await;
+
         // Move the actuator one gear mode at a time, starting with `P`.
         info!("5. Move actuator to specific gear modes");
-        for mode in Button::iterator() {
-            info!("Mode={}", mode);
-            actuator.change_gear_mode(GearModes::from(Button::from(mode))).await;
+        for mode in GearModes::iterator() {
+            info!("  Mode={}", mode);
+            actuator.change_gear_mode(mode).await;
 
-            info!("Mode={} - DONE", mode);
+            info!("  Mode={} - DONE", mode);
             Timer::after_secs(1).await;
             debug!("After sleep (1)..");
         }
 
         Timer::after_secs(2).await;
         debug!("After sleep (2)..");
+
+        info!("6. Move actuator from 'D' back to 'P'");
+        actuator.change_gear_mode(GearModes::P).await;
+
+        Timer::after_secs(3).await;
+        debug!("After sleep (3)..");
 
         info!("--");
     }
