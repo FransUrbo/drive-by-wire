@@ -186,13 +186,6 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 
 LED | GPIO 25
 
-[Olimex RP2040-PICO30-16](https://thepihut.com/products/olimex-rp2040-pico30-16) also exposes GPIO 23-25, 29 by sacrificing four GROUND pins.
-
-Then there's the [Olimex PICO2-XL](https://thepihut.com/products/olimex-pico2-xl-rp2350-board-with-48-gpio) and
-[Olimex PICO2-XXL](https://thepihut.com/products/olimex-pico2-xxl-rp2350-board-with-48-gpio) that exposes all the
-48 GPIO ports of the RP2350 chip. Now, THAT would be cool :). Won't need 16MB external flash in the XXL. The 2MB
-flash in the XL is more than enough. I only need a few bits..
-
 The RP2350 is faster, obviously, but also have some [other nice features](https://news.sparkfun.com/11692) that
 could be nice to have.
 
@@ -424,8 +417,8 @@ and that chassis connector, which minimizes the size of the motherboard connecto
 
 These aren't things needed, but maybe I'll have a need for them one day..
 
-| Part | Price |
-| :--- | :---  |
+| Part | Price | Notes
+| :--- | :---  | :---
 | [1 Channel Relay for RPi](https://thepihut.com/products/grove-relay?variant=40341004746947) | £3 |
 | [2 Channel Relay Breakout - 12v](https://thepihut.com/products/2-channel-relay-breakout-12v) | £8 |
 | [2 Channel Relay Breakout -  5v](https://thepihut.com/products/2-channel-relay-breakout-5v) | £7 |
@@ -438,8 +431,10 @@ These aren't things needed, but maybe I'll have a need for them one day..
 | [DC-DC Buck-Mode Power Module (5.5-28V to 3.3V 2.4A)](https://thepihut.com/products/dc-dc-buck-mode-power-module-5-5-28v-to-3-3v-2-4a) | £3 |
 | [5V Buck Converter Unit (ME3116AM6G)](https://thepihut.com/products/5v-buck-converter-unit-me3116am6g) | £4 |
 | [High Precision Capacitive Fingerprint Reader](https://thepihut.com/products/high-precision-capacitive-fingerprint-reader-b) | £61 |
-| [I2C GPIO Expander](https://thepihut.com/products/adafruit-pcf8574-i2c-gpio-expander-breakout-stemma-qt-qwiic) | £5 |
+| [I2C GPIO Expander](https://thepihut.com/products/adafruit-pcf8574-i2c-gpio-expander-breakout-stemma-qt-qwiic) | £5 | 8 GPIO pins
+| [I2C GPIO Expander](https://thepihut.com/products/adafruit-mcp23017-i2c-gpio-expander-breakout-stemma-qt-qwiic) | £6 | 16 GPIO pins
 | [MRK CAN Shield Arduino](https://www.pcbway.com/project/shareproject/MRK_CAN_Shield_Arduino_133f7666.html) | - |
+| [UPS Module for Raspberry Pi Pico](https://thepihut.com/products/ups-module-for-raspberry-pi-pico-with-600mah-lipo-battery?variant=40195823042755) | £14 | -
 
 ## Small footprint controllers
 
@@ -450,19 +445,22 @@ Some of the signals I need will probably be to fast for the I2C bus, so those wo
 not the I2C GPIOs. But then, the whole setup will be bigger anyway (because of the expander), so might just stick with the
 Pico anyway. Besides, the whole circuit board is (going to be) about the size of my palm anyway.
 
-| Part | Price | Note
-| :--- | :---  | :---
-| [Seeed XIAO RP2040](https://thepihut.com/products/seeed-xiao-rp2040) | £6 | 11 GPIO pins
-| [Tiny 2040](https://thepihut.com/products/tiny-2040?variant=41359025897667) | £12 | 12 GPIO pins
-| [Waveshare RP2040 Tiny](https://thepihut.com/products/waveshare-rp2040-tiny?variant=42483599507651) | £5 | 20 GPIO pins
+| Part | Processor | Price | Note
+| :--- | :---      | :---  | :---
+| [Seeed XIAO RP2040](https://thepihut.com/products/seeed-xiao-rp2040) | RP2040 | £6 | 11 GPIO pins
+| [Tiny 2040](https://thepihut.com/products/tiny-2040?variant=41359025897667) | RP2040 | £12 | 12 GPIO pins
+| [Waveshare RP2040 Tiny](https://thepihut.com/products/waveshare-rp2040-tiny?variant=42483599507651) | RP2040 | £5 | 20 GPIO pins
+| [Olimex RP2040-PICO30-16](https://thepihut.com/products/olimex-rp2040-pico30-16) | RP2040 | £8 | 30 GPIO pins (GPIO 23-25, 29 by sacrificing four GROUND pins)
+| [Waveshare RP2350 Tiny](https://thepihut.com/products/waveshare-rp2350-tiny) | RP2350 | £5 | 28 GPIO pins (8 on solder pads)
+| [Waveshare RP2350 Plus](https://thepihut.com/products/waveshare-rp2350-plus?variant=53997063078273) | RP2350 | £5 | 28 pins (same footprint as the Pico 2)
+| [Olimex PICO2-XL](https://thepihut.com/products/olimex-pico2-xl-rp2350-board-with-48-gpio) | RP2350 | £5 | 48 GPIO pins (not very "small footprint" though! :)
+| [RP2350 Zero Mini](https://thepihut.com/products/rp2350-zero-mini-development-board) | RP2350 | £5 | 29 GPIO pins
+| [Beetle RP2350](https://thepihut.com/products/beetle-rp2350-mini-dual-core-development-board-arm-cortex-m33-risc-v) | RP2350 | £5 | 11 GPIO pins
 
 ### Notes about the small footprint controllers
 
-As can be seen from the [pin layout](#pin-layout-for-raspberrypi-3-5-and-pico), I need more than this!
-At the moment, I have TWO GPIO to spare (and two GPIO/ADC) of the 26 pins that the RPi's have!
-
-I might even have to go with the [Olimex RP2040-PICO30-16](https://thepihut.com/products/olimex-rp2040-pico30-16) which
-have an additional four GPIO pins by sacrificing four GROUND pins..
+As can be seen from the [pin layout](#pin-layout-for-raspberrypi-3-5-and-pico), I need *at least* 26, as of today (Jan 2026).
+At the moment, I have NO GPIO to spare (but two I2C) of the 28 (GPIO) pins that the RPi's have!
 
 But seems like the design have stabilized now. UNLESS the CAN bus adapters I'm going to have to get need more than TX/RX.
 Don't know which ones to get yet, still work in progres.
