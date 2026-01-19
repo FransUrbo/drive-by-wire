@@ -16,7 +16,7 @@ use crate::lib_config;
 use crate::DbwConfig;
 use crate::FLASH_SIZE;
 
-use actuator::{Actuator, GearModes};
+use actuator::Actuator;
 
 pub static CHANNEL_ACTUATOR: Channel<CriticalSectionRawMutex, Button, 64> = Channel::new();
 type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SIZE>>;
@@ -35,8 +35,10 @@ pub async fn actuator_control(
         // Block waiting for button press.
         let button = receiver.receive().await;
 
+        // TODO: We need to check that we're not moving etc !!
+
         // Move the actuator to the gear mode selected.
-        actuator.change_gear_mode(GearModes::from(Button::from(button))).await;
+        actuator.change_gear_mode(Button::to_gearmode(button)).await;
 
         // Now that we're done moving the actuator, Enable reading buttons again.
         unsafe { BUTTONS_BLOCKED = false };

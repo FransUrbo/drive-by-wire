@@ -26,6 +26,7 @@ use crate::DbwConfig;
 use crate::FLASH_SIZE;
 
 use r503;
+use actuator::GearModes;
 
 #[derive(Copy, Clone, Format, PartialEq)]
 #[repr(u8)]
@@ -34,7 +35,6 @@ pub enum Button {
     R,
     N,
     D,
-    UNSET,
 }
 
 // https://medium.com/@mikecode/rust-conversion-between-enum-and-integer-0e10e613573c
@@ -45,7 +45,6 @@ impl Button {
             1 => Self::R,
             2 => Self::N,
             3 => Self::D,
-            4 => Self::UNSET,
             _ => panic!("Unknown value: {}", v),
         }
     }
@@ -56,7 +55,15 @@ impl Button {
             Self::R => 1,
             Self::N => 2,
             Self::D => 3,
-            _ => 4, // UNSET
+        }
+    }
+
+    pub fn to_gearmode(v: Self) -> GearModes {
+        match v {
+            Self::P => GearModes::P,
+            Self::R => GearModes::R,
+            Self::N => GearModes::N,
+            Self::D => GearModes::D,
         }
     }
 
@@ -77,7 +84,7 @@ pub static CHANNEL_R: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel:
 pub static CHANNEL_D: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
 
 // Start with the button UNSET, then change it when we know what gear the car is in.
-pub static mut BUTTON_ENABLED: Button = Button::UNSET;
+pub static mut BUTTON_ENABLED: Button = Button::P;
 
 // When the actuator is moving, we need to set this to `true` to block input.
 pub static mut BUTTONS_BLOCKED: bool = false;
@@ -119,7 +126,6 @@ pub async fn read_button(
 
     // Spawn off a LED driver for this button.
     match button {
-        Button::UNSET => (), // Should be impossible, but just to make the compiler happy.
         Button::P => spawner.spawn(set_led(CHANNEL_P.receiver(), led_pin, button).unwrap()),
         Button::N => spawner.spawn(set_led(CHANNEL_N.receiver(), led_pin, button).unwrap()),
         Button::R => spawner.spawn(set_led(CHANNEL_R.receiver(), led_pin, button).unwrap()),
@@ -247,7 +253,6 @@ pub async fn read_button(
 
                 // We know who WE are, so turn ON our own LED and turn off all the other LEDs.
                 match button {
-                    Button::UNSET => (),
                     Button::P => {
                         if unsafe { button == BUTTON_ENABLED } {
                             // Already enabled => blink *our* LED three times.
