@@ -11,5 +11,5 @@ export DEV="$(echo /dev/cu.usbmodem*)"
     tee -p logs/run.log-raw | \
     grep --line-buffered -v '^└─ ' | \
     tee -p logs/run.log-filtered | \
-    grep --line-buffered ' INFO ' | \
+    grep --extended-regexp --line-buffered ' INFO | ERROR | WARN ' | \
     tee -p logs/run.log-info
