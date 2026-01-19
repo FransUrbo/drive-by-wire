@@ -40,8 +40,10 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
 4. [Source code](#source-code)
    - [Code testing and setup](#code-testing-and-setup)
    - [DriveByWire code](#drivebywire-code)
+     - [Videos of it in action](#videos-of-it-in-action)
      - [Relays](#relays)
-     - [Status LED](#status-led)
+     - [Big Status LED](#big-status-led)
+     - [Actuator LEDs](#actuator-leds)
 5. [Updates](#updates)
    - [Update Sun 18 Jan 2026](#update-sun-18-jan-2026)
    - [Update Sat 17 Jan 2026](#update-sat-17-jan-2026)
@@ -162,27 +164,27 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 # Pin layout for RaspberryPI 3-5, and Pico
 
 | <div style="width:25px">Pin</div> | <div style="width:75px">Port</div> | <div style="width:280px">Use</div> | <div style="width:25px">Pin</div> | <div style="width:75px">Port</div> | <div style="width:280px">Use</div>
-| --: | :------ | :----------------------------- | --: | :----------------- | :------------------------------------- |
-|   1 | GPIO  0 | Button (Switch - N)            | 40  | VBUS               |                                        |
-|   2 | GPIO  1 | Button (Switch - D)            | 39  | VSYS               |                                        |
-|   3 | GND     |                                | 38  | GND                |                                        |
-|   4 | GPIO  2 | Button (Switch - P)            | 37  | 3V3_EN             |                                        |
-|   5 | GPIO  3 | Button (Switch - R)            | 36  | 3V3_OUT            |                                        |
-|   6 | GPIO  4 | Debug (TX)                     | 35  | ADC_VREF           | Actuator Feedback - +5V                |
-|   7 | GPIO  5 | Debug (RX)                     | 34  | GPIO 28<br>ADC2    | Actuator Feedback - Brush              |
-|   8 | GND     |                                | 33  | GND<br>AGND        | Actuator Feedback - GND                |
-|   9 | GPIO  6<br>I2C/SDA | Power monitor (SDA) | 32  | GPIO 27<br>I2C/SCL | ~~Future Use~~                         |
-|  10 | GPIO  7<br>I2C/SCL | Power monitor (SCL) | 31  | GPIO 26<br>I2C/SDA | ~~Future Use~~                         |
-|  11 | GPIO  8 | Button (Telltale - N)          | 30  | RUN                |                                        |
-|  12 | GPIO  9 | Button (Telltale - D)          | 29  | GPIO 22            | EIS Relay (#3 - start) (YELLOW)        |
-|  13 | GND     | ~~*[GPIO 29]*~~                | 28  | GND                | ~~*[GPIO 23]*~~                        |
-|  14 | GPIO 10 | Actuator - Motor Relay (#1)    | 27  | GPIO 21            | CAN #0 (RX)                            |
-|  15 | GPIO 11 | Actuator - Motor Relay (#2)    | 26  | GPIO 20            | CAN #0 (TX)                            |
-|  16 | GPIO 12 | Actuator - +5V/+12V select     | 25  | GPIO 19            | EIS Relay (#1 - steering lock) (GREEN) |
-|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP)   | 24  | GPIO 18            | Button (Telltale - R)                  |
-|  18 | GND     | ~~*[GPIO 25]*~~                | 23  | GND                | ~~*[GPIO 24]*~~                        |
-|  19 | GPIO 14 | Button (Telltale - P)          | 22  | GPIO 17            | Fingerprint Scanner (TX)               |
-|  20 | GPIO 15 | Status LED (Data IN)           | 21  | GPIO 16            | Fingerprint Scanner (RX)               |
+| --: | :------ | :------------------------------ | --: | :------------------ | :------------------------------------- |
+|   1 | GPIO  0 | Button (Switch - N)             | 40  | VBUS                |                                        |
+|   2 | GPIO  1 | Button (Switch - D)             | 39  | VSYS                |                                        |
+|   3 | GND     |                                 | 38  | GND                 |                                        |
+|   4 | GPIO  2 | Button (Switch - P)             | 37  | 3V3_EN              |                                        |
+|   5 | GPIO  3 | Button (Switch - R)             | 36  | 3V3_OUT             |                                        |
+|   6 | GPIO  4 | Debug (TX)                      | 35  | ADC_VREF            | Actuator Feedback - +5V                |
+|   7 | GPIO  5 | Debug (RX)                      | 34  | GPIO 28<br>ADC2     | Actuator Feedback - Brush              |
+|   8 | GND     |                                 | 33  | GND<br>AGND         | Actuator Feedback - GND                |
+|   9 | GPIO  6<br>I2C0/SDA | Power monitor (SDA) | 32  | GPIO 27<br>I2C1/SCL | ~~Future Use~~                         |
+|  10 | GPIO  7<br>I2C0/SCL | Power monitor (SCL) | 31  | GPIO 26<br>I2C1/SDA | ~~Future Use~~                         |
+|  11 | GPIO  8 | Button (Telltale - N)           | 30  | RUN                 |                                        |
+|  12 | GPIO  9 | Button (Telltale - D)           | 29  | GPIO 22             | EIS Relay (#3 - start) (YELLOW)        |
+|  13 | GND     | ~~*[GPIO 29]*~~                 | 28  | GND                 | ~~*[GPIO 23]*~~                        |
+|  14 | GPIO 10 | Actuator - Motor Relay (#1)     | 27  | GPIO 21             | CAN #0 (RX)                            |
+|  15 | GPIO 11 | Actuator - Motor Relay (#2)     | 26  | GPIO 20             | CAN #0 (TX)                            |
+|  16 | GPIO 12 | Actuator - +5V/+12V select      | 25  | GPIO 19             | EIS Relay (#1 - steering lock) (GREEN) |
+|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP)    | 24  | GPIO 18             | Button (Telltale - R)                  |
+|  18 | GND     | ~~*[GPIO 25]*~~                 | 23  | GND                 | ~~*[GPIO 24]*~~                        |
+|  19 | GPIO 14 | Button (Telltale - P)           | 22  | GPIO 17             | Fingerprint Scanner (TX)               |
+|  20 | GPIO 15 | Status LED (Data IN)            | 21  | GPIO 16             | Fingerprint Scanner (RX)               |
 
 LED | GPIO 25
 
@@ -557,18 +559,32 @@ hardware.
 * [How to read, write and verify fingerprint with the fingerprint scanner](https://github.com/FransUrbo/pico-rust-test_3-FP_SCANNER)
 * [How to control the three MOSFET "relays"](https://github.com/FransUrbo/pico-rust-test_4-MOSFET_RELAYS)
 * [How to setup and trigger the built-in watchdog on the RPi](https://github.com/FransUrbo/pico-rust-test_6-WATCHDOG-LED)
-* [How to read and write to the CAN-bus and the display](https://github.com/FransUrbo/pico-rust-test_7-CAN_BUS)
+* ~~[How to read and write to the CAN-bus and the display](https://github.com/FransUrbo/pico-rust-test_7-CAN_BUS)~~
+
+These serve absolutely no purpose, I just thought it'd be easier to test things out in a separate program, without
+all the other "fluff" that I've added to [the main program](./code/src/drive-by-wire.rs).
+
+The code is really simple, all it does is set things up, then all the *real* magic is done in the additional libraries
+I wrote for it.
+
+* [Actuator control code](https://github.com/FransUrbo/rust-libs-actuator/blob/main/src/lib.rs).
+* [Read button presses](https://github.com/FransUrbo/rust-libs-debounce/blob/main/src/lib.rs) - not really mine, but
+  to avoid things changing without my knowledge in third-party code, I put it in my own repo, targeted to my exact
+  use-cases.
+* [Talk to the fingerprint scanner](https://github.com/FransUrbo/rust-libs-r503/blob/main/src/lib.rs).
+* [Talk to the multi-colour LED](https://github.com/FransUrbo/rust-libs-ws2812/blob/main/src/lib.rs) - also not really
+  my code, but it's a slimmed down version of the one in [embassy-rp](https://github.com/embassy-rs/embassy/blob/main/embassy-rp/src/pio_programs/ws2812.rs).
 
 ## DriveByWire code
 
 The actual DriveByWire source code is getting underway, it's in [the code directory](./code).
 I verify fingerprint, read buttons, turn on LEDs correctly and I move the actuator back and forth.
 
-I do seem to have an issue with the hardware. "Something" is resetting the Pico every now and then.
-It is *likely* "something" to do with the actuator, not sure what. The guess is that it's a spike, a
-feedback from it or that it draws so much power that the power supply I'm using can't take it, drops
-the power to much (or to fast?) that either the DC-DC converter I have or the Pico can't handle it
-and resets.
+All that's left is really the CAN-bus part. I have the hardware, but haven't tested it yet. Nor have I written
+the code, but I'll get going with that "soonish". I won't be able to go so far as actually _talking_ to the
+CAN-bus, but at least I can talk to the controller. I hope.
+
+### Videos of it in action
 
 This was a [recording of the screen](https://www.idrive.com/idrive/sh/sh/c9u3n6z4o6) while it was running.
 It's a day old, and I've done some modifications to the code since them, but this demostrates it fairly
@@ -600,11 +616,23 @@ I've considered using relays that stays in position and need a trigger to switch
 problems - if they're "on" and I've turned the car (ignition) off (which will instantly cut power to the system)
 and walked away, then they'll do no good!
 
-### Status LED
+A better option is probably an UPS module - see [Controller](#controller). That way, I can *also* automatically
+move to (P)ark if/when the ignition is turned off. *THEN* it can turn off - it'll only stay awake long enough
+to "clean things up" (a few seconds at most).
+
+### Big Status LED
 
 The steady orange (well, it's not very orange, is it!?? :) and then green LED in the top middle is orange =>
 "starting up" (the module) and when it turns green, it means "all is well". Had the fingerprint not matched,
 it and the aura around the fingerprint scanner turns red.
+
+### Actuator LEDs
+
+In the middle of the upper right breadboard is a green and a red LED. They turn on when the corresponding relay
+to move the actuator is triggered - green for backwards (retract) and red for forwards (extend).
+
+They're also in the circuit diagram, but weather I actually use that in practice, we'll see. The whole controll
+unit will be hidden away, so that won't be visible anyway.
 
 # Updates
 
