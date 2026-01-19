@@ -258,10 +258,7 @@ async fn main(spawner: Spawner) {
     CHANNEL_CANWRITE.send(CANMessage::ButtonsInitialized).await;
 
     // =====
-    // 11. TODO: Find out what gear mode the car is in.
-    //     NOTE: Need to do this *after* we've verified that the actuator works. It will tell us
-    //           what position it is in, and from there we can extrapolate the gear.
-    //     FAKE: Read what button (gear) was enabled when last it changed from the flash.
+    // 11. Read what button (gear) was enabled when last it changed from the flash.
     match config.active_button {
         Button::P => {
             info!("Setting enabled button to P");
@@ -299,16 +296,19 @@ async fn main(spawner: Spawner) {
 
             unsafe { BUTTON_ENABLED = Button::D };
         }
-        _ => (),
     }
 
+    // 12. Move the gear into the position it was last saved as.
+    info!("Changing gear to {}", config.active_button);
+    CHANNEL_ACTUATOR.send(config.active_button).await;
+
     // =====
-    // 12. Turn on the ignition switch.
+    // 13. Turn on the ignition switch.
     eis_steering_lock.set_high();
     info!("Turning on the EIS");
 
     // =====
-    // 13. Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
+    // 14. Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
     if !config.valet_mode {
         // Sleep here three seconds to allow the car to "catch up".
         // Sometime, it takes a while for the car to "wake up". Not sure why..
@@ -323,7 +323,7 @@ async fn main(spawner: Spawner) {
     }
 
     // =====
-    // 14. TODO: Not sure how we avoid stopping the program here, the button presses are done in
+    // 15. TODO: Not sure how we avoid stopping the program here, the button presses are done in
     //           separate tasks!
     info!("Main function complete, control handed over to subtasks.");
     loop {
