@@ -1,32 +1,30 @@
 use defmt::{debug, error, info, trace, Format};
 
 use embassy_executor::Spawner;
-use embassy_rp::flash::{Async, Flash};
-use embassy_rp::gpio::{AnyPin, Input, Level, Output, Pull};
-use embassy_rp::peripherals::FLASH;
-use embassy_rp::Peri;
-use embassy_sync::channel::{Channel, Receiver};
+use embassy_rp::{
+    flash::{Async, Flash},
+    gpio::{AnyPin, Input, Level, Output, Pull},
+    peripherals::FLASH,
+    Peri,
+};
 use embassy_sync::{
-    blocking_mutex::raw::CriticalSectionRawMutex, blocking_mutex::raw::NoopRawMutex, mutex::Mutex,
+    blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex},
+    channel::{Channel, Receiver},
+    mutex::Mutex,
 };
 use embassy_time::{with_deadline, Duration, Instant, Timer};
 
-type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
-type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
-
-use debounce;
+pub type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
+pub type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 
 // External "defines".
-use crate::CANMessage;
-use crate::CHANNEL_ACTUATOR;
-use crate::CHANNEL_CANWRITE;
+use crate::lib_actuator::CHANNEL_ACTUATOR;
+use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
+use crate::lib_config::{resonable_defaults, write_flash, DbwConfig, FLASH_SIZE};
 
-use crate::lib_config;
-use crate::DbwConfig;
-use crate::FLASH_SIZE;
-
-use r503;
 use actuator::GearModes;
+use debounce;
+use r503;
 
 #[derive(Copy, Clone, Format, PartialEq)]
 #[repr(u8)]
@@ -180,7 +178,7 @@ pub async fn read_button(
                             Ok(config) => config,
                             Err(e) => {
                                 error!("Button::{}: Failed to read flash: {:?}", button, e);
-                                lib_config::resonable_defaults()
+                                resonable_defaults()
                             }
                         };
 
@@ -195,7 +193,7 @@ pub async fn read_button(
                             CHANNEL_CANWRITE.send(CANMessage::EnableValetMode).await;
                             config.valet_mode = true;
                         }
-                        lib_config::write_flash(&mut flash, config).await;
+                        write_flash(&mut flash, config).await;
 
                         // Turn off the 'N' LED.
                         CHANNEL_N.send(LedStatus::Off).await;

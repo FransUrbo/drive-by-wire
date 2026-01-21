@@ -1,3 +1,6 @@
+#![no_std]
+#![no_main]
+
 //! This example test the flash connected to the RP2040 chip.
 
 //! This was taken directly from https://github.com/embassy-rs/embassy/blob/0cbdd8b9c84511eb2a9b7065fecb0f56a9a255d2/examples/rp/src/bin/flash.rs.
@@ -5,13 +8,13 @@
 //! The read and write functionality was removed, don't need it.
 //! I just need it to clear the flash area I'm using in the main app.
 
-#![no_std]
-#![no_main]
-
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_rp::flash::{Async, Flash, ERASE_SIZE, FLASH_BASE};
-use embassy_rp::peripherals::FLASH;
+use embassy_rp::{
+    flash::{Async, Flash, ERASE_SIZE, FLASH_BASE},
+    peripherals::FLASH,
+};
+
 use {defmt_rtt as _, panic_probe as _};
 
 // offset from the flash start, NOT absolute address.

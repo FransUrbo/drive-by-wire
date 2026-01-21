@@ -1,24 +1,21 @@
 #![no_std]
 #![no_main]
 
-use defmt::{debug, error, info};
+use defmt::{debug, error, info, unwrap};
 
 use embassy_executor::Spawner;
-use embassy_rp::adc::InterruptHandler as ADCInterruptHandler;
-use embassy_rp::bind_interrupts;
-use embassy_rp::flash::{Async as FlashAsync, Flash};
-use embassy_rp::gpio::{Level, Output};
-use embassy_rp::peripherals::{FLASH, PIO1, UART0, UART1};
-use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
-use embassy_rp::uart::{
-    Blocking, Config as UartConfig, InterruptHandler as UARTInterruptHandler, UartTx,
+use embassy_rp::{
+    adc::InterruptHandler as ADCInterruptHandler,
+    bind_interrupts,
+    flash::{Async as FlashAsync, Flash},
+    gpio::{Level, Output},
+    peripherals::{PIO0, UART0, UART1},
+    pio::{InterruptHandler as PIOInterruptHandler, Pio},
+    uart::{Blocking, Config as UartConfig, InterruptHandler as UARTInterruptHandler, UartTx},
+    watchdog::*,
 };
-use embassy_rp::watchdog::*;
-use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex};
+use embassy_sync::mutex::Mutex;
 use embassy_time::{Duration, Timer};
-
-type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SIZE>>;
-type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 
 use static_cell::StaticCell;
 
@@ -35,23 +32,22 @@ pub mod lib_can_bus;
 pub mod lib_config;
 pub mod lib_watchdog;
 
-use crate::lib_actuator::*;
-use crate::lib_buttons::*;
-use crate::lib_can_bus::*;
-use crate::lib_config::*;
-use crate::lib_watchdog::*;
+use crate::lib_actuator::{actuator_control, CHANNEL_ACTUATOR};
+use crate::lib_buttons::{
+    read_button, Button, FlashMutex, LedStatus, ScannerMutex, CHANNEL_D, CHANNEL_N, CHANNEL_P,
+    CHANNEL_R, BUTTON_ENABLED
+};
+use crate::lib_can_bus::{read_can, write_can, CANMessage, CHANNEL_CANWRITE};
+use crate::lib_config::{FLASH_SIZE, DbwConfig};
+use crate::lib_watchdog::{feed_watchdog, StopWatchdog, CHANNEL_WATCHDOG};
 
-use crate::CHANNEL_ACTUATOR;
-use crate::CHANNEL_CANWRITE;
-use crate::CHANNEL_WATCHDOG;
-
-// DMA Channels used:
+// DMA Channels used (of 12):
 // * Fingerprint scanner:	UART0	DMA_CH[0-1]	PIN_13, PIN_16, PIN_17
-// * NeoPixel:			PIO1	DMA_CH2		PIN_15
+// * NeoPixel:			PIO0	DMA_CH2		PIN_15
 // * Flash:			FLASH	DMA_CH3		-
 // * Serial logging:		UART1	DMA_CH4		PIN_4
 bind_interrupts!(struct Irqs {
-    PIO1_IRQ_0   => PIOInterruptHandler<PIO1>;		// NeoPixel
+    PIO0_IRQ_0   => PIOInterruptHandler<PIO0>;		// NeoPixel
     UART0_IRQ    => UARTInterruptHandler<UART0>;	// Fingerprint scanner
     UART1_IRQ    => UARTInterruptHandler<UART1>;	// Serial logging
     ADC_IRQ_FIFO => ADCInterruptHandler;		// Actuator potentiometer
@@ -65,7 +61,7 @@ async fn main(spawner: Spawner) {
 
     // =====
     //  1. Initialize the serial UART for debug/log output.
-    let uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, UartConfig::default()); // => 115200/8N1
+    let uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, UartConfig::default()); // => 115200/8N1 (UART1)
     static SERIAL: StaticCell<UartTx<'static, Blocking>> = StaticCell::new();
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
@@ -85,7 +81,7 @@ async fn main(spawner: Spawner) {
     //  3. Initialize the NeoPixel LED. Do this first, so we can turn on the status LED.
     let Pio {
         mut common, sm0, ..
-    } = Pio::new(p.PIO1, Irqs);
+    } = Pio::new(p.PIO0, Irqs);
     let mut neopixel = Ws2812::new(&mut common, sm0, p.DMA_CH2, p.PIN_15);
     info!("NeoPixel LED initialized");
     neopixel.set_colour(Colour::ORANGE).await;
@@ -94,13 +90,16 @@ async fn main(spawner: Spawner) {
     //  4. Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
     let mut watchdog = Watchdog::new(p.WATCHDOG);
     watchdog.start(Duration::from_millis(1_050));
-    spawner.spawn(feed_watchdog(CHANNEL_WATCHDOG.receiver(), watchdog).unwrap());
+    spawner.spawn(unwrap!(feed_watchdog(
+        CHANNEL_WATCHDOG.receiver(),
+        watchdog
+    )));
     info!("Watchdog timer initialized");
 
     // =====
     //  5. Initialize the CAN bus. Needs to come third, so we can talk to the IC.
-    spawner.spawn(read_can().unwrap());
-    spawner.spawn(write_can(CHANNEL_CANWRITE.receiver()).unwrap());
+    spawner.spawn(unwrap!(read_can()));
+    spawner.spawn(unwrap!(write_can(CHANNEL_CANWRITE.receiver())));
     info!("CAN bus communicators initialized");
     CHANNEL_CANWRITE.send(CANMessage::Starting).await;
 
@@ -121,7 +120,7 @@ async fn main(spawner: Spawner) {
     // Read the config from flash drive.
     let config = {
         let mut flash = flash.lock().await;
-        DbwConfig::read(&mut flash).unwrap()
+        unwrap!(DbwConfig::read(&mut flash))
     };
     info!("{:?}", config);
 
@@ -132,8 +131,8 @@ async fn main(spawner: Spawner) {
     let mut actuator = Actuator::new(
         p.PIN_10.into(), // pin_motor_plus
         p.PIN_11.into(), // pin_motor_minus
-        p.PIN_12.into(), // pin_volt_select
-        p.PIN_28,        // pin_pot
+        p.PIN_12.into(), // pin_volt_select - UART0
+        p.PIN_28,        // pin_pot         - ADC2
         p.ADC,
         Irqs,
     );
@@ -149,7 +148,7 @@ async fn main(spawner: Spawner) {
     }
 
     // Actuator works. Spawn off the actuator control task.
-    spawner.spawn(actuator_control(CHANNEL_ACTUATOR.receiver(), flash, actuator).unwrap());
+    spawner.spawn(unwrap!(actuator_control(CHANNEL_ACTUATOR.receiver(), flash, actuator)));
     info!("Actuator initialized");
     CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
 
@@ -160,11 +159,11 @@ async fn main(spawner: Spawner) {
     let fp_scanner = R503::new(
         p.UART0,
         Irqs,
-        p.PIN_16,
+        p.PIN_16, // UART0
         p.DMA_CH0,
-        p.PIN_17,
+        p.PIN_17, // UART0
         p.DMA_CH1,
-        p.PIN_13.into(),
+        p.PIN_13.into(), // UART0
     );
     static FP_SCANNER: StaticCell<ScannerMutex> = StaticCell::new();
     let fp_scanner = FP_SCANNER.init(Mutex::new(fp_scanner));
@@ -210,50 +209,38 @@ async fn main(spawner: Spawner) {
     // 10. Spawn off one button reader per button. They will then spawn off a LED controller each
     //     so thateach button can control their "own" LED.
     info!("Initializing drive buttons");
-    spawner.spawn(
-        read_button(
-            spawner,
-            flash,
-            fp_scanner,
-            Button::P,
-            p.PIN_2.into(),
-            p.PIN_14.into(),
-        )
-        .unwrap(),
-    ); // button/P
-    spawner.spawn(
-        read_button(
-            spawner,
-            flash,
-            fp_scanner,
-            Button::R,
-            p.PIN_3.into(),
-            p.PIN_18.into(),
-        )
-        .unwrap(),
-    ); // button/R
-    spawner.spawn(
-        read_button(
-            spawner,
-            flash,
-            fp_scanner,
-            Button::N,
-            p.PIN_0.into(),
-            p.PIN_8.into(),
-        )
-        .unwrap(),
-    ); // button/N
-    spawner.spawn(
-        read_button(
-            spawner,
-            flash,
-            fp_scanner,
-            Button::D,
-            p.PIN_1.into(),
-            p.PIN_9.into(),
-        )
-        .unwrap(),
-    ); // button/D
+    spawner.spawn(unwrap!(read_button(
+        spawner,
+        flash,
+        fp_scanner,
+        Button::P,
+        p.PIN_2.into(),
+        p.PIN_14.into(),
+    ))); // button/P
+    spawner.spawn(unwrap!(read_button(
+        spawner,
+        flash,
+        fp_scanner,
+        Button::R,
+        p.PIN_3.into(),
+        p.PIN_18.into(),
+    ))); // button/R
+    spawner.spawn(unwrap!(read_button(
+        spawner,
+        flash,
+        fp_scanner,
+        Button::N,
+        p.PIN_0.into(), // UART0
+        p.PIN_8.into(), // UART1
+    ))); // button/N
+    spawner.spawn(unwrap!(read_button(
+        spawner,
+        flash,
+        fp_scanner,
+        Button::D,
+        p.PIN_1.into(), // UART0
+        p.PIN_9.into(), // UART1
+    ))); // button/D
     info!("Drive buttons initialized");
     CHANNEL_CANWRITE.send(CANMessage::ButtonsInitialized).await;
 

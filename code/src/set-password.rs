@@ -4,10 +4,12 @@
 use defmt::{debug, error, info};
 
 use embassy_executor::Spawner;
-use embassy_rp::bind_interrupts;
-use embassy_rp::peripherals::{PIO1, UART0};
-use embassy_rp::pio::{InterruptHandler as PIOInterruptHandler, Pio};
-use embassy_rp::uart::InterruptHandler as UARTInterruptHandler;
+use embassy_rp::{
+    bind_interrupts,
+    peripherals::{PIO0, UART0},
+    pio::{InterruptHandler as PIOInterruptHandler, Pio},
+    uart::InterruptHandler as UARTInterruptHandler,
+};
 use embassy_time::Timer;
 
 use {defmt_rtt as _, panic_probe as _};
@@ -16,7 +18,7 @@ use r503::Status;
 use ws2812::{Colour, Ws2812};
 
 bind_interrupts!(pub struct Irqs {
-    PIO1_IRQ_0 => PIOInterruptHandler<PIO1>;	// NeoPixel
+    PIO0_IRQ_0 => PIOInterruptHandler<PIO0>;	// NeoPixel
     UART0_IRQ  => UARTInterruptHandler<UART0>;	// Fingerprint scanner
 });
 
@@ -44,7 +46,7 @@ async fn main(_spawner: Spawner) {
     // Initialize the multi-colour LED.
     let Pio {
         mut common, sm0, ..
-    } = Pio::new(p.PIO1, Irqs);
+    } = Pio::new(p.PIO0, Irqs);
     let mut ws2812 = Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
 
     debug!("NeoPixel OFF");

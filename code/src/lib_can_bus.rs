@@ -1,7 +1,9 @@
 use defmt::{debug, error, info};
 
-use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::channel::{Channel, Receiver};
+use embassy_sync::{
+    blocking_mutex::raw::CriticalSectionRawMutex,
+    channel::{Channel, Receiver},
+};
 use embassy_time::Timer;
 
 pub enum CANMessage {

@@ -1,25 +1,17 @@
 use defmt::{error, info};
 
-use embassy_rp::flash::{Async as FlashAsync, Flash};
-use embassy_rp::peripherals::FLASH;
-use embassy_sync::channel::{Channel, Receiver};
 use embassy_sync::{
-    blocking_mutex::raw::CriticalSectionRawMutex, blocking_mutex::raw::NoopRawMutex, mutex::Mutex,
+    blocking_mutex::raw::CriticalSectionRawMutex,
+    channel::{Channel, Receiver},
 };
 
 // External "defines".
-use crate::Button;
-use crate::BUTTONS_BLOCKED;
-use crate::BUTTON_ENABLED;
-
-use crate::lib_config;
-use crate::DbwConfig;
-use crate::FLASH_SIZE;
+use crate::lib_buttons::{Button, FlashMutex, BUTTONS_BLOCKED, BUTTON_ENABLED};
+use crate::lib_config::{resonable_defaults, write_flash, DbwConfig};
 
 use actuator::Actuator;
 
 pub static CHANNEL_ACTUATOR: Channel<CriticalSectionRawMutex, Button, 64> = Channel::new();
-type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SIZE>>;
 
 // Control the actuator. Calculate in what direction and how much to move it to get to
 // the desired drive mode position.
@@ -55,7 +47,7 @@ pub async fn actuator_control(
                 Ok(config) => config,
                 Err(e) => {
                     error!("Failed to read flash: {:?}", e);
-                    lib_config::resonable_defaults()
+                    resonable_defaults()
                 }
             };
 
@@ -63,7 +55,7 @@ pub async fn actuator_control(
             config.active_button = button;
 
             // Write the config to flash.
-            lib_config::write_flash(&mut flash, config).await;
+            write_flash(&mut flash, config).await;
         }
     }
 }

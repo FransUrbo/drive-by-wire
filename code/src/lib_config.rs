@@ -1,7 +1,9 @@
 use defmt::{debug, error, info, trace, Format};
 
-use embassy_rp::flash::{Async, Error, Flash, ERASE_SIZE};
-use embassy_rp::peripherals::FLASH;
+use embassy_rp::{
+    flash::{Async, Error, Flash, ERASE_SIZE},
+    peripherals::FLASH,
+};
 
 // External "defines".
 use crate::Button;

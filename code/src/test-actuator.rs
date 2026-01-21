@@ -1,33 +1,33 @@
-//! Connect to the actuator and move it back and forth in different ways.
-
 #![no_std]
 #![no_main]
+
+//! Connect to the actuator and move it back and forth in different ways.
 
 use defmt::{debug, info};
 use {defmt_serial as _, panic_probe as _};
 
 use embassy_executor::Spawner;
-use embassy_rp::adc::InterruptHandler as ADCInterruptHandler;
-use embassy_rp::bind_interrupts;
-use embassy_rp::peripherals::UART1;
-use embassy_rp::uart::{
-    Blocking, Config as UartConfig, InterruptHandler as UARTInterruptHandler, UartTx,
+use embassy_rp::{
+    adc::InterruptHandler as ADCInterruptHandler,
+    bind_interrupts,
+    peripherals::UART1,
+    uart::{Blocking, Config as UartConfig, InterruptHandler as UARTInterruptHandler, UartTx},
 };
 use embassy_time::Timer;
 
 use static_cell::StaticCell;
 
-use actuator::{Actuator, GearModes, RESISTANCE_THROW_1MM, RESISTANCE_THROW_MIN, RESISTANCE_THROW_MAX};
+use actuator::{
+    Actuator, GearModes, RESISTANCE_THROW_1MM, RESISTANCE_THROW_MAX, RESISTANCE_THROW_MIN,
+};
 
 // External "defines". All because we need the `Button` define!!
 pub mod lib_actuator;
 pub mod lib_buttons;
 pub mod lib_can_bus;
 pub mod lib_config;
-use crate::lib_actuator::CHANNEL_ACTUATOR;
-use crate::lib_buttons::{Button, BUTTONS_BLOCKED, BUTTON_ENABLED};
-use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
-use crate::lib_config::{DbwConfig, FLASH_SIZE};
+
+use crate::lib_buttons::Button;
 
 bind_interrupts!(struct Irqs {
     UART1_IRQ    => UARTInterruptHandler<UART1>;	// Serial logging
