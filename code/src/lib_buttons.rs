@@ -2,9 +2,7 @@ use defmt::{debug, error, info, trace, Format};
 
 use embassy_executor::Spawner;
 use embassy_rp::{
-    flash::{Async, Flash},
     gpio::{AnyPin, Input, Level, Output, Pull},
-    peripherals::FLASH,
     Peri,
 };
 use embassy_sync::{
@@ -14,13 +12,12 @@ use embassy_sync::{
 };
 use embassy_time::{with_deadline, Duration, Instant, Timer};
 
-pub type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
 pub type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 
 // External "defines".
 use crate::lib_actuator::CHANNEL_ACTUATOR;
 use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
-use crate::lib_config::{resonable_defaults, write_flash, DbwConfig, FLASH_SIZE};
+use crate::lib_config::{DbwConfig, FlashMutex, resonable_defaults, write_flash};
 
 use actuator::GearModes;
 use debounce;

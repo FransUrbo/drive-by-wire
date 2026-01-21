@@ -4,6 +4,10 @@ use embassy_rp::{
     flash::{Async, Error, Flash, ERASE_SIZE},
     peripherals::FLASH,
 };
+use embassy_sync::{
+    blocking_mutex::raw::NoopRawMutex,
+    mutex::Mutex
+};
 
 // External "defines".
 use crate::Button;
@@ -11,6 +15,8 @@ use crate::Button;
 // Offset from the flash start, NOT absolute address.
 const ADDR_OFFSET: u32 = 0x100000;
 pub const FLASH_SIZE: usize = 2 * 1024 * 1024;
+
+pub type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
 
 // What we store in flash.
 #[derive(Format)]

@@ -34,11 +34,11 @@ pub mod lib_watchdog;
 
 use crate::lib_actuator::{actuator_control, CHANNEL_ACTUATOR};
 use crate::lib_buttons::{
-    read_button, Button, FlashMutex, LedStatus, ScannerMutex, CHANNEL_D, CHANNEL_N, CHANNEL_P,
+    read_button, Button, LedStatus, ScannerMutex, CHANNEL_D, CHANNEL_N, CHANNEL_P,
     CHANNEL_R, BUTTON_ENABLED
 };
 use crate::lib_can_bus::{read_can, write_can, CANMessage, CHANNEL_CANWRITE};
-use crate::lib_config::{FLASH_SIZE, DbwConfig};
+use crate::lib_config::{FlashMutex, DbwConfig, FLASH_SIZE};
 use crate::lib_watchdog::{feed_watchdog, StopWatchdog, CHANNEL_WATCHDOG};
 
 // DMA Channels used (of 12):
