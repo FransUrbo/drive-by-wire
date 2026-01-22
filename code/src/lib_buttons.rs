@@ -150,12 +150,13 @@ pub async fn read_button(
                     button
                 );
 
-                {
-                    // Turn on the 'P' and 'N' LEDs, to indicate that both have been pressed.
-                    CHANNEL_P.send(LedStatus::On).await;
-                    CHANNEL_N.send(LedStatus::On).await;
+                // Turn on the 'P' and 'N' LEDs, to indicate that both have been pressed.
+                CHANNEL_P.send(LedStatus::On).await;
+                CHANNEL_N.send(LedStatus::On).await;
 
+                {
                     // Verify with a valid fingerprint that we're authorized to change Valet Mode.
+                    // The fp_scanner lock is released when it goes out of scope.
                     let mut fp_scanner = fp_scanner.lock().await;
                     if !fp_scanner.Wrapper_Verify_Fingerprint().await {
                         error!("Can't match fingerprint, will not toggle Valet Mode");
@@ -172,28 +173,31 @@ pub async fn read_button(
                         // Restart loop.
                         continue;
                     } else {
-                        // Lock the flash and read old values.
-                        let mut flash = flash.lock().await;
-                        let mut config = match DbwConfig::read(&mut flash) {
-                            Ok(config) => config,
-                            Err(e) => {
-                                error!("Button::{}: Failed to read flash: {:?}", button, e);
-                                resonable_defaults()
-                            }
-                        };
+                        {
+                            // Lock the flash and read old values.
+                            // The flash lock is released when it goes out of scope.
+                            let mut flash = flash.lock().await;
+                            let mut config = match DbwConfig::read(&mut flash) {
+                                Ok(config) => config,
+                                Err(e) => {
+                                    error!("Button::{}: Failed to read flash: {:?}", button, e);
+                                    resonable_defaults()
+                                }
+                            };
 
-                        // Toggle Valet Mode.
-                        debug!("Config (before toggle): {:?}", config);
-                        if config.valet_mode {
-                            info!("Disabling Valet mode");
-                            CHANNEL_CANWRITE.send(CANMessage::DisableValetMode).await;
-                            config.valet_mode = false;
-                        } else {
-                            info!("Enabling Valet mode");
-                            CHANNEL_CANWRITE.send(CANMessage::EnableValetMode).await;
-                            config.valet_mode = true;
+                            // Toggle Valet Mode.
+                            debug!("Config (before toggle): {:?}", config);
+                            if config.valet_mode {
+                                info!("Disabling Valet mode");
+                                CHANNEL_CANWRITE.send(CANMessage::DisableValetMode).await;
+                                config.valet_mode = false;
+                            } else {
+                                info!("Enabling Valet mode");
+                                CHANNEL_CANWRITE.send(CANMessage::EnableValetMode).await;
+                                config.valet_mode = true;
+                            }
+                            write_flash(&mut flash, config).await;
                         }
-                        write_flash(&mut flash, config).await;
 
                         // Turn off the 'N' LED.
                         CHANNEL_N.send(LedStatus::Off).await;

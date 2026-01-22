@@ -119,6 +119,7 @@ async fn main(spawner: Spawner) {
 
     // Read the config from flash drive.
     let config = {
+        // The flash lock is released when it goes out of scope.
         let mut flash = flash.lock().await;
         unwrap!(DbwConfig::read(&mut flash))
     };
@@ -183,21 +184,24 @@ async fn main(spawner: Spawner) {
         loop {
             neopixel.set_colour(Colour::BLUE).await;
 
-            let mut fp_scanner = fp_scanner.lock().await;
-            if !fp_scanner.Wrapper_Verify_Fingerprint().await {
-                error!("Can't match fingerprint - retrying");
+            {
+                // The fp_scanner lock is released when it goes out of scope.
+                let mut fp_scanner = fp_scanner.lock().await;
+                if !fp_scanner.Wrapper_Verify_Fingerprint().await {
+                    error!("Can't match fingerprint - retrying");
 
-                debug!("NeoPixel RED");
-                neopixel.set_colour(Colour::RED).await;
+                    debug!("NeoPixel RED");
+                    neopixel.set_colour(Colour::RED).await;
 
-                // Give it five seconds before we retry.
-                Timer::after_secs(5).await;
-            } else {
-                info!("Fingerprint matches, use authorized");
-                break;
+                    // Give it five seconds before we retry.
+                    Timer::after_secs(5).await;
+                } else {
+                    info!("Fingerprint matches, use authorized");
+                    break;
+                }
+
+                fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
             }
-
-            fp_scanner.Wrapper_AuraSet_Off().await; // Turn off the aura.
         }
 
         neopixel.set_colour(Colour::GREEN).await;

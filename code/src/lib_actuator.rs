@@ -41,6 +41,7 @@ pub async fn actuator_control(
         // .. and write it to flash.
         {
             // Read the existing values from the flash.
+            // The flash lock is released when it goes out of scope.
             let mut flash = flash.lock().await;
             let mut config = match DbwConfig::read(&mut flash) {
                 // Read the old/current values.
