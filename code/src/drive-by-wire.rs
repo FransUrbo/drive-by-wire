@@ -31,6 +31,7 @@ pub mod lib_buttons;
 pub mod lib_can_bus;
 pub mod lib_config;
 pub mod lib_watchdog;
+pub mod lib_resources;
 
 use crate::lib_actuator::{actuator_control, CHANNEL_ACTUATOR};
 use crate::lib_buttons::{
@@ -40,6 +41,10 @@ use crate::lib_buttons::{
 use crate::lib_can_bus::{read_can, write_can, CANMessage, CHANNEL_CANWRITE};
 use crate::lib_config::{FlashMutex, DbwConfig, FLASH_SIZE};
 use crate::lib_watchdog::{feed_watchdog, StopWatchdog, CHANNEL_WATCHDOG};
+use crate::lib_resources::{
+    AssignedResources, PeriSerial, PeriBuiltin, PeriNeopixel, PeriWatchdog, PeriSteering,
+    PeriStart, PeriFlash, PeriActuator, PeriFPScanner, PeriButtons
+};
 
 // DMA Channels used (of 12):
 // * Fingerprint scanner:	UART0	DMA_CH[0-1]	PIN_13, PIN_16, PIN_17
@@ -58,10 +63,11 @@ bind_interrupts!(struct Irqs {
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
+    let r = split_resources! {p};
 
     // =====
     //  1. Initialize the serial UART for debug/log output.
-    let uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, UartConfig::default()); // => 115200/8N1 (UART1)
+    let uart = UartTx::new(r.serial.uart, r.serial.pin, r.serial.dma, UartConfig::default()); // => 115200/8N1 (UART1)
     static SERIAL: StaticCell<UartTx<'static, Blocking>> = StaticCell::new();
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
@@ -75,20 +81,20 @@ async fn main(spawner: Spawner) {
 
     // =====
     //  2. Initialize the built-in LED and turn it on. Just for completness.
-    let _builtin_led = Output::new(p.PIN_25, Level::High);
+    let _builtin_led = Output::new(r.builtin.pin, Level::High);
 
     // =====
     //  3. Initialize the NeoPixel LED. Do this first, so we can turn on the status LED.
     let Pio {
         mut common, sm0, ..
-    } = Pio::new(p.PIO0, Irqs);
-    let mut neopixel = Ws2812::new(&mut common, sm0, p.DMA_CH2, p.PIN_15);
+    } = Pio::new(r.neopixel.pio, Irqs);
+    let mut neopixel = Ws2812::new(&mut common, sm0, r.neopixel.dma, r.neopixel.pin);
     info!("NeoPixel LED initialized");
     neopixel.set_colour(Colour::ORANGE).await;
 
     // =====
     //  4. Initialize the watchdog. Needs to be second, so it'll restart if something goes wrong.
-    let mut watchdog = Watchdog::new(p.WATCHDOG);
+    let mut watchdog = Watchdog::new(r.watchdog.peri);
     watchdog.start(Duration::from_millis(1_050));
     spawner.spawn(unwrap!(feed_watchdog(
         CHANNEL_WATCHDOG.receiver(),
@@ -105,15 +111,15 @@ async fn main(spawner: Spawner) {
 
     // =====
     //  6. Initialize the MOSFET relays.
-    let mut eis_steering_lock = Output::new(p.PIN_19, Level::Low); // EIS/Steering lock (GREEN)
-    let mut eis_start = Output::new(p.PIN_22, Level::Low); // EIS/Start (YELLOW)
+    let mut eis_steering_lock = Output::new(r.steering.pin, Level::Low); // EIS/Steering lock (GREEN)
+    let mut eis_start = Output::new(r.start.pin, Level::Low); // EIS/Start (YELLOW)
     info!("EIS relays initialized");
     CHANNEL_CANWRITE.send(CANMessage::RelaysInitialized).await;
 
     // =====
     //  7. Initialize the flash drive where we store some config values across reboots.
     info!("Initializing the flash drive");
-    let flash = Flash::<_, FlashAsync, FLASH_SIZE>::new(p.FLASH, p.DMA_CH3);
+    let flash = Flash::<_, FlashAsync, FLASH_SIZE>::new(r.flash.peri, r.flash.dma);
     static FLASH: StaticCell<FlashMutex> = StaticCell::new();
     let flash = FLASH.init(Mutex::new(flash));
 
@@ -130,11 +136,11 @@ async fn main(spawner: Spawner) {
     info!("Initializing actuator");
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
     let mut actuator = Actuator::new(
-        p.PIN_10.into(), // pin_motor_plus
-        p.PIN_11.into(), // pin_motor_minus
-        p.PIN_12.into(), // pin_volt_select - UART0
-        p.PIN_28,        // pin_pot         - ADC2
-        p.ADC,
+        r.actuator.mplus.into(), // pin_motor_plus
+        r.actuator.mminus.into(), // pin_motor_minus
+        r.actuator.vsel.into(), // pin_volt_select - UART0
+        r.actuator.pot, // pin_pot         - ADC2
+        r.actuator.adc,
         Irqs,
     );
 
@@ -158,13 +164,13 @@ async fn main(spawner: Spawner) {
     info!("Initializing the fingerprint scanner");
     CHANNEL_CANWRITE.send(CANMessage::InitFP).await;
     let fp_scanner = R503::new(
-        p.UART0,
+        r.fpscan.uart,
         Irqs,
-        p.PIN_16, // UART0
-        p.DMA_CH0,
-        p.PIN_17, // UART0
-        p.DMA_CH1,
-        p.PIN_13.into(), // UART0
+        r.fpscan.send_pin,
+        r.fpscan.send_dma,
+        r.fpscan.recv_pin,
+        r.fpscan.recv_dma,
+        r.fpscan.wakeup.into()
     );
     static FP_SCANNER: StaticCell<ScannerMutex> = StaticCell::new();
     let fp_scanner = FP_SCANNER.init(Mutex::new(fp_scanner));
@@ -218,32 +224,32 @@ async fn main(spawner: Spawner) {
         flash,
         fp_scanner,
         Button::P,
-        p.PIN_2.into(),
-        p.PIN_14.into(),
+        r.buttons.p_but.into(),
+        r.buttons.p_led.into()
     ))); // button/P
     spawner.spawn(unwrap!(read_button(
         spawner,
         flash,
         fp_scanner,
         Button::R,
-        p.PIN_3.into(),
-        p.PIN_18.into(),
+        r.buttons.r_but.into(),
+        r.buttons.r_led.into()
     ))); // button/R
     spawner.spawn(unwrap!(read_button(
         spawner,
         flash,
         fp_scanner,
         Button::N,
-        p.PIN_0.into(), // UART0
-        p.PIN_8.into(), // UART1
+        r.buttons.n_but.into(),
+        r.buttons.n_led.into()
     ))); // button/N
     spawner.spawn(unwrap!(read_button(
         spawner,
         flash,
         fp_scanner,
         Button::D,
-        p.PIN_1.into(), // UART0
-        p.PIN_9.into(), // UART1
+        r.buttons.d_but.into(),
+        r.buttons.d_led.into()
     ))); // button/D
     info!("Drive buttons initialized");
     CHANNEL_CANWRITE.send(CANMessage::ButtonsInitialized).await;

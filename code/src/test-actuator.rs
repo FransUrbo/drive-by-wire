@@ -26,8 +26,13 @@ pub mod lib_actuator;
 pub mod lib_buttons;
 pub mod lib_can_bus;
 pub mod lib_config;
+pub mod lib_resources;
 
 use crate::lib_buttons::Button;
+use crate::lib_resources::{
+    AssignedResources, PeriSerial, PeriBuiltin, PeriNeopixel, PeriWatchdog, PeriSteering,
+    PeriStart, PeriFlash, PeriActuator, PeriFPScanner, PeriButtons
+};
 
 bind_interrupts!(struct Irqs {
     UART1_IRQ    => UARTInterruptHandler<UART1>;	// Serial logging
@@ -37,9 +42,10 @@ bind_interrupts!(struct Irqs {
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
+    let r = split_resources! {p};
 
     // Initialize the serial UART for debug/log output.
-    let uart = UartTx::new(p.UART1, p.PIN_4, p.DMA_CH4, UartConfig::default()); // => 115200/8N1
+    let uart = UartTx::new(r.serial.uart, r.serial.pin, r.serial.dma, UartConfig::default()); // => 115200/8N1 (UART1)
     static SERIAL: StaticCell<UartTx<'_, Blocking>> = StaticCell::new();
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
@@ -54,11 +60,11 @@ async fn main(_spawner: Spawner) {
     // Initialize the actuator.
     info!("Initializing actuator");
     let mut actuator = Actuator::new(
-        p.PIN_10.into(), // pin_motor_plus
-        p.PIN_11.into(), // pin_motor_minus
-        p.PIN_12.into(), // pin_volt_select
-        p.PIN_28,        // pin_pot
-        p.ADC,
+        r.actuator.mplus.into(), // pin_motor_plus
+        r.actuator.mminus.into(), // pin_motor_minus
+        r.actuator.vsel.into(), // pin_volt_select - UART0
+        r.actuator.pot, // pin_pot         - ADC2
+        r.actuator.adc,
         Irqs,
     );
     info!("Actuator initialized");

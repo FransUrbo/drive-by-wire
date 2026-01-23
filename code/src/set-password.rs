@@ -14,8 +14,14 @@ use embassy_time::Timer;
 
 use {defmt_rtt as _, panic_probe as _};
 
-use r503::Status;
+use r503::{R503, Status};
 use ws2812::{Colour, Ws2812};
+
+pub mod lib_resources;
+use crate::lib_resources::{
+    AssignedResources, PeriSerial, PeriBuiltin, PeriNeopixel, PeriWatchdog, PeriSteering,
+    PeriStart, PeriFlash, PeriActuator, PeriFPScanner, PeriButtons
+};
 
 bind_interrupts!(pub struct Irqs {
     PIO0_IRQ_0 => PIOInterruptHandler<PIO0>;	// NeoPixel
@@ -26,19 +32,20 @@ bind_interrupts!(pub struct Irqs {
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
+    let p = embassy_rp::init(Default::default());
+    let r = split_resources! {p};
+
     info!("Start");
 
-    let p = embassy_rp::init(Default::default());
-
     // Initialize the fingerprint scanner.
-    let mut r503 = r503::R503::new(
-        p.UART0,
+    let mut r503 = R503::new(
+        r.fpscan.uart,
         Irqs,
-        p.PIN_16,
-        p.DMA_CH0,
-        p.PIN_17,
-        p.DMA_CH1,
-        p.PIN_13.into(),
+        r.fpscan.send_pin,
+        r.fpscan.send_dma,
+        r.fpscan.recv_pin,
+        r.fpscan.recv_dma,
+        r.fpscan.wakeup.into()
     );
     r503.password = 0x00000000; // CURRENT password.
     let new_pw = 0x00100000; // NEW password.
@@ -46,8 +53,8 @@ async fn main(_spawner: Spawner) {
     // Initialize the multi-colour LED.
     let Pio {
         mut common, sm0, ..
-    } = Pio::new(p.PIO0, Irqs);
-    let mut ws2812 = Ws2812::new(&mut common, sm0, p.DMA_CH3, p.PIN_15);
+    } = Pio::new(r.neopixel.pio, Irqs);
+    let mut ws2812 = Ws2812::new(&mut common, sm0, r.neopixel.dma, r.neopixel.pin);
 
     debug!("NeoPixel OFF");
     ws2812.set_colour(Colour::BLACK).await;

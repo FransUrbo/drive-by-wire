@@ -17,6 +17,12 @@ use embassy_rp::{
 
 use {defmt_rtt as _, panic_probe as _};
 
+pub mod lib_resources;
+use crate::lib_resources::{
+    AssignedResources, PeriSerial, PeriBuiltin, PeriNeopixel, PeriWatchdog, PeriSteering,
+    PeriStart, PeriFlash, PeriActuator, PeriFPScanner, PeriButtons
+};
+
 // offset from the flash start, NOT absolute address.
 const ADDR_OFFSET: u32 = 0x100000;
 const FLASH_SIZE: usize = 2 * 1024 * 1024;
@@ -24,9 +30,11 @@ const FLASH_SIZE: usize = 2 * 1024 * 1024;
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
+    let r = split_resources! {p};
+
     info!("Hello World!");
 
-    let mut flash = Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH0);
+    let mut flash = Flash::<_, Async, FLASH_SIZE>::new(r.flash.peri, r.flash.dma);
 
     erase_write_sector(&mut flash);
 

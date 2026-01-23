@@ -24,6 +24,7 @@ cortex-m-rt = "0.7.0"
 panic-probe = { version = "1.0.0", features = ["print-defmt"] }
 portable-atomic = { version = "1.10.0", features = ["critical-section"] }
 static_cell = "2.1.0"
+assign-resources = "0.5.0"
 
 [dependencies.defmt-serial]
 # The released one (v1.0.1) is missing features for new Embassy.

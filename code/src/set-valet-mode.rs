@@ -17,19 +17,26 @@ pub mod lib_actuator;
 pub mod lib_buttons;
 pub mod lib_can_bus;
 pub mod lib_config;
+pub mod lib_resources;
 
 use crate::lib_buttons::Button;
 use crate::lib_config::{DbwConfig, FLASH_SIZE};
+use crate::lib_resources::{
+    AssignedResources, PeriSerial, PeriBuiltin, PeriNeopixel, PeriWatchdog, PeriSteering,
+    PeriStart, PeriFlash, PeriActuator, PeriFPScanner, PeriButtons
+};
 
 use {defmt_rtt as _, panic_probe as _};
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
+    let r = split_resources! {p};
+
     info!("Setting valet mode in flash");
 
     // Instantiate the flash.
-    let mut flash = Flash::<_, Async, FLASH_SIZE>::new(p.FLASH, p.DMA_CH0);
+    let mut flash = Flash::<_, Async, FLASH_SIZE>::new(r.flash.peri, r.flash.dma);
 
     // Read old values.
     match DbwConfig::read(&mut flash) {

@@ -11,6 +11,12 @@ use embassy_time::Timer;
 
 use actuator::Actuator;
 
+pub mod lib_resources;
+use crate::lib_resources::{
+    AssignedResources, PeriSerial, PeriBuiltin, PeriNeopixel, PeriWatchdog, PeriSteering,
+    PeriStart, PeriFlash, PeriActuator, PeriFPScanner, PeriButtons
+};
+
 use {defmt_rtt as _, panic_probe as _};
 
 bind_interrupts!(struct Irqs {
@@ -20,13 +26,14 @@ bind_interrupts!(struct Irqs {
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
+    let r = split_resources! {p};
 
     let mut actuator = Actuator::new(
-        p.PIN_10.into(), // pin_motor_plus
-        p.PIN_11.into(), // pin_motor_minus
-        p.PIN_12.into(), // pin_volt_select
-        p.PIN_28,        // pin_pot
-        p.ADC,
+        r.actuator.mplus.into(), // pin_motor_plus
+        r.actuator.mminus.into(), // pin_motor_minus
+        r.actuator.vsel.into(), // pin_volt_select - UART0
+        r.actuator.pot, // pin_pot         - ADC2
+        r.actuator.adc,
         Irqs,
     );
 
