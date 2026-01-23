@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use defmt::{debug, error, info, unwrap};
+use defmt::{debug, error, info, todo, unwrap};
 
 use embassy_executor::{Executor, Spawner};
 use embassy_rp::{
@@ -39,7 +39,7 @@ use crate::lib_buttons::{
     CHANNEL_R,
 };
 use crate::lib_can_bus::{write_can, CANMessage, CHANNEL_CANWRITE};
-use crate::lib_config::{DbwConfig, init_flash};
+use crate::lib_config::{flash_control, FlashConfigMessages, CHANNEL_FLASH};
 use crate::lib_resources::{
     AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
     PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
@@ -117,17 +117,8 @@ async fn main(spawner: Spawner) {
     CHANNEL_CANWRITE.send(CANMessage::RelaysInitialized).await;
 
     // =====
-    //  6. Initialize the flash drive where we store the state across reboots.
-    info!("Initializing the flash drive");
-    let flash = init_flash(r.flash);
-
-    // Read the config from flash drive.
-    let config = {
-        // The flash lock is released when it goes out of scope.
-        let mut flash = flash.lock().await;
-        unwrap!(DbwConfig::read(&mut flash))
-    };
-    info!("{:?}", config);
+    //  7. Initialize the flash drive where we store some config values across reboots.
+    spawner.spawn(unwrap!(flash_control(r.flash)));
 
     // =====
     //  7a. Initialize and test the actuator.
@@ -165,7 +156,6 @@ async fn main(spawner: Spawner) {
                 spawner.spawn(unwrap!(core1_tasks(
                     spawner,
                     CHANNEL_ACTUATOR.receiver(),
-//                    flash,
                     actuator,
                     r.watchdog
                 )))
@@ -194,8 +184,10 @@ async fn main(spawner: Spawner) {
     // 9b. Verify fingerprint.
     info!("Authorizing use");
     CHANNEL_CANWRITE.send(CANMessage::Authorizing).await;
-    if config.valet_mode {
-        neopixel.set_colour(Colour::ORANGE).await;
+    CHANNEL_FLASH.send(FlashConfigMessages::ReadValet).await;
+    let valet_mode = CHANNEL_FLASH.receive().await;
+    if valet_mode == FlashConfigMessages::ValetOff {
+        neopixel.set_colour(Colour::WHITE).await;
 
         info!("Running in VALET mode, won't authorize");
         CHANNEL_CANWRITE.send(CANMessage::ValetMode).await;
@@ -235,7 +227,6 @@ async fn main(spawner: Spawner) {
     info!("Initializing drive buttons");
     spawner.spawn(unwrap!(read_button(
         spawner,
-        flash,
         fp_scanner,
         Button::P,
         r.buttons.p_but.into(),
@@ -243,7 +234,6 @@ async fn main(spawner: Spawner) {
     ))); // button/P
     spawner.spawn(unwrap!(read_button(
         spawner,
-        flash,
         fp_scanner,
         Button::R,
         r.buttons.r_but.into(),
@@ -251,7 +241,6 @@ async fn main(spawner: Spawner) {
     ))); // button/R
     spawner.spawn(unwrap!(read_button(
         spawner,
-        flash,
         fp_scanner,
         Button::N,
         r.buttons.n_but.into(),
@@ -259,7 +248,6 @@ async fn main(spawner: Spawner) {
     ))); // button/N
     spawner.spawn(unwrap!(read_button(
         spawner,
-        flash,
         fp_scanner,
         Button::D,
         r.buttons.d_but.into(),
@@ -270,8 +258,10 @@ async fn main(spawner: Spawner) {
 
     // =====
     // 11. Read what button (gear) was enabled when last it changed from the flash.
-    match config.active_button {
-        Button::P => {
+    CHANNEL_FLASH.send(FlashConfigMessages::ReadButton).await;
+    let active_button = CHANNEL_FLASH.receive().await;
+    match active_button {
+        FlashConfigMessages::ButtonP => {
             info!("Setting enabled button to P");
             CHANNEL_P.send(LedStatus::On).await;
             CHANNEL_R.send(LedStatus::Off).await;
@@ -280,7 +270,7 @@ async fn main(spawner: Spawner) {
 
             unsafe { BUTTON_ENABLED = Button::P };
         }
-        Button::R => {
+        FlashConfigMessages::ButtonR => {
             info!("Setting enabled button to R");
             CHANNEL_P.send(LedStatus::Off).await;
             CHANNEL_R.send(LedStatus::On).await;
@@ -289,7 +279,7 @@ async fn main(spawner: Spawner) {
 
             unsafe { BUTTON_ENABLED = Button::R };
         }
-        Button::N => {
+        FlashConfigMessages::ButtonN => {
             info!("Setting enabled button to N");
             CHANNEL_P.send(LedStatus::Off).await;
             CHANNEL_R.send(LedStatus::Off).await;
@@ -298,7 +288,7 @@ async fn main(spawner: Spawner) {
 
             unsafe { BUTTON_ENABLED = Button::N };
         }
-        Button::D => {
+        FlashConfigMessages::ButtonD => {
             info!("Setting enabled button to D");
             CHANNEL_P.send(LedStatus::Off).await;
             CHANNEL_R.send(LedStatus::Off).await;
@@ -307,11 +297,17 @@ async fn main(spawner: Spawner) {
 
             unsafe { BUTTON_ENABLED = Button::D };
         }
+        _ => todo!(),
     }
 
     // 12. Move the gear into the position it was last saved as.
-    info!("Changing gear to {}", config.active_button);
-    CHANNEL_ACTUATOR.send(config.active_button).await;
+    info!(
+        "Changing gear to {}",
+        FlashConfigMessages::to_button(&active_button)
+    );
+    CHANNEL_ACTUATOR
+        .send(FlashConfigMessages::to_button(&active_button))
+        .await;
 
     // =====
     // 13. Turn on the ignition switch.
@@ -320,7 +316,9 @@ async fn main(spawner: Spawner) {
 
     // =====
     // 14. Starting the car by turning on the EIS/start relay on for one sec and then turn it off.
-    if !config.valet_mode {
+    CHANNEL_FLASH.send(FlashConfigMessages::ReadValet).await;
+    let valet_mode = CHANNEL_FLASH.receive().await;
+    if valet_mode == FlashConfigMessages::ValetOn {
         // Sleep here three seconds to allow the car to "catch up".
         // Sometime, it takes a while for the car to "wake up". Not sure why..
         info!("Waiting 3s to wakeup the car");

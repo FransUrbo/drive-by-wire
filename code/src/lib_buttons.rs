@@ -1,4 +1,4 @@
-use defmt::{debug, error, info, trace, Format};
+use defmt::{debug, error, info, todo, trace, Format};
 
 use embassy_executor::Spawner;
 use embassy_rp::{
@@ -17,7 +17,7 @@ pub type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 // External "defines".
 use crate::lib_actuator::CHANNEL_ACTUATOR;
 use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
-use crate::lib_config::{resonable_defaults, write_flash, DbwConfig, FlashMutex};
+use crate::lib_config::{FlashConfigMessages, CHANNEL_FLASH};
 
 use actuator::GearModes;
 use debounce;
@@ -109,7 +109,7 @@ async fn set_led(
 #[embassy_executor::task(pool_size = 4)]
 pub async fn read_button(
     spawner: Spawner,
-    flash: &'static FlashMutex,
+    //    flash: &'static FlashMutex,
     fp_scanner: &'static ScannerMutex,
     button: Button,
     btn_pin: Peri<'static, AnyPin>,
@@ -170,30 +170,17 @@ pub async fn read_button(
                         // Restart loop.
                         continue;
                     } else {
-                        {
-                            // Lock the flash and read old values.
-                            // The flash lock is released when it goes out of scope.
-                            let mut flash = flash.lock().await;
-                            let mut config = match DbwConfig::read(&mut flash) {
-                                Ok(config) => config,
-                                Err(e) => {
-                                    error!("Button::{}: Failed to read flash: {:?}", button, e);
-                                    resonable_defaults()
-                                }
-                            };
-
-                            // Toggle Valet Mode.
-                            debug!("Config (before toggle): {:?}", config);
-                            if config.valet_mode {
-                                info!("Disabling Valet mode");
+                        // Toggle Valet Mode.
+                        match CHANNEL_FLASH.receive().await {
+                            FlashConfigMessages::ValetOn => {
                                 CHANNEL_CANWRITE.send(CANMessage::DisableValetMode).await;
-                                config.valet_mode = false;
-                            } else {
-                                info!("Enabling Valet mode");
-                                CHANNEL_CANWRITE.send(CANMessage::EnableValetMode).await;
-                                config.valet_mode = true;
+                                CHANNEL_FLASH.send(FlashConfigMessages::ValetOff).await;
                             }
-                            write_flash(&mut flash, config).await;
+                            FlashConfigMessages::ValetOff => {
+                                CHANNEL_CANWRITE.send(CANMessage::EnableValetMode).await;
+                                CHANNEL_FLASH.send(FlashConfigMessages::ValetOff).await;
+                            }
+                            _ => todo!(),
                         }
 
                         // Turn off the 'N' LED.

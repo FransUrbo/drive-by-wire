@@ -22,6 +22,7 @@ pub enum CANMessage {
     Authorizing,
     Authorized,
 }
+
 pub static CHANNEL_CANWRITE: Channel<CriticalSectionRawMutex, CANMessage, 64> = Channel::new();
 
 // Write messages to CAN-bus.
