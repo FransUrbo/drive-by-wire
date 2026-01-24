@@ -30,21 +30,21 @@ pub mod lib_actuator;
 pub mod lib_buttons;
 pub mod lib_can_bus;
 pub mod lib_config;
-pub mod lib_watchdog;
 pub mod lib_resources;
+pub mod lib_watchdog;
 
 use crate::lib_actuator::{actuator_control, CHANNEL_ACTUATOR};
 use crate::lib_buttons::{
-    read_button, Button, LedStatus, ScannerMutex, CHANNEL_D, CHANNEL_N, CHANNEL_P,
-    CHANNEL_R, BUTTON_ENABLED
+    read_button, Button, LedStatus, ScannerMutex, BUTTON_ENABLED, CHANNEL_D, CHANNEL_N, CHANNEL_P,
+    CHANNEL_R,
 };
 use crate::lib_can_bus::{read_can, write_can, CANMessage, CHANNEL_CANWRITE};
-use crate::lib_config::{FlashMutex, DbwConfig, FLASH_SIZE};
-use crate::lib_watchdog::{feed_watchdog, StopWatchdog, CHANNEL_WATCHDOG};
+use crate::lib_config::{DbwConfig, FlashMutex, FLASH_SIZE};
 use crate::lib_resources::{
-    AssignedResources, PeriSerial, PeriBuiltin, PeriNeopixel, PeriWatchdog, PeriSteering,
-    PeriStart, PeriFlash, PeriActuator, PeriFPScanner, PeriButtons
+    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
+    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
 };
+use crate::lib_watchdog::{feed_watchdog, StopWatchdog, CHANNEL_WATCHDOG};
 
 // DMA Channels used (of 12):
 // * Fingerprint scanner:	UART0	DMA_CH[0-1]	PIN_13, PIN_16, PIN_17
@@ -67,7 +67,12 @@ async fn main(spawner: Spawner) {
 
     // =====
     //  1. Initialize the serial UART for debug/log output.
-    let uart = UartTx::new(r.serial.uart, r.serial.pin, r.serial.dma, UartConfig::default()); // => 115200/8N1 (UART1)
+    let uart = UartTx::new(
+        r.serial.uart,
+        r.serial.pin,
+        r.serial.dma,
+        UartConfig::default(),
+    ); // => 115200/8N1 (UART1)
     static SERIAL: StaticCell<UartTx<'static, Blocking>> = StaticCell::new();
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
@@ -136,10 +141,10 @@ async fn main(spawner: Spawner) {
     info!("Initializing actuator");
     CHANNEL_CANWRITE.send(CANMessage::InitActuator).await;
     let mut actuator = Actuator::new(
-        r.actuator.mplus.into(), // pin_motor_plus
+        r.actuator.mplus.into(),  // pin_motor_plus
         r.actuator.mminus.into(), // pin_motor_minus
-        r.actuator.vsel.into(), // pin_volt_select - UART0
-        r.actuator.pot, // pin_pot         - ADC2
+        r.actuator.vsel.into(),   // pin_volt_select - UART0
+        r.actuator.pot,           // pin_pot         - ADC2
         r.actuator.adc,
         Irqs,
     );
@@ -155,7 +160,11 @@ async fn main(spawner: Spawner) {
     }
 
     // Actuator works. Spawn off the actuator control task.
-    spawner.spawn(unwrap!(actuator_control(CHANNEL_ACTUATOR.receiver(), flash, actuator)));
+    spawner.spawn(unwrap!(actuator_control(
+        CHANNEL_ACTUATOR.receiver(),
+        flash,
+        actuator
+    )));
     info!("Actuator initialized");
     CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
 
@@ -170,7 +179,7 @@ async fn main(spawner: Spawner) {
         r.fpscan.send_dma,
         r.fpscan.recv_pin,
         r.fpscan.recv_dma,
-        r.fpscan.wakeup.into()
+        r.fpscan.wakeup.into(),
     );
     static FP_SCANNER: StaticCell<ScannerMutex> = StaticCell::new();
     let fp_scanner = FP_SCANNER.init(Mutex::new(fp_scanner));

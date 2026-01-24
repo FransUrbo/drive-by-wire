@@ -4,10 +4,7 @@ use embassy_rp::{
     flash::{Async, Error, Flash, ERASE_SIZE},
     peripherals::FLASH,
 };
-use embassy_sync::{
-    blocking_mutex::raw::NoopRawMutex,
-    mutex::Mutex
-};
+use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex};
 
 // External "defines".
 use crate::Button;

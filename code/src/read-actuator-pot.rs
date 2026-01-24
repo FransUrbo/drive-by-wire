@@ -13,8 +13,8 @@ use actuator::Actuator;
 
 pub mod lib_resources;
 use crate::lib_resources::{
-    AssignedResources, PeriSerial, PeriBuiltin, PeriNeopixel, PeriWatchdog, PeriSteering,
-    PeriStart, PeriFlash, PeriActuator, PeriFPScanner, PeriButtons
+    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
+    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
 };
 
 use {defmt_rtt as _, panic_probe as _};
@@ -29,10 +29,10 @@ async fn main(_spawner: Spawner) {
     let r = split_resources! {p};
 
     let mut actuator = Actuator::new(
-        r.actuator.mplus.into(), // pin_motor_plus
+        r.actuator.mplus.into(),  // pin_motor_plus
         r.actuator.mminus.into(), // pin_motor_minus
-        r.actuator.vsel.into(), // pin_volt_select - UART0
-        r.actuator.pot, // pin_pot         - ADC2
+        r.actuator.vsel.into(),   // pin_volt_select - UART0
+        r.actuator.pot,           // pin_pot         - ADC2
         r.actuator.adc,
         Irqs,
     );

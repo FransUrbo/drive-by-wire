@@ -18,8 +18,8 @@ use ws2812::{Colour, Ws2812};
 
 pub mod lib_resources;
 use crate::lib_resources::{
-    AssignedResources, PeriSerial, PeriBuiltin, PeriNeopixel, PeriWatchdog, PeriSteering,
-    PeriStart, PeriFlash, PeriActuator, PeriFPScanner, PeriButtons
+    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
+    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
 };
 
 bind_interrupts!(pub struct Irqs {
@@ -44,7 +44,7 @@ async fn main(_spawner: Spawner) {
         r.fpscan.send_dma,
         r.fpscan.recv_pin,
         r.fpscan.recv_dma,
-        r.fpscan.wakeup.into()
+        r.fpscan.wakeup.into(),
     );
     info!("Fingerprint scanner initialized");
 

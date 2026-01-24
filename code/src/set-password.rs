@@ -14,13 +14,13 @@ use embassy_time::Timer;
 
 use {defmt_rtt as _, panic_probe as _};
 
-use r503::{R503, Status};
+use r503::{Status, R503};
 use ws2812::{Colour, Ws2812};
 
 pub mod lib_resources;
 use crate::lib_resources::{
-    AssignedResources, PeriSerial, PeriBuiltin, PeriNeopixel, PeriWatchdog, PeriSteering,
-    PeriStart, PeriFlash, PeriActuator, PeriFPScanner, PeriButtons
+    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
+    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
 };
 
 bind_interrupts!(pub struct Irqs {
@@ -45,7 +45,7 @@ async fn main(_spawner: Spawner) {
         r.fpscan.send_dma,
         r.fpscan.recv_pin,
         r.fpscan.recv_dma,
-        r.fpscan.wakeup.into()
+        r.fpscan.wakeup.into(),
     );
     r503.password = 0x00000000; // CURRENT password.
     let new_pw = 0x00100000; // NEW password.

@@ -30,8 +30,8 @@ pub mod lib_resources;
 
 use crate::lib_buttons::Button;
 use crate::lib_resources::{
-    AssignedResources, PeriSerial, PeriBuiltin, PeriNeopixel, PeriWatchdog, PeriSteering,
-    PeriStart, PeriFlash, PeriActuator, PeriFPScanner, PeriButtons
+    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
+    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
 };
 
 bind_interrupts!(struct Irqs {
@@ -45,7 +45,12 @@ async fn main(_spawner: Spawner) {
     let r = split_resources! {p};
 
     // Initialize the serial UART for debug/log output.
-    let uart = UartTx::new(r.serial.uart, r.serial.pin, r.serial.dma, UartConfig::default()); // => 115200/8N1 (UART1)
+    let uart = UartTx::new(
+        r.serial.uart,
+        r.serial.pin,
+        r.serial.dma,
+        UartConfig::default(),
+    ); // => 115200/8N1 (UART1)
     static SERIAL: StaticCell<UartTx<'_, Blocking>> = StaticCell::new();
     defmt_serial::defmt_serial(SERIAL.init(uart));
 
@@ -60,10 +65,10 @@ async fn main(_spawner: Spawner) {
     // Initialize the actuator.
     info!("Initializing actuator");
     let mut actuator = Actuator::new(
-        r.actuator.mplus.into(), // pin_motor_plus
+        r.actuator.mplus.into(),  // pin_motor_plus
         r.actuator.mminus.into(), // pin_motor_minus
-        r.actuator.vsel.into(), // pin_volt_select - UART0
-        r.actuator.pot, // pin_pot         - ADC2
+        r.actuator.vsel.into(),   // pin_volt_select - UART0
+        r.actuator.pot,           // pin_pot         - ADC2
         r.actuator.adc,
         Irqs,
     );
