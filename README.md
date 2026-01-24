@@ -9,6 +9,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
 1. [Fingerprint scanner instead of Start button](#fingerprint-scanner-instead-of-start-button)
 2. [Software function](#software-function)
 3. [Pin layout](#pin-layout-for-raspberrypi-3-5-and-pico)
+   * [RP2350](#rp2350)
    1. [External contacts](#external-contacts)
       - [Buttons and their LEDs](#buttons-and-their-leds)
       - [Status LED](#status-led)
@@ -163,40 +164,51 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 
 # Pin layout for RaspberryPI 3-5, and Pico
 
-| <div style="width:25px">Pin</div> | <div style="width:75px">Port</div> | <div style="width:280px">Use</div> | <div style="width:25px">Pin</div> | <div style="width:75px">Port</div> | <div style="width:280px">Use</div>
-| --: | :------ | :------------------------------ | --: | :------------------ | :------------------------------------- |
-|   1 | GPIO  0 | Button (Switch - N)             | 40  | VBUS                |                                        |
-|   2 | GPIO  1 | Button (Switch - D)             | 39  | VSYS                |                                        |
-|   3 | GND     |                                 | 38  | GND                 |                                        |
-|   4 | GPIO  2 | Button (Switch - P)             | 37  | 3V3_EN              |                                        |
-|   5 | GPIO  3 | Button (Switch - R)             | 36  | 3V3_OUT             |                                        |
-|   6 | GPIO  4 | Debug (TX)                      | 35  | ADC_VREF            | Actuator Feedback - +5V                |
-|   7 | GPIO  5 | Debug (RX)                      | 34  | GPIO 28<br>ADC2     | Actuator Feedback - Brush              |
-|   8 | GND     |                                 | 33  | GND<br>AGND         | Actuator Feedback - GND                |
-|   9 | GPIO  6<br>I2C0/SDA | Power monitor (SDA) | 32  | GPIO 27<br>I2C1/SCL | ~~Future Use~~                         |
-|  10 | GPIO  7<br>I2C0/SCL | Power monitor (SCL) | 31  | GPIO 26<br>I2C1/SDA | ~~Future Use~~                         |
-|  11 | GPIO  8 | Button (Telltale - N)           | 30  | RUN                 |                                        |
-|  12 | GPIO  9 | Button (Telltale - D)           | 29  | GPIO 22             | EIS Relay (#3 - start) (YELLOW)        |
-|  13 | GND     | ~~*[GPIO 29]*~~                 | 28  | GND                 | ~~*[GPIO 23]*~~                        |
-|  14 | GPIO 10 | Actuator - Motor Relay (#1)     | 27  | GPIO 21             | CAN #0 (RX)                            |
-|  15 | GPIO 11 | Actuator - Motor Relay (#2)     | 26  | GPIO 20             | CAN #0 (TX)                            |
-|  16 | GPIO 12 | Actuator - +5V/+12V select      | 25  | GPIO 19             | EIS Relay (#1 - steering lock) (GREEN) |
-|  17 | GPIO 13 | Fingerprint Scanner (WAKEUP)    | 24  | GPIO 18             | Button (Telltale - R)                  |
-|  18 | GND     | ~~*[GPIO 25]*~~                 | 23  | GND                 | ~~*[GPIO 24]*~~                        |
-|  19 | GPIO 14 | Button (Telltale - P)           | 22  | GPIO 17             | Fingerprint Scanner (TX)               |
-|  20 | GPIO 15 | Status LED (Data IN)            | 21  | GPIO 16             | Fingerprint Scanner (RX)               |
+| <div style="width:25px">Pin</div> | UARTx | <div style="width:75px">Port</div> | <div style="width:280px">Use</div> | <div style="width:25px">Pin</div> | UARTx | <div style="width:75px">Port</div> | <div style="width:280px">Use</div>
+| --: |  :-:  | :------ | :------------------------------ | --: |  :-:  | :------------------ | :------------------------------------- |
+|   1 | ~~0~~ | GPIO  0 | Button (Switch - N)             | 40  |       | VBUS                |                                        |
+|   2 | ~~0~~ | GPIO  1 | Button (Switch - D)             | 39  |       | VSYS                |                                        |
+|   3 |       | GND     |                                 | 38  |       | GND                 |                                        |
+|   4 |       | GPIO  2 | Button (Switch - P)             | 37  |       | 3V3_EN              |                                        |
+|   5 |       | GPIO  3 | Button (Switch - R)             | 36  |       | 3V3_OUT             |                                        |
+|   6 | **1** | GPIO  4 | Debug (TX)                      | 35  |       | ADC_VREF            | Actuator Feedback - +5V                |
+|   7 | ~~1~~ | GPIO  5 | Debug (RX)                      | 34  |       | GPIO 28<br>ADC2     | Actuator Feedback - Brush              |
+|   8 |       | GND     |                                 | 33  |       | GND<br>AGND         | Actuator Feedback - GND                |
+|   9 |       | GPIO  6<br>I2C0/SDA | Power monitor (SDA) | 32  |       | GPIO 27<br>I2C1/SCL | ~~Future Use~~                         |
+|  10 |       | GPIO  7<br>I2C0/SCL | Power monitor (SCL) | 31  |       | GPIO 26<br>I2C1/SDA | ~~Future Use~~                         |
+|  11 | ~~1~~ | GPIO  8 | Button (Telltale - N)           | 30  |       | RUN                 |                                        |
+|  12 | ~~1~~ | GPIO  9 | Button (Telltale - D)           | 29  |       | GPIO 22             | EIS Relay (#3 - start) (YELLOW)        |
+|  13 |       | GND     | ~~*[GPIO 29]*~~                 | 28  |       | GND                 | ~~*[GPIO 23]*~~                        |
+|  14 |       | GPIO 10 | Actuator - Motor Relay (#1)     | 27  |       | GPIO 21             | CAN #0 (RX)                            |
+|  15 |       | GPIO 11 | Actuator - Motor Relay (#2)     | 26  |       | GPIO 20             | CAN #0 (TX)                            |
+|  16 | ~~0~~ | GPIO 12 | ~~Actuator - +5V/+12V select~~  | 25  |       | GPIO 19             | EIS Relay (#1 - steering lock) (GREEN) |
+|  17 | ~~0~~ | GPIO 13 | Fingerprint Scanner (WAKEUP)    | 24  |       | GPIO 18             | Button (Telltale - R)                  |
+|  18 |       | GND     | ~~*[GPIO 25]*~~                 | 23  |       | GND                 | ~~*[GPIO 24]*~~                        |
+|  19 |       | GPIO 14 | Button (Telltale - P)           | 22  | **0** | GPIO 17             | Fingerprint Scanner (TX)               |
+|  20 |       | GPIO 15 | Status LED (Data IN)            | 21  | **0** | GPIO 16             | Fingerprint Scanner (RX)               |
 
-LED | GPIO 25
+* LED | GPIO 25
+* Crossed-out GPIOx: Not using it as a UART, but "regular" (?) Input/Output.
 
-The RP2350 is faster, obviously, but also have some [other nice features](https://news.sparkfun.com/11692) that
+## RP2350
+
+The RP2350 in the Pico 2 is faster (two ARM Cortex-M33/150MHz cores *WITH* FPUs, as opposed to two Cortex-M0+/133MHz
+cores for the R2040), obviously, but also have some [other nice features](https://news.sparkfun.com/11692) that
 could be nice to have.
 
-I'll see if I'll upgrade at some point. The RP2040 do feel a bit .. slughish, but on the other hand I'm only
-using one of the two cores, which I'll rectify "soonish".
+Main difference is that the RP2350 have two additional (RISC-V) cores (although, no idea how to use those! :),
+twice the memory (520kB, versus 264kB), 12 PIO state machines (as opposed to 8 for the RP2040) and 16 DMA, with 4
+IRQs channels (as opposed to 12 DMA channels with 4 IRQs for the RP2040).
 
-The different uses are specifically this way, because I need to consider UARTs/PIOs/ADC etc, and which pins they
-have connected to them. So it's not as .. "pretty" and simple as just throwing them in there and start using
-the ports..
+I'll see if I'll upgrade at some point, although I really don't use any memory, don't have anything to process.
+All I do is listen on a GPIO, and trigger another :). Only use one PIO state machine so don't need that..
+
+But the RP2040 do feel a bit .. slughish, but on the other hand I'm only using one of the two cores, which I'll
+rectify "soonish".
+
+The pinout are specifically this way, because I need to consider UARTs/PIOs/ADC etc, and which pins they have
+connected to them, some pins down't work well with others. So it's not as .. "pretty" and simple as just throwing
+them in there and start using the ports..
 
 Not exactly sure what to use the `Data OUT` on the NeoPixel (Status LED) for, so haven't connected that anywhere.
 I'm not using it in the code.
