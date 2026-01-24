@@ -7,7 +7,6 @@ use embassy_executor::Spawner;
 use embassy_rp::{
     adc::InterruptHandler as ADCInterruptHandler,
     bind_interrupts,
-    flash::{Async as FlashAsync, Flash},
     gpio::{Level, Output},
     peripherals::{PIO0, UART0, UART1},
     pio::{InterruptHandler as PIOInterruptHandler, Pio},
@@ -39,7 +38,7 @@ use crate::lib_buttons::{
     CHANNEL_R,
 };
 use crate::lib_can_bus::{read_can, write_can, CANMessage, CHANNEL_CANWRITE};
-use crate::lib_config::{DbwConfig, FlashMutex, FLASH_SIZE};
+use crate::lib_config::{DbwConfig, init_flash};
 use crate::lib_resources::{
     AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
     PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
@@ -124,9 +123,7 @@ async fn main(spawner: Spawner) {
     // =====
     //  7. Initialize the flash drive where we store some config values across reboots.
     info!("Initializing the flash drive");
-    let flash = Flash::<_, FlashAsync, FLASH_SIZE>::new(r.flash.peri, r.flash.dma);
-    static FLASH: StaticCell<FlashMutex> = StaticCell::new();
-    let flash = FLASH.init(Mutex::new(flash));
+    let flash = init_flash(r.flash);
 
     // Read the config from flash drive.
     let config = {

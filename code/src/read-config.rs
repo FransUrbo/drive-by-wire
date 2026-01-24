@@ -9,9 +9,7 @@
 //! I just need it to clear the flash area I'm using in the main app.
 
 use defmt::{error, info};
-
 use embassy_executor::Spawner;
-use embassy_rp::flash::{Async, Flash};
 
 pub mod lib_actuator;
 pub mod lib_buttons;
@@ -20,7 +18,7 @@ pub mod lib_config;
 pub mod lib_resources;
 
 use crate::lib_buttons::Button;
-use crate::lib_config::{DbwConfig, FLASH_SIZE};
+use crate::lib_config::{DbwConfig, init_flash};
 use crate::lib_resources::{
     AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
     PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
@@ -36,9 +34,10 @@ async fn main(_spawner: Spawner) {
     info!("Reading the content of the flash");
 
     // Instantiate the flash.
-    let mut flash = Flash::<_, Async, FLASH_SIZE>::new(r.flash.peri, r.flash.dma);
+    let flash = init_flash(r.flash);
 
     // Read old values.
+    let mut flash = flash.lock().await;
     match DbwConfig::read(&mut flash) {
         Ok(config) => {
             info!("Config: {:?}", config);

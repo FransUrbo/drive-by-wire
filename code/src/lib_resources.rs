@@ -1,6 +1,10 @@
 use assign_resources::assign_resources;
 use embassy_rp::{peripherals, Peri};
 
+// Offset from the flash start, NOT absolute address.
+pub const ADDR_OFFSET: u32 = 0x100000;
+pub const FLASH_SIZE: usize = 2 * 1024 * 1024;
+
 assign_resources! {
     serial: PeriSerial {
         uart: UART1,

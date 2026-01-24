@@ -17,15 +17,18 @@ use embassy_rp::{
 
 use {defmt_rtt as _, panic_probe as _};
 
+pub mod lib_actuator;
+pub mod lib_buttons;
+pub mod lib_can_bus;
 pub mod lib_resources;
+pub mod lib_config;
+
+use crate::lib_buttons::Button;
 use crate::lib_resources::{
     AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
-    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
+    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog, ADDR_OFFSET, FLASH_SIZE
 };
-
-// offset from the flash start, NOT absolute address.
-const ADDR_OFFSET: u32 = 0x100000;
-const FLASH_SIZE: usize = 2 * 1024 * 1024;
+use crate::lib_config::init_flash;
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
@@ -34,9 +37,13 @@ async fn main(_spawner: Spawner) {
 
     info!("Hello World!");
 
-    let mut flash = Flash::<_, Async, FLASH_SIZE>::new(r.flash.peri, r.flash.dma);
+    // Instantiate the flash.
+    let flash = init_flash(r.flash);
 
-    erase_write_sector(&mut flash);
+    {
+        let mut flash = flash.lock().await;
+        erase_write_sector(&mut flash);
+    }
 
     #[allow(clippy::empty_loop)]
     loop {}

@@ -6,12 +6,11 @@ use embassy_rp::{
 };
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex};
 
+use static_cell::StaticCell;
+
 // External "defines".
 use crate::Button;
-
-// Offset from the flash start, NOT absolute address.
-const ADDR_OFFSET: u32 = 0x100000;
-pub const FLASH_SIZE: usize = 2 * 1024 * 1024;
+use crate::lib_resources::{PeriFlash, ADDR_OFFSET, FLASH_SIZE};
 
 pub type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
 
@@ -116,4 +115,12 @@ pub fn resonable_defaults() -> DbwConfig {
         active_button: Button::P,
         valet_mode: false,
     }
+}
+
+pub fn init_flash(r: PeriFlash) -> &'static FlashMutex {
+    let flash = Flash::<_, Async, FLASH_SIZE>::new(r.peri, r.dma);
+    static FLASH: StaticCell<FlashMutex> = StaticCell::new();
+    let flash: &'static FlashMutex = FLASH.init(Mutex::new(flash));
+
+    return flash;
 }
