@@ -33,7 +33,7 @@ rev = "411ae7fa909b4fd2667885aff687e009b9108190"
 
 [dependencies.ws2812]
 git = "https://github.com/FransUrbo/rust-libs-ws2812.git"
-version = "1.0.0"
+rev = "23564d1"
 
 [dependencies.r503]
 git = "https://github.com/FransUrbo/rust-libs-r503.git"

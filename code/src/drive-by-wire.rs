@@ -187,7 +187,7 @@ async fn main(spawner: Spawner) {
     info!("Authorizing use");
     CHANNEL_CANWRITE.send(CANMessage::Authorizing).await;
     if config.valet_mode {
-        neopixel.set_colour(Colour::WHITE).await;
+        neopixel.set_colour(Colour::ORANGE).await;
 
         info!("Running in VALET mode, won't authorize");
         CHANNEL_CANWRITE.send(CANMessage::ValetMode).await;
