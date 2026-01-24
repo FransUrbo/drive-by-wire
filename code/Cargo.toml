@@ -127,8 +127,8 @@ name = "prepare-flash"
 path = "src/prepare-flash.rs"
 
 [[bin]]
-name = "read_config"
-path = "src/read_config.rs"
+name = "read-config"
+path = "src/read-config.rs"
 
 [[bin]]
 name = "set-valet-mode"
