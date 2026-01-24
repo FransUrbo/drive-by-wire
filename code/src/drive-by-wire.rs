@@ -165,7 +165,7 @@ async fn main(spawner: Spawner) {
                 spawner.spawn(unwrap!(core1_tasks(
                     spawner,
                     CHANNEL_ACTUATOR.receiver(),
-                    flash,
+//                    flash,
                     actuator,
                     r.watchdog
                 )))
