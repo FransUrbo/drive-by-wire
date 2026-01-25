@@ -332,13 +332,4 @@ async fn main(spawner: Spawner) {
         Timer::after_secs(1).await;
         eis_start.set_low();
     }
-
-    // =====
-    // 15. TODO: Not sure how we avoid stopping the program here, the button presses are done in
-    //           separate tasks!
-    info!("Main function complete, control handed over to subtasks.");
-    loop {
-        // Nothing to do, just sleep as long as we can, but 10 minutes should do it, then just loop.
-        Timer::after_secs(600).await;
-    }
 }
