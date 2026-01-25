@@ -7,6 +7,7 @@ use embassy_sync::{
 
 // External "defines".
 use crate::lib_buttons::{Button, BUTTONS_BLOCKED, BUTTON_ENABLED};
+use crate::lib_config::{FlashConfigMessages, CHANNEL_FLASH};
 
 use actuator::Actuator;
 
@@ -17,7 +18,6 @@ pub static CHANNEL_ACTUATOR: Channel<CriticalSectionRawMutex, Button, 64> = Chan
 #[embassy_executor::task]
 pub async fn actuator_control(
     receiver: Receiver<'static, CriticalSectionRawMutex, Button, 64>,
-//    flash: &'static FlashMutex,
     mut actuator: Actuator<'static>,
 ) {
     info!("Started actuator control task");
@@ -37,25 +37,7 @@ pub async fn actuator_control(
         // .. and update the button enabled.
         unsafe { BUTTON_ENABLED = button };
 
-        // // .. and write it to flash.
-        // {
-        //     // Read the existing values from the flash.
-        //     // The flash lock is released when it goes out of scope.
-        //     let mut flash = flash.lock().await;
-        //     let mut config = match DbwConfig::read(&mut flash) {
-        //         // Read the old/current values.
-        //         Ok(config) => config,
-        //         Err(e) => {
-        //             error!("Failed to read flash: {:?}", e);
-        //             resonable_defaults()
-        //         }
-        //     };
-
-        //     // Set new value.
-        //     config.active_button = button;
-
-        //     // Write the config to flash.
-        //     write_flash(&mut flash, config).await;
-        // }
+        // ... and update the flash.
+        CHANNEL_FLASH.send(FlashConfigMessages::from(button)).await;
     }
 }

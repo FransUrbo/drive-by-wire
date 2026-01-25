@@ -8,7 +8,8 @@
 //! The read and write functionality was removed, don't need it.
 //! I just need it to clear the flash area I'm using in the main app.
 
-use defmt::{error, info};
+use defmt::info;
+
 use embassy_executor::Spawner;
 
 pub mod lib_actuator;
@@ -18,32 +19,24 @@ pub mod lib_config;
 pub mod lib_resources;
 
 use crate::lib_buttons::Button;
-use crate::lib_config::{DbwConfig, init_flash};
-use crate::lib_resources::{
-    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
-    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
-};
+use crate::lib_config::{FlashConfigMessages, CHANNEL_FLASH};
 
 use {defmt_rtt as _, panic_probe as _};
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
-    let p = embassy_rp::init(Default::default());
-    let r = split_resources! {p};
-
     info!("Reading the content of the flash");
 
-    // Instantiate the flash.
-    let flash = init_flash(r.flash);
+    CHANNEL_FLASH.send(FlashConfigMessages::ReadValet).await;
+    let valet_mode = CHANNEL_FLASH.receive().await;
+    info!("Valet mode: {}", FlashConfigMessages::to_valet(valet_mode));
 
-    // Read old values.
-    let mut flash = flash.lock().await;
-    match DbwConfig::read(&mut flash) {
-        Ok(config) => {
-            info!("Config: {:?}", config);
-        }
-        Err(e) => error!("Failed to read flash: {:?}", e),
-    }
+    CHANNEL_FLASH.send(FlashConfigMessages::ReadButton).await;
+    let active_button = CHANNEL_FLASH.receive().await;
+    info!(
+        "Active button: {}",
+        FlashConfigMessages::to_button(&active_button)
+    );
 
     #[allow(clippy::empty_loop)]
     loop {}
