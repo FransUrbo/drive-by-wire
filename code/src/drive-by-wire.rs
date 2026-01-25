@@ -165,7 +165,7 @@ async fn main(spawner: Spawner) {
                 spawner.spawn(unwrap!(core1_tasks(
                     spawner,
                     CHANNEL_ACTUATOR.receiver(),
-//                    flash,
+                    &flash,
                     actuator,
                     r.watchdog
                 )))
@@ -235,7 +235,7 @@ async fn main(spawner: Spawner) {
     info!("Initializing drive buttons");
     spawner.spawn(unwrap!(read_button(
         spawner,
-        flash,
+        &flash,
         fp_scanner,
         Button::P,
         r.buttons.p_but.into(),
@@ -243,7 +243,7 @@ async fn main(spawner: Spawner) {
     ))); // button/P
     spawner.spawn(unwrap!(read_button(
         spawner,
-        flash,
+        &flash,
         fp_scanner,
         Button::R,
         r.buttons.r_but.into(),
@@ -251,7 +251,7 @@ async fn main(spawner: Spawner) {
     ))); // button/R
     spawner.spawn(unwrap!(read_button(
         spawner,
-        flash,
+        &flash,
         fp_scanner,
         Button::N,
         r.buttons.n_but.into(),
@@ -259,7 +259,7 @@ async fn main(spawner: Spawner) {
     ))); // button/N
     spawner.spawn(unwrap!(read_button(
         spawner,
-        flash,
+        &flash,
         fp_scanner,
         Button::D,
         r.buttons.d_but.into(),

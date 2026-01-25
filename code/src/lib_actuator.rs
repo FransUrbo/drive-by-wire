@@ -1,4 +1,4 @@
-use defmt::info;
+use defmt::{error, info};
 
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex,
@@ -7,6 +7,7 @@ use embassy_sync::{
 
 // External "defines".
 use crate::lib_buttons::{Button, BUTTONS_BLOCKED, BUTTON_ENABLED};
+use crate::lib_config::{FlashMutex, DbwConfig, resonable_defaults, write_flash};
 
 use actuator::Actuator;
 
@@ -17,7 +18,7 @@ pub static CHANNEL_ACTUATOR: Channel<CriticalSectionRawMutex, Button, 64> = Chan
 #[embassy_executor::task]
 pub async fn actuator_control(
     receiver: Receiver<'static, CriticalSectionRawMutex, Button, 64>,
-//    flash: &'static FlashMutex,
+    _flash: &'static FlashMutex,
     mut actuator: Actuator<'static>,
 ) {
     info!("Started actuator control task");

@@ -13,6 +13,7 @@ use crate::lib_buttons::Button;
 use crate::lib_can_bus::{read_can, CANMessage, CHANNEL_CANWRITE};
 use crate::lib_watchdog::{feed_watchdog, CHANNEL_WATCHDOG};
 use crate::lib_resources::PeriWatchdog;
+use crate::lib_config::FlashMutex;
 
 use actuator::Actuator;
 
@@ -20,7 +21,7 @@ use actuator::Actuator;
 pub async fn core1_tasks(
     spawner: Spawner,
     receiver: Receiver<'static, CriticalSectionRawMutex, Button, 64>,
-//    flash: &'static FlashMutex,
+    flash: &'static FlashMutex,
     actuator: Actuator<'static>,
     watchdog: PeriWatchdog
 ) {
@@ -40,7 +41,7 @@ pub async fn core1_tasks(
     // Spawn the Actuator controller.
     spawner.spawn(unwrap!(actuator_control(
         receiver,
-//        flash,
+        flash,
         actuator
     )));
     info!("Actuator controller running");
