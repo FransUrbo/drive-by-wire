@@ -17,7 +17,7 @@ pub type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 // External "defines".
 use crate::lib_actuator::CHANNEL_ACTUATOR;
 use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
-use crate::lib_config::{resonable_defaults, write_flash, DbwConfig, FlashMutex};
+use crate::lib_config::{write_flash, DbwConfig, FlashMutex};
 
 use actuator::GearModes;
 use debounce;
@@ -174,13 +174,7 @@ pub async fn read_button(
                             // Lock the flash and read old values.
                             // The flash lock is released when it goes out of scope.
                             let mut flash = flash.lock().await;
-                            let mut config = match DbwConfig::read(&mut flash) {
-                                Ok(config) => config,
-                                Err(e) => {
-                                    error!("Button::{}: Failed to read flash: {:?}", button, e);
-                                    resonable_defaults()
-                                }
-                            };
+                            let mut config = DbwConfig::read(&mut flash).unwrap();
 
                             // Toggle Valet Mode.
                             debug!("Config (before toggle): {:?}", config);
@@ -193,6 +187,8 @@ pub async fn read_button(
                                 CHANNEL_CANWRITE.send(CANMessage::EnableValetMode).await;
                                 config.valet_mode = true;
                             }
+
+                            // Write the (updated) config back to the flash.
                             write_flash(&mut flash, config).await;
                         }
 
