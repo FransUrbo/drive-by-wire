@@ -35,15 +35,7 @@ impl DbwConfig {
             Ok(_) => {
                 debug!("Flash read successful");
 
-                // Translate the u8's.
-                let active_button = match read_buf[0] {
-                    0 => Button::P,
-                    1 => Button::R,
-                    2 => Button::N,
-                    3 => Button::D,
-                    _ => Button::P, // Never going to happen, but just to keep the compiler happy with resonable default
-                };
-
+                let active_button = Button::from_integer(read_buf[0]);
                 let valet_mode = match read_buf[1] {
                     0 => false,
                     1 => true,
