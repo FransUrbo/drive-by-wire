@@ -1,4 +1,4 @@
-use defmt::{debug, info};
+use defmt::{error, info};
 
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex,
@@ -18,14 +18,14 @@ pub async fn feed_watchdog(
     control: Receiver<'static, CriticalSectionRawMutex, StopWatchdog, 64>,
     mut wd: embassy_rp::watchdog::Watchdog,
 ) {
-    debug!("Started watchdog feeder task");
+    info!("Started watchdog feeder task");
 
     // Feed the watchdog every 3/4 second to avoid reset.
     loop {
         match control.try_receive() {
             // Only *if* there's data, receive and deal with it.
             Ok(StopWatchdog::Yes) => {
-                info!("StopWatchdog = Yes received");
+                error!("StopWatchdog = Yes received");
                 return;
             }
             _ => {
