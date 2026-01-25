@@ -6,13 +6,15 @@ use embassy_rp::{
 };
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex};
 
-use static_cell::StaticCell;
-
 // External "defines".
 use crate::Button;
 use crate::lib_resources::{PeriFlash, ADDR_OFFSET, FLASH_SIZE};
 
-pub type FlashMutex = Mutex<NoopRawMutex, Flash<'static, FLASH, Async, FLASH_SIZE>>;
+pub type FlashType = Flash<'static, FLASH, Async, FLASH_SIZE>;
+pub type FlashMutex = Mutex<NoopRawMutex, FlashType>;
+
+use static_cell::StaticCell;
+pub static FLASH: StaticCell<FlashMutex> = StaticCell::new();
 
 // What we store in flash.
 #[derive(Format)]
@@ -26,7 +28,7 @@ impl DbwConfig {
         [self.active_button as u8, self.valet_mode as u8]
     }
 
-    pub fn read(flash: &mut Flash<'_, FLASH, Async, FLASH_SIZE>) -> Result<DbwConfig, Error> {
+    pub fn read(flash: &mut FlashType) -> Result<DbwConfig, Error> {
         let mut read_buf = [0u8; ERASE_SIZE];
 
         match flash.blocking_read(ADDR_OFFSET + ERASE_SIZE as u32, &mut read_buf) {
@@ -63,7 +65,7 @@ impl DbwConfig {
     }
 
     pub fn write(
-        flash: &mut Flash<'_, FLASH, Async, FLASH_SIZE>,
+        flash: &mut FlashType,
         config: Self,
     ) -> Result<(), Error> {
         // Convert our struct to an array, so we can loop through it easier.
@@ -83,7 +85,7 @@ impl DbwConfig {
     }
 }
 
-pub async fn write_flash(flash: &mut Flash<'_, FLASH, Async, FLASH_SIZE>, buf: DbwConfig) {
+pub async fn write_flash(flash: &mut FlashType, buf: DbwConfig) {
     trace!("write_flash({:?})", buf);
 
     match DbwConfig::read(flash) {
@@ -119,7 +121,6 @@ pub fn resonable_defaults() -> DbwConfig {
 
 pub fn init_flash(r: PeriFlash) -> &'static FlashMutex {
     let flash = Flash::<_, Async, FLASH_SIZE>::new(r.peri, r.dma);
-    static FLASH: StaticCell<FlashMutex> = StaticCell::new();
     let flash: &'static FlashMutex = FLASH.init(Mutex::new(flash));
 
     return flash;
