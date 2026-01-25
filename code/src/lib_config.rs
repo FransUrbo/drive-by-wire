@@ -4,14 +4,14 @@ use embassy_rp::{
     flash::{Async, Error, Flash, ERASE_SIZE},
     peripherals::FLASH,
 };
-use embassy_sync::{blocking_mutex::raw::NoopRawMutex, mutex::Mutex};
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 
 // External "defines".
 use crate::Button;
 use crate::lib_resources::{PeriFlash, ADDR_OFFSET, FLASH_SIZE};
 
 pub type FlashType = Flash<'static, FLASH, Async, FLASH_SIZE>;
-pub type FlashMutex = Mutex<NoopRawMutex, FlashType>;
+pub type FlashMutex = Mutex<CriticalSectionRawMutex, FlashType>;
 
 use static_cell::StaticCell;
 pub static FLASH: StaticCell<FlashMutex> = StaticCell::new();
