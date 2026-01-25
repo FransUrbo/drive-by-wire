@@ -11,7 +11,7 @@
 use defmt::*;
 use embassy_executor::Spawner;
 use embassy_rp::{
-    flash::{Async, Flash, ERASE_SIZE, FLASH_BASE},
+    flash::{Blocking, Flash, ERASE_SIZE, FLASH_BASE},
     peripherals::FLASH,
 };
 
@@ -49,7 +49,7 @@ async fn main(_spawner: Spawner) {
     loop {}
 }
 
-fn erase_write_sector(flash: &mut Flash<'_, FLASH, Async, FLASH_SIZE>) {
+fn erase_write_sector(flash: &mut Flash<'_, FLASH, Blocking, FLASH_SIZE>) {
     info!(">>>> [erase_write_sector]");
     let mut buf = [0u8; ERASE_SIZE];
 

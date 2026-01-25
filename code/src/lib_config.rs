@@ -1,7 +1,7 @@
 use defmt::{debug, error, info, trace, Format};
 
 use embassy_rp::{
-    flash::{Async, Error, Flash, ERASE_SIZE},
+    flash::{Blocking, Error, Flash, ERASE_SIZE},
     peripherals::FLASH,
 };
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
@@ -10,7 +10,7 @@ use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 use crate::Button;
 use crate::lib_resources::{PeriFlash, ADDR_OFFSET, FLASH_SIZE};
 
-pub type FlashType = Flash<'static, FLASH, Async, FLASH_SIZE>;
+pub type FlashType = Flash<'static, FLASH, Blocking, FLASH_SIZE>;
 pub type FlashMutex = Mutex<CriticalSectionRawMutex, FlashType>;
 
 use static_cell::StaticCell;
@@ -112,7 +112,7 @@ pub fn resonable_defaults() -> DbwConfig {
 }
 
 pub fn init_flash(r: PeriFlash) -> &'static FlashMutex {
-    let flash = Flash::<_, Async, FLASH_SIZE>::new(r.peri, r.dma);
+    let flash = Flash::<_, Blocking, FLASH_SIZE>::new_blocking(r.peri);
     let flash: &'static FlashMutex = FLASH.init(Mutex::new(flash));
 
     return flash;
