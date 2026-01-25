@@ -46,6 +46,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Big Status LED](#big-status-led)
      - [Actuator LEDs](#actuator-leds)
 5. [Updates](#updates)
+   - [Update Sun 25 Jan 2026](#update-sun-25-jan-2026)
    - [Update Sun 18 Jan 2026](#update-sun-18-jan-2026)
    - [Update Sat 17 Jan 2026](#update-sat-17-jan-2026)
    - [Update Thu 15 Jan 2026](#update-thu-15-jan-2026)
@@ -647,6 +648,18 @@ They're also in the circuit diagram, but weather I actually use that in practice
 unit will be hidden away, so that won't be visible anyway.
 
 # Updates
+
+## Update Sun 25 Jan 2026
+
+Merged in my code to run some of the tasks on the second core of the Pico. I had to disable the flash handling,
+because of compiler errors. Hopefully I can get that sorted at some point. Don't *technically* need it right now,
+nor the fingerprint scanner, so I've "hardwired" the code to be in valet mode (i.e., no authorization).
+
+Last few days I've been working on simplifying the way I handle resources. There was a lot of duplication, where
+I had to change a lot of code, a lot files, if I moved [the usage of] a pin. Instead, gather that into one file,
+which gets included where needed.
+
+Bump version v0.4.0.
 
 ## Update Sun 18 Jan 2026
 
