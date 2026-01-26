@@ -13,8 +13,8 @@ use actuator::Actuator;
 
 pub static CHANNEL_ACTUATOR: Channel<CriticalSectionRawMutex, Button, 64> = Channel::new();
 
-// Control the actuator. Calculate in what direction and how much to move it to get to
-// the desired drive mode position.
+// Control the actuator. Wait for a button press, then move it to the
+// desired drive mode position.
 #[embassy_executor::task]
 pub async fn actuator_control(
     receiver: Receiver<'static, CriticalSectionRawMutex, Button, 64>,
@@ -30,7 +30,10 @@ pub async fn actuator_control(
         // TODO: We need to check that we're not moving etc !!
 
         // Move the actuator to the gear mode selected.
-        actuator.change_gear_mode(Button::to_gearmode(button)).await;
+        if !actuator.change_gear_mode(Button::to_gearmode(button)).await {
+            error!("Actuator failed to move to {}", Button::to_gearmode(button));
+            continue;
+        }
 
         // Now that we're done moving the actuator, Enable reading buttons again.
         unsafe { BUTTONS_BLOCKED = false };
