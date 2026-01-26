@@ -8,7 +8,8 @@ if [ -z "${1}" ]; then
 	uniq | \
 	sed -e "s@.*\"\(.*\)\"@\1@" | \
 	while read bin; do
-	    echo "  ${bin}"
+	    # Skip binaries which uses `defmt_serial`. They can't run via Cargo!
+	    grep -q 'defmt_serial' "src/${bin}.rs" || echo "  ${bin}"
 	done
     exit 1
 elif ! grep -q "^name = \"${1}\"" Cargo.toml; then
