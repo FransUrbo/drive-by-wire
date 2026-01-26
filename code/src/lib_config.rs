@@ -1,4 +1,4 @@
-use defmt::{debug, error, info, trace, Format};
+use defmt::{debug, error, trace, Format};
 
 use embassy_rp::{
     flash::{Blocking, Error, Flash, ERASE_SIZE},
@@ -94,7 +94,7 @@ pub async fn write_flash(flash: &mut FlashType, buf: DbwConfig) {
     }
 
     match DbwConfig::write(flash, buf) {
-        Ok(_) => info!("Config update successful"),
+        Ok(_) => debug!("Config update successful"),
         Err(e) => error!("Config update failed: {}", e),
     }
 

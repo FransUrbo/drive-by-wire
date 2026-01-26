@@ -33,12 +33,12 @@ pub mod lib_resources;
 pub mod lib_watchdog;
 pub mod lib_core1;
 
-use crate::lib_actuator::CHANNEL_ACTUATOR;
+use crate::lib_actuator::{CHANNEL_ACTUATOR, actuator_control};
 use crate::lib_buttons::{
     read_button, Button, LedStatus, ScannerMutex, BUTTON_ENABLED, CHANNEL_D, CHANNEL_N, CHANNEL_P,
     CHANNEL_R,
 };
-use crate::lib_can_bus::{write_can, CANMessage, CHANNEL_CANWRITE};
+use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
 use crate::lib_config::{DbwConfig, init_flash};
 use crate::lib_resources::{
     AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
@@ -102,11 +102,25 @@ async fn main(spawner: Spawner) {
     neopixel.set_colour(Colour::ORANGE).await;
 
     // =====
-    //  4. Initialize the CAN bus. Needs to come as early as possible, so we can talk to the IC.
-    //     NOTE: `read_can()` is spawned on CORE1 in `core1_tasks()` a bit later, because at this
-    //           point we don't actually need to read the CAN.
-    spawner.spawn(unwrap!(write_can(CHANNEL_CANWRITE.receiver())));
-    info!("CAN bus writer runing");
+    //  4. Spawn off tasks on CORE1.
+    //     * Watchdog.
+    //     * CAN reader.
+    //     * CAN writer.
+    spawn_core1(
+        p.CORE1,
+        unsafe { &mut *core::ptr::addr_of_mut!(CORE1_STACK) },
+        move || {
+            let executor = EXECUTOR.init(Executor::new());
+            executor.run(|spawner| {
+                spawner.spawn(unwrap!(core1_tasks(
+                    spawner,
+                    CHANNEL_CANWRITE.receiver(),
+                    r.watchdog
+                )))
+            });
+        },
+    );
+
     CHANNEL_CANWRITE.send(CANMessage::Starting).await;
 
     // =====
@@ -152,26 +166,14 @@ async fn main(spawner: Spawner) {
         CHANNEL_WATCHDOG.send(StopWatchdog::Yes).await;
     }
 
-    //  8. Spawn off tasks on CORE1.
-    //     * Watchdog.
-    //     * Actuator control.
-    //     * CAN reader.
-    spawn_core1(
-        p.CORE1,
-        unsafe { &mut *core::ptr::addr_of_mut!(CORE1_STACK) },
-        move || {
-            let executor = EXECUTOR.init(Executor::new());
-            executor.run(|spawner| {
-                spawner.spawn(unwrap!(core1_tasks(
-                    spawner,
-                    CHANNEL_ACTUATOR.receiver(),
-                    &flash,
-                    actuator,
-                    r.watchdog
-                )))
-            });
-        },
-    );
+    // Actuator works. Spawn off the actuator control task.
+    spawner.spawn(unwrap!(actuator_control(
+        CHANNEL_ACTUATOR.receiver(),
+        &flash,
+        actuator
+    )));
+    info!("Actuator controller running");
+    CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
 
     // =====
     // 9a. Initialize the fingerprint scanner.

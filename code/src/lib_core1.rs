@@ -5,24 +5,17 @@ use embassy_rp::watchdog::*;
 use embassy_time::Duration;
 use embassy_sync::{
     blocking_mutex::raw::CriticalSectionRawMutex,
-    channel::Receiver
+    channel::Receiver,
 };
 
-use crate::lib_actuator::actuator_control;
-use crate::lib_buttons::Button;
-use crate::lib_can_bus::{read_can, CANMessage, CHANNEL_CANWRITE};
+use crate::lib_can_bus::{read_can, write_can, CANMessage};
 use crate::lib_watchdog::{feed_watchdog, CHANNEL_WATCHDOG};
 use crate::lib_resources::PeriWatchdog;
-use crate::lib_config::FlashMutex;
-
-use actuator::Actuator;
 
 #[embassy_executor::task]
 pub async fn core1_tasks(
     spawner: Spawner,
-    receiver: Receiver<'static, CriticalSectionRawMutex, Button, 64>,
-    flash: &'static FlashMutex,
-    actuator: Actuator<'static>,
+    receiver: Receiver<'static, CriticalSectionRawMutex, CANMessage, 64>,
     watchdog: PeriWatchdog
 ) {
     info!("Spawning tasks on CORE1");
@@ -38,17 +31,12 @@ pub async fn core1_tasks(
     info!("Watchdog timer running");
 
     // -----
-    // Spawn the Actuator controller.
-    spawner.spawn(unwrap!(actuator_control(
-        receiver,
-        flash,
-        actuator
-    )));
-    info!("Actuator controller running");
-    CHANNEL_CANWRITE.send(CANMessage::ActuatorInitialized).await;
-
-    // -----
     // Spawn the CAN reader.
     spawner.spawn(unwrap!(read_can()));
+    info!("CAN bus reader runing");
+
+    // -----
+    // Spawn the CAN writer.
+    spawner.spawn(unwrap!(write_can(receiver)));
     info!("CAN bus reader runing");
 }
