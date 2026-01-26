@@ -38,8 +38,7 @@ impl DbwConfig {
                 let active_button = Button::from_integer(read_buf[0]);
                 let valet_mode = match read_buf[1] {
                     0 => false,
-                    1 => true,
-                    _ => true, // Never going to happen, but just to keep the compiler happy with resonable default
+                    _ => true
                 };
 
                 Ok(DbwConfig {
