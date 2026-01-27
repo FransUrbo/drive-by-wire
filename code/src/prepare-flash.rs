@@ -24,10 +24,7 @@ pub mod lib_resources;
 pub mod lib_config;
 
 use crate::lib_buttons::Button;
-use crate::lib_resources::{
-    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
-    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog, ADDR_OFFSET, FLASH_SIZE
-};
+use crate::lib_resources::*;
 use crate::lib_config::init_flash;
 
 #[embassy_executor::main]

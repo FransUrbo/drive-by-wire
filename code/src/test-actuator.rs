@@ -29,10 +29,7 @@ pub mod lib_config;
 pub mod lib_resources;
 
 use crate::lib_buttons::Button;
-use crate::lib_resources::{
-    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
-    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
-};
+use crate::lib_resources::*;
 
 bind_interrupts!(struct Irqs {
     UART1_IRQ    => UARTInterruptHandler<UART1>;	// Serial logging
@@ -47,7 +44,7 @@ async fn main(_spawner: Spawner) {
     // Initialize the serial UART for debug/log output.
     let uart = UartTx::new(
         r.serial.uart,
-        r.serial.pin,
+        r.serial.tx,
         r.serial.dma,
         UartConfig::default(),
     ); // => 115200/8N1 (UART1)

@@ -11,10 +11,7 @@ use embassy_rp::{adc::InterruptHandler, bind_interrupts};
 use actuator::{Actuator, RESISTANCE_THROW_1MM};
 
 pub mod lib_resources;
-use crate::lib_resources::{
-    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
-    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
-};
+use crate::lib_resources::*;
 
 use {defmt_rtt as _, panic_probe as _};
 

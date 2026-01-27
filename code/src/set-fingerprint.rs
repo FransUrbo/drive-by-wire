@@ -21,10 +21,7 @@ use r503::R503;
 use ws2812::{Colour, Ws2812};
 
 pub mod lib_resources;
-use crate::lib_resources::{
-    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
-    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
-};
+use crate::lib_resources::*;
 
 // For our commented out 'Empty()' below, in case we need it again.
 #[allow(unused_imports)]

@@ -42,7 +42,7 @@ use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
 use crate::lib_config::{DbwConfig, init_flash};
 use crate::lib_resources::{
     AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
-    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
+    PeriNeopixel, PeriSerial, PeriEis, PeriWatchdog, PeriCan, PeriPowerMonitor, PeriFuture
 };
 use crate::lib_watchdog::{StopWatchdog, CHANNEL_WATCHDOG};
 use crate::lib_core1::core1_tasks;
@@ -73,7 +73,7 @@ async fn main(spawner: Spawner) {
     //  1. Initialize the serial UART for debug/log output.
     let uart = UartTx::new(
         r.serial.uart,
-        r.serial.pin,
+        r.serial.tx,
         r.serial.dma,
         UartConfig::default(),
     ); // => 115200/8N1 (UART1)
@@ -125,8 +125,8 @@ async fn main(spawner: Spawner) {
 
     // =====
     //  5. Initialize the MOSFET relays.
-    let mut eis_steering_lock = Output::new(r.steering.pin, Level::Low); // EIS/Steering lock (GREEN)
-    let mut eis_start = Output::new(r.start.pin, Level::Low); // EIS/Start (YELLOW)
+    let mut eis_lock = Output::new(r.eis.lock, Level::Low); // EIS/Steering lock (GREEN)
+    let mut eis_start = Output::new(r.eis.start, Level::Low); // EIS/Start (YELLOW)
     info!("EIS relays initialized");
     CHANNEL_CANWRITE.send(CANMessage::RelaysInitialized).await;
 
@@ -317,7 +317,7 @@ async fn main(spawner: Spawner) {
 
     // =====
     // 13. Turn on the ignition switch.
-    eis_steering_lock.set_high();
+    eis_lock.set_high();
     info!("Turning on the EIS");
 
     // =====

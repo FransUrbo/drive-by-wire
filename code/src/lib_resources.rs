@@ -9,7 +9,8 @@ assign_resources! {
     serial: PeriSerial {
         uart: UART1,
         dma: DMA_CH4,
-        pin: PIN_4
+        tx: PIN_4,
+        rx: PIN_5
     },
     builtin: PeriBuiltin {
         pin: PIN_25
@@ -22,11 +23,9 @@ assign_resources! {
     watchdog: PeriWatchdog {
         peri: WATCHDOG
     },
-    steering: PeriSteering {
-        pin: PIN_19
-    },
-    start: PeriStart {
-        pin: PIN_22
+    eis: PeriEis {
+        lock: PIN_19,
+        start: PIN_22
     },
     flash: PeriFlash {
         peri: FLASH,
@@ -55,6 +54,18 @@ assign_resources! {
         n_but: PIN_0, // UART0
         n_led: PIN_8, // UART1
         d_but: PIN_1, // UART0
-        d_led: PIN_9, // UART1
+        d_led: PIN_9 // UART1
+    },
+    can: PeriCan {
+        tx: PIN_20,
+        rx: PIN_21
+    },
+    i2c0: PeriPowerMonitor {
+        sda: PIN_6,
+        scl: PIN_7
+    },
+    i2c1: PeriFuture {
+        sda: PIN_26,
+        scl: PIN_27
     }
 }

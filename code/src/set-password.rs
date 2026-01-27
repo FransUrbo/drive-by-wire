@@ -18,10 +18,7 @@ use r503::{Status, R503};
 use ws2812::{Colour, Ws2812};
 
 pub mod lib_resources;
-use crate::lib_resources::{
-    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
-    PeriNeopixel, PeriSerial, PeriStart, PeriSteering, PeriWatchdog,
-};
+use crate::lib_resources::*;
 
 bind_interrupts!(pub struct Irqs {
     PIO0_IRQ_0 => PIOInterruptHandler<PIO0>;	// NeoPixel
