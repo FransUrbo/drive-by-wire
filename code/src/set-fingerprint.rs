@@ -1,6 +1,9 @@
 #![no_std]
 #![no_main]
 
+// What memory position in the fingerprint scanner do we start storing fingerprints?
+static OFFSET: u16 = 1;
+
 use defmt::{debug, error, info};
 
 use embassy_executor::Spawner;
@@ -41,6 +44,7 @@ async fn main(_spawner: Spawner) {
 
     info!("Start");
 
+    // =====
     // Initialize the fingerprint scanner.
     let mut r503 = R503::new(
         r.fpscan.uart,
@@ -52,6 +56,7 @@ async fn main(_spawner: Spawner) {
         r.fpscan.wakeup.into(),
     );
 
+    // =====
     // Initialize the multi-colour LED.
     let Pio {
         mut common, sm0, ..
@@ -62,33 +67,42 @@ async fn main(_spawner: Spawner) {
     ws2812.set_colour(Colour::BLACK).await;
     Timer::after_secs(1).await;
 
-    //match r503.Empty().await {
-    //    Status::CmdExecComplete => {
-    //        info!("Library emptied");
-    //    }
-    //    stat => {
-    //        info!("Return code: '{=u8:#04x}'", stat as u8);
-    //    }
-    //}
+    // =====
+    match r503.Empty().await {
+       Status::CmdExecComplete => {
+           info!("Library emptied");
+       }
+       stat => {
+           info!("Return code: '{=u8:#04x}'", stat as u8);
+       }
+    }
 
     // =====
+    // Get five (successful!) fingerprint scans.
+    let mut fp: u16 = 0 + OFFSET;
     loop {
         debug!("NeoPixel BLUE");
         ws2812.set_colour(Colour::BLUE).await;
 
-        if !r503.Wrapper_Enrole_Fingerprint(0x0002).await {
+        if !r503.Wrapper_Enrole_Fingerprint(fp).await {
             error!("Can't enrole fingerprint");
 
             debug!("NeoPixel RED");
             ws2812.set_colour(Colour::RED).await;
 
             Timer::after_secs(5).await;
+        } else if fp >= 5 {
+            info!("Five fingerprints enrolled");
+
+            return;
         } else {
-            info!("Fingerprint enrolled");
+            info!("Fingerprint enrolled ({}/5)", fp);
 
             debug!("NeoPixel GREEN");
             ws2812.set_colour(Colour::GREEN).await;
-            return;
+
+            fp = fp + 1;
+            Timer::after_secs(1).await;
         }
     }
 }
