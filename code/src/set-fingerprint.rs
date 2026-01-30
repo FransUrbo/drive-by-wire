@@ -1,9 +1,6 @@
 #![no_std]
 #![no_main]
 
-// What memory position in the fingerprint scanner do we start storing fingerprints?
-static OFFSET: u16 = 1;
-
 use defmt::{debug, error, info};
 
 use embassy_executor::Spawner;
@@ -74,13 +71,26 @@ async fn main(_spawner: Spawner) {
        }
     }
 
+    // Get the first free fingerprint slot.
+    match r503.TempleteNum().await {
+       Status::CmdExecComplete => {
+           info!("Library emptied");
+       }
+       stat => {
+           info!("Return code: '{=u8:#04x}'", stat as u8);
+       }
+    }
+
     // =====
     // Get five (successful!) fingerprint scans.
-    let mut fp: u16 = 0 + OFFSET;
+    // TempleteNum() will return the last position, so increase by one.
+    let mut fp: u16 = r503.templatenum + 1;
     loop {
         debug!("NeoPixel BLUE");
         ws2812.set_colour(Colour::BLUE).await;
 
+        info!(".");
+        info!("Current template number: {}", fp);
         if !r503.Wrapper_Enrole_Fingerprint(fp).await {
             error!("Can't enrole fingerprint");
 
