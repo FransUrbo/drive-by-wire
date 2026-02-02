@@ -1,4 +1,4 @@
-use defmt::{debug, error, info, trace, Format};
+use defmt::{debug, error, info, trace, unwrap, Format};
 
 use embassy_executor::Spawner;
 use embassy_rp::{
@@ -121,10 +121,10 @@ pub async fn read_button(
 
     // Spawn off a LED driver for this button.
     match button {
-        Button::P => spawner.spawn(set_led(CHANNEL_P.receiver(), led_pin, button).unwrap()),
-        Button::N => spawner.spawn(set_led(CHANNEL_N.receiver(), led_pin, button).unwrap()),
-        Button::R => spawner.spawn(set_led(CHANNEL_R.receiver(), led_pin, button).unwrap()),
-        Button::D => spawner.spawn(set_led(CHANNEL_D.receiver(), led_pin, button).unwrap()),
+        Button::P => spawner.spawn(unwrap!(set_led(CHANNEL_P.receiver(), led_pin, button))),
+        Button::N => spawner.spawn(unwrap!(set_led(CHANNEL_N.receiver(), led_pin, button))),
+        Button::R => spawner.spawn(unwrap!(set_led(CHANNEL_R.receiver(), led_pin, button))),
+        Button::D => spawner.spawn(unwrap!(set_led(CHANNEL_D.receiver(), led_pin, button))),
     };
     debug!("Button::{}: Started button control task", button);
 
@@ -174,7 +174,7 @@ pub async fn read_button(
                             // Lock the flash and read old values.
                             // The flash lock is released when it goes out of scope.
                             let mut flash = flash.lock().await;
-                            let mut config = DbwConfig::read(&mut flash).unwrap();
+                            let mut config = unwrap!(DbwConfig::read(&mut flash));
 
                             // Toggle Valet Mode.
                             debug!("Config (before toggle): {:?}", config);
