@@ -175,8 +175,8 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 |   6 | **1** | GPIO  4 | Debug (TX)                      | 35  |       | ADC_VREF            | Actuator Feedback - +5V                |
 |   7 | ~~1~~ | GPIO  5 | Debug (RX)                      | 34  |       | GPIO 28<br>ADC2     | Actuator Feedback - Brush              |
 |   8 |       | GND     |                                 | 33  |       | GND<br>AGND         | Actuator Feedback - GND                |
-|   9 |       | GPIO  6<br>I2C0/SDA | Power monitor (SDA) | 32  |       | GPIO 27<br>I2C1/SCL | ~~Future Use~~                         |
-|  10 |       | GPIO  7<br>I2C0/SCL | Power monitor (SCL) | 31  |       | GPIO 26<br>I2C1/SDA | ~~Future Use~~                         |
+|   9 |       | GPIO  6<br>I2C1/SDA | Power monitor (SDA) | 32  |       | GPIO 27<br>I2C1/SCL | ~~Future Use~~                         |
+|  10 |       | GPIO  7<br>I2C1/SCL | Power monitor (SCL) | 31  |       | GPIO 26<br>I2C1/SDA | ~~Future Use~~                         |
 |  11 | ~~1~~ | GPIO  8 | Button (Telltale - N)           | 30  |       | RUN                 |                                        |
 |  12 | ~~1~~ | GPIO  9 | Button (Telltale - D)           | 29  |       | GPIO 22             | EIS Relay (#3 - start) (YELLOW)        |
 |  13 |       | GND     | ~~*[GPIO 29]*~~                 | 28  |       | GND                 | ~~*[GPIO 23]*~~                        |
