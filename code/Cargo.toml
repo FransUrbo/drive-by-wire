@@ -27,9 +27,7 @@ static_cell = "2.1.0"
 assign-resources = "0.5.0"
 
 [dependencies.defmt-serial]
-# The released one (v1.0.1) is missing features for new Embassy.
-git = "https://github.com/gauteh/defmt-serial"
-rev = "411ae7fa909b4fd2667885aff687e009b9108190"
+version = "0.11.0"
 
 [dependencies.ws2812]
 git = "https://github.com/FransUrbo/rust-libs-ws2812.git"
