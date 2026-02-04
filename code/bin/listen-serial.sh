@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # This is the device for my Debug Probe on my MacOS host.
-export DEV="$(echo /dev/cu.usbmodem*)"
+export DEV="$(/bin/ls -lt /dev/cu.usbmodem* | sed 's@.* @@' | head -n1)"
 
 [ ! -d "logs" ] && mkdir logs
 
