@@ -115,7 +115,6 @@ async fn main(spawner: Spawner) {
             executor.run(|spawner| {
                 spawner.spawn(unwrap!(core1_tasks(
                     spawner,
-                    CHANNEL_CANWRITE.receiver(),
                     r.watchdog,
                     r.ups
                 )))
