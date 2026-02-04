@@ -31,6 +31,7 @@ pub mod lib_can_bus;
 pub mod lib_config;
 pub mod lib_resources;
 pub mod lib_watchdog;
+pub mod lib_ups;
 pub mod lib_core1;
 
 use crate::lib_actuator::{CHANNEL_ACTUATOR, actuator_control};
@@ -42,7 +43,7 @@ use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
 use crate::lib_config::{DbwConfig, init_flash};
 use crate::lib_resources::{
     AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
-    PeriNeopixel, PeriSerial, PeriEis, PeriWatchdog, PeriCan, PeriPowerMonitor, PeriFuture
+    PeriNeopixel, PeriSerial, PeriEis, PeriWatchdog, PeriCan, PeriPowerMonitor
 };
 use crate::lib_watchdog::{StopWatchdog, CHANNEL_WATCHDOG};
 use crate::lib_core1::core1_tasks;
@@ -115,7 +116,8 @@ async fn main(spawner: Spawner) {
                 spawner.spawn(unwrap!(core1_tasks(
                     spawner,
                     CHANNEL_CANWRITE.receiver(),
-                    r.watchdog
+                    r.watchdog,
+                    r.ups
                 )))
             });
         },

@@ -21,7 +21,7 @@ use crate::lib_buttons::Button;
 use crate::lib_config::{DbwConfig, init_flash};
 use crate::lib_resources::{
     AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
-    PeriNeopixel, PeriSerial, PeriEis, PeriWatchdog, PeriCan, PeriPowerMonitor, PeriFuture
+    PeriNeopixel, PeriSerial, PeriEis, PeriWatchdog, PeriCan, PeriPowerMonitor
 };
 
 use {defmt_rtt as _, panic_probe as _};

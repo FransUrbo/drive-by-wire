@@ -60,12 +60,13 @@ assign_resources! {
         tx: PIN_20,
         rx: PIN_21
     },
-    i2c0: PeriPowerMonitor {
+    ups: PeriPowerMonitor {
         sda: PIN_6,
-        scl: PIN_7
-    },
-    i2c1: PeriFuture {
-        sda: PIN_26,
-        scl: PIN_27
+        scl: PIN_7,
+        i2c: I2C1
     }
 }
+
+// Free pins:
+// * PIN_26,
+// * PIN_27
