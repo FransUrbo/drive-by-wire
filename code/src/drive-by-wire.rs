@@ -107,6 +107,7 @@ async fn main(spawner: Spawner) {
     //     * Watchdog.
     //     * CAN reader.
     //     * CAN writer.
+    //     * UPS manager.
     spawn_core1(
         p.CORE1,
         unsafe { &mut *core::ptr::addr_of_mut!(CORE1_STACK) },
@@ -337,8 +338,7 @@ async fn main(spawner: Spawner) {
     }
 
     // =====
-    // 15. TODO: Not sure how we avoid stopping the program here, the button presses are done in
-    //           separate tasks!
+    // 15. If we exit here, the EIS lock will turn off, so loop forever.
     info!("Main function complete, control handed over to subtasks.");
     loop {
         // Nothing to do, just sleep as long as we can, but 10 minutes should do it, then just loop.
