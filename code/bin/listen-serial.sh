@@ -1,7 +1,11 @@
 #!/bin/sh
 
 # This is the device for my Debug Probe on my MacOS host.
-export DEV="$(/bin/ls -lt /dev/cu.usbmodem* | sed 's@.* @@' | head -n1)"
+export DEV="$(/bin/ls -lt /dev/cu.usbmodem* 2> /dev/null | sed 's@.* @@' | head -n1)"
+if [ -z "${DEV}" ]; then
+    echo "ERROR: No serial device connected"
+    exit 1
+fi
 
 [ ! -d "logs" ] && mkdir logs
 
