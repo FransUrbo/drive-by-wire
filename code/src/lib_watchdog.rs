@@ -15,7 +15,7 @@ pub static CHANNEL_WATCHDOG: Channel<CriticalSectionRawMutex, StopWatchdog, 64> 
 // Doggy is hungry, needs to be feed every three quarter second, otherwise it gets cranky! :)
 #[embassy_executor::task]
 pub async fn feed_watchdog(doggy: PeriWatchdog) {
-    info!("Starting watchdog feeder task");
+    info!("Watchdog timer running");
 
     let mut watchdog = Watchdog::new(doggy.peri);
     watchdog.start(Duration::from_millis(1_050));

@@ -1,4 +1,4 @@
-use defmt::{debug, error, info};
+use defmt::{error, info};
 
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 use embassy_time::Timer;
@@ -24,7 +24,7 @@ pub static CHANNEL_CANWRITE: Channel<CriticalSectionRawMutex, CANMessage, 64> = 
 // Write messages to CAN-bus.
 #[embassy_executor::task]
 pub async fn write_can() {
-    debug!("Started CAN write task");
+    info!("CAN bus writer running");
 
     loop {
         let message = CHANNEL_CANWRITE.receive().await; // Block waiting for data.
@@ -78,7 +78,7 @@ pub async fn write_can() {
 // Read CAN-bus messages.
 #[embassy_executor::task]
 pub async fn read_can() {
-    debug!("Started CAN read task");
+    info!("CAN bus reader running");
 
     loop {
         // TODO: Read CAN-bus messages (blocking).
