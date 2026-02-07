@@ -15,7 +15,7 @@ use ina219::{
 };
 
 use crate::lib_buttons::ButtonState;
-use crate::lib_resources::PeriPowerMonitor;
+use crate::lib_resources::{PeriPowerMonitor, UPS_ADDRESS};
 
 bind_interrupts!(struct Irqs {
     I2C1_IRQ => InterruptHandler<embassy_rp::peripherals::I2C1>;
@@ -38,7 +38,7 @@ pub async fn ups_monitor(ups: PeriPowerMonitor) {
     // The shunt resistor in the Pico UPS Hat B: R1/0.01Ω (10,000µΩ/10mΩ).
     //let calib = IntCalibration::new(MicroAmpere(1_000_000), 10_000).unwrap();
     let calib = IntCalibration::new(MicroAmpere(100), 10_000).unwrap();
-    match SyncIna219::new_calibrated(i2c, Address::from_byte(0x43).unwrap(), calib) {
+    match SyncIna219::new_calibrated(i2c, Address::from_byte(UPS_ADDRESS).unwrap(), calib) {
         Err(InitializationError {
             reason: I2cError(Abort(NoAcknowledge)),
             ..

@@ -5,6 +5,8 @@ use embassy_rp::{peripherals, Peri};
 pub const ADDR_OFFSET: u32 = 0x100000;
 pub const FLASH_SIZE: usize = 2 * 1024 * 1024;
 
+pub const UPS_ADDRESS: u8 = 0x43;
+
 #[cfg_attr(any(), rustfmt::skip)]
 assign_resources! {
     serial: PeriSerial {
