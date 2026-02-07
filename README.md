@@ -46,6 +46,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Big Status LED](#big-status-led)
      - [Actuator LEDs](#actuator-leds)
 5. [Updates](#updates)
+   - [Update Sat 7 Feb 2026](#update-sat-7-feb2026)
    - [Update Sun 25 Jan 2026](#update-sun-25-jan-2026)
    - [Update Sun 18 Jan 2026](#update-sun-18-jan-2026)
    - [Update Sat 17 Jan 2026](#update-sat-17-jan-2026)
@@ -648,6 +649,15 @@ They're also in the circuit diagram, but weather I actually use that in practice
 unit will be hidden away, so that won't be visible anyway.
 
 # Updates
+
+## Update Sat 7 Feb 2026
+
+* Implement a UPS handler, that will stop processing button presses if/when on battery.
+* *Add* to the fingerprint storage, instead of hard-coding the slot it in the `set-fingerprint` app.
+* Catch return status from `change_gear_mode()` - if we fail, just start over listening for commands.
+  SHOULD, hopefully, make it more graceful if the actuator isn't connected.
+
+Release v0.4.2.
 
 ## Update Sun 25 Jan 2026
 
