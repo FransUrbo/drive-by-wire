@@ -46,7 +46,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Big Status LED](#big-status-led)
      - [Actuator LEDs](#actuator-leds)
 5. [Updates](#updates)
-   - [Update Sat 7 Feb 2026](#update-sat-7-feb2026)
+   - [Update Sat 7 Feb 2026](#update-sat-7-feb-2026)
    - [Update Sun 25 Jan 2026](#update-sun-25-jan-2026)
    - [Update Sun 18 Jan 2026](#update-sun-18-jan-2026)
    - [Update Sat 17 Jan 2026](#update-sat-17-jan-2026)
