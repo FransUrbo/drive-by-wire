@@ -150,8 +150,11 @@ pub async fn read_button(
         //       If we ARE blocked, then sleep until we're not, then restart the loop from
         //       the beginning, listening for a button press again.
         match select(subscriber.next_message(), btn.debounce()).await {
-            Either::Second(_) => {} // Button pressed - fall through.
-            Either::First(msg) => { // Got message, process it.
+            Either::Second(_) => {
+                // Button pressed - fall through.
+            }
+            Either::First(msg) => {
+                // Got message, process it.
                 match msg {
                     WaitResult::Message(ButtonState::Stop) => {
                         // We're told to stop processing button presses - we're on battery!
