@@ -1,6 +1,7 @@
 use defmt::{debug, error, info, trace, unwrap, Format};
 
 use embassy_executor::Spawner;
+use embassy_futures::select::{select, Either};
 use embassy_rp::{
     gpio::{AnyPin, Input, Level, Output, Pull},
     Peri,
@@ -9,6 +10,7 @@ use embassy_sync::{
     blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex},
     channel::{Channel, Receiver},
     mutex::Mutex,
+    pubsub::WaitResult,
 };
 use embassy_time::{with_deadline, Duration, Instant, Timer};
 
@@ -18,6 +20,7 @@ pub type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 use crate::lib_actuator::CHANNEL_ACTUATOR;
 use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
 use crate::lib_config::{write_flash, DbwConfig, FlashMutex};
+use crate::lib_ups::CHANNEL_UPS_STATE;
 
 use actuator::GearModes;
 use debounce;
@@ -30,6 +33,12 @@ pub enum Button {
     R,
     N,
     D,
+}
+
+#[derive(Copy, Clone)]
+pub enum ButtonState {
+    Stop,
+    Start,
 }
 
 // https://medium.com/@mikecode/rust-conversion-between-enum-and-integer-0e10e613573c
@@ -97,8 +106,8 @@ async fn set_led(
     let mut led = Output::new(led_pin, Level::Low); // Always start with the LED off.
 
     loop {
+        // Block waiting for data.
         match receiver.receive().await {
-            // Block waiting for data.
             LedStatus::On => led.set_high(),
             LedStatus::Off => led.set_low(),
         }
@@ -128,14 +137,57 @@ pub async fn read_button(
     };
     debug!("Button::{}: Started button control task", button);
 
+    // Subscribe to the UPS state channel.
+    let mut subscriber = CHANNEL_UPS_STATE.dyn_subscriber().unwrap();
+
     loop {
-        // NOTE: We need to wait for a button to be pressed, BEFORE we can check if we're
-        //       blocked. If we don't, we've checked if we're blocked, we're not and we
-        //       start listening to a button. But if someone else have got the press,
-        //       then "this" will still wait for a press!
+        // Block-wait for _either_ a message on the UPS state channel, _or_ a button press.
+        // NOTE: We need to wait for a button to be pressed, BEFORE we can check if we're blocked.
+        //       Ok, this here doesn't make any sense! Even I can't make heads or tails of it!! :D
+        //       If we don't, we checked if we're blocked, we're not and we start listening to
+        //       a button. But if someone else have got the press, then "we" will still wait for
+        //       a press!
         //       If we ARE blocked, then sleep until we're not, then restart the loop from
         //       the beginning, listening for a button press again.
-        btn.debounce().await; // Button pressed
+        match select(subscriber.next_message(), btn.debounce()).await {
+            Either::Second(_) => {} // Button pressed - fall through.
+            Either::First(msg) => { // Got message, process it.
+                match msg {
+                    WaitResult::Message(ButtonState::Stop) => {
+                        // We're told to stop processing button presses - we're on battery!
+                        debug!(
+                            "Button::{}: Stop processing button presses - block buttons",
+                            button
+                        );
+                        unsafe { BUTTONS_BLOCKED = true };
+
+                        // Also turn off all the LEDs to indicate this.
+                        CHANNEL_P.send(LedStatus::Off).await;
+                        CHANNEL_N.send(LedStatus::Off).await;
+                        CHANNEL_R.send(LedStatus::Off).await;
+                        CHANNEL_D.send(LedStatus::Off).await;
+                    }
+                    WaitResult::Message(ButtonState::Start) => {
+                        // We're told to processing button presses again - we're back on power!
+                        debug!(
+                            "Button::{}: Start processing button presses - unblock buttons",
+                            button
+                        );
+                        unsafe { BUTTONS_BLOCKED = false };
+
+                        match unsafe { BUTTON_ENABLED } {
+                            Button::P => CHANNEL_P.send(LedStatus::On).await,
+                            Button::N => CHANNEL_N.send(LedStatus::On).await,
+                            Button::R => CHANNEL_R.send(LedStatus::On).await,
+                            Button::D => CHANNEL_D.send(LedStatus::On).await,
+                        }
+                    }
+                    _ => {}
+                }
+
+                continue;
+            }
+        }
 
         if unsafe { BUTTONS_BLOCKED } {
             debug!("Button::{}: Buttons blocked", button);
@@ -201,20 +253,6 @@ pub async fn read_button(
                 // As in, let the button block "reach" the 'N' button task.
                 Timer::after_secs(1).await;
                 unsafe { BUTTONS_BLOCKED = false };
-            }
-
-            let mut cnt = 1;
-            while unsafe { BUTTONS_BLOCKED } {
-                // Block here while we wait for it to be unblocked.
-                debug!("Button::{}: Waiting for unblock", button);
-                Timer::after_secs(1).await;
-
-                if cnt >= 5 {
-                    unsafe { BUTTONS_BLOCKED = false };
-                    break;
-                }
-
-                cnt += 1;
             }
 
             continue;

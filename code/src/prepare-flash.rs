@@ -22,6 +22,7 @@ pub mod lib_buttons;
 pub mod lib_can_bus;
 pub mod lib_config;
 pub mod lib_resources;
+pub mod lib_ups;
 
 use crate::lib_buttons::Button;
 use crate::lib_config::init_flash;

@@ -71,6 +71,11 @@ features = ["defmt"]
 git = "https://github.com/embassy-rs/embassy.git"
 rev = "ef01e2e"
 
+[dependencies.embassy-futures]
+features = ["defmt"]
+git = "https://github.com/embassy-rs/embassy.git"
+rev = "ef01e2e"
+
 # =====
 # https://doc.rust-lang.org/cargo/reference/profiles.html
 
