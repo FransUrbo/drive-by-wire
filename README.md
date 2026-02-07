@@ -168,26 +168,26 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 
 | <div style="width:25px">Pin</div> | UARTx | <div style="width:75px">Port</div> | <div style="width:280px">Use</div> | <div style="width:25px">Pin</div> | UARTx | <div style="width:75px">Port</div> | <div style="width:280px">Use</div>
 | --: |  :-:  | :------ | :------------------------------ | --: |  :-:  | :------------------ | :------------------------------------- |
-|   1 | ~~0~~ | GPIO  0 | Button (Switch - N)             | 40  |       | VBUS                |                                        |
-|   2 | ~~0~~ | GPIO  1 | Button (Switch - D)             | 39  |       | VSYS                |                                        |
+|   1 | ~~0~~ | GPIO  0 | Fingerprint Scanner (UART0/RX)  | 40  |       | VBUS                |                                        |
+|   2 | ~~0~~ | GPIO  1 | Fingerprint Scanner (UART0/TX)  | 39  |       | VSYS                |                                        |
 |   3 |       | GND     |                                 | 38  |       | GND                 |                                        |
 |   4 |       | GPIO  2 | Button (Switch - P)             | 37  |       | 3V3_EN              |                                        |
 |   5 |       | GPIO  3 | Button (Switch - R)             | 36  |       | 3V3_OUT             |                                        |
 |   6 | **1** | GPIO  4 | Debug (TX)                      | 35  |       | ADC_VREF            | Actuator Feedback - +5V                |
 |   7 | ~~1~~ | GPIO  5 | Debug (RX)                      | 34  |       | GPIO 28<br>ADC2     | Actuator Feedback - Brush              |
 |   8 |       | GND     |                                 | 33  |       | GND<br>AGND         | Actuator Feedback - GND                |
-|   9 |       | GPIO  6<br>I2C1/SDA | Power monitor (SDA) | 32  |       | GPIO 27<br>I2C1/SCL | ~~Future Use~~                         |
-|  10 |       | GPIO  7<br>I2C1/SCL | Power monitor (SCL) | 31  |       | GPIO 26<br>I2C1/SDA | ~~Future Use~~                         |
+|   9 |       | GPIO  6<br>I2C1/SDA | Power monitor (SDA) | 32  |       | GPIO 27             | Button (Switch - D)                    |
+|  10 |       | GPIO  7<br>I2C1/SCL | Power monitor (SCL) | 31  |       | GPIO 26             | Button (Switch - N)                    |
 |  11 | ~~1~~ | GPIO  8 | Button (Telltale - N)           | 30  |       | RUN                 |                                        |
 |  12 | ~~1~~ | GPIO  9 | Button (Telltale - D)           | 29  |       | GPIO 22             | EIS Relay (#3 - start) (YELLOW)        |
 |  13 |       | GND     | ~~*[GPIO 29]*~~                 | 28  |       | GND                 | ~~*[GPIO 23]*~~                        |
-|  14 |       | GPIO 10 | Actuator - Motor Relay (#1)     | 27  |       | GPIO 21             | CAN #0 (RX)                            |
-|  15 |       | GPIO 11 | Actuator - Motor Relay (#2)     | 26  |       | GPIO 20             | CAN #0 (TX)                            |
-|  16 | ~~0~~ | GPIO 12 | ~~Actuator - +5V/+12V select~~  | 25  |       | GPIO 19             | EIS Relay (#1 - steering lock) (GREEN) |
-|  17 | ~~0~~ | GPIO 13 | Fingerprint Scanner (WAKEUP)    | 24  |       | GPIO 18             | Button (Telltale - R)                  |
+|  14 |       | GPIO 10 | Actuator - Motor Relay (#1)     | 27  |       | GPIO 21             | EIS Relay (#1 - steering lock) (GREEN) |
+|  15 |       | GPIO 11 | Actuator - Motor Relay (#2)     | 26  |       | GPIO 20             | Button (Telltale - R)                  |
+|  16 | ~~0~~ | GPIO 12 | ~~Actuator - +5V/+12V select~~  | 25  |       | GPIO 19             | CAN #0 (SPI0/TX)                       |
+|  17 | ~~0~~ | GPIO 13 | Fingerprint Scanner (WAKEUP)    | 24  |       | GPIO 18             | CAN #0 (SPI0/SCK)                      |
 |  18 |       | GND     | ~~*[GPIO 25]*~~                 | 23  |       | GND                 | ~~*[GPIO 24]*~~                        |
-|  19 |       | GPIO 14 | Button (Telltale - P)           | 22  | **0** | GPIO 17             | Fingerprint Scanner (TX)               |
-|  20 |       | GPIO 15 | Status LED (Data IN)            | 21  | **0** | GPIO 16             | Fingerprint Scanner (RX)               |
+|  19 |       | GPIO 14 | Button (Telltale - P)           | 22  | **0** | GPIO 17             | CAN #0 (SPI0/CSn)                      |
+|  20 |       | GPIO 15 | Status LED (Data IN)            | 21  | **0** | GPIO 16             | CAN #0 (SPI0/RX)                       |
 
 * LED | GPIO 25
 * Crossed-out GPIOx: Not using it as a UART, but "regular" (?) Input/Output.
@@ -507,9 +507,12 @@ My [components library](https://a360.co/4cwNAcc) can also be found on that site.
 
 ## Wiring on bread boards
 
-Those CAN bus adaptors I can't apparently used. They're for a high-speed CAN, but the MB I have have a low-frequency,
-fault-tolerant CAN :(. Something using the TJA1055T1 chip for the CAN and a MCP2515 for interfacing with the Pico. I'll
-figure something out..
+This was the very first version on breadboards.. It looked so simple back then :).
+
+Those CAN bus adaptors I can't use. They're for a high-speed CAN, but the MB I have have a low-frequency, fault-tolerant CAN :(.
+Something using the TJA1055T1 chip for the CAN and a MCP2515 for interfacing with the Pico. I'll figure something out..
+
+And I did figure something out, found a design online, that [a friend](https://github.com/konne88/slk) used as well in his project.
 
 Also, I'm missing the headers for the fingerprint scanner and the actuator in the upper right breadboard.
 
@@ -519,9 +522,11 @@ Also, I'm missing the headers for the fingerprint scanner and the actuator in th
 
 This what it looks like now. I built a box :D :D.
 
-![Latest wiring on bread boards](./images/2024-05-04%2011.09.21.jpg)
+![Latest wiring on bread boards](./images/2026-01-29%2018.42.02.jpg)
 
-![With the buttons folded away](./images/2024-06-24%2011.22.03.jpg)
+![With the buttons folded away](./images/2026-01-29%2018.43.10.jpg)
+
+![Closeup of the breadboards](./images/2026-01-29%2018.43.19.jpg)
 
 ### CAN-bus circuit diagram
 
@@ -656,8 +661,19 @@ unit will be hidden away, so that won't be visible anyway.
 * *Add* to the fingerprint storage, instead of hard-coding the slot it in the `set-fingerprint` app.
 * Catch return status from `change_gear_mode()` - if we fail, just start over listening for commands.
   SHOULD, hopefully, make it more graceful if the actuator isn't connected.
-
 Release v0.4.2.
+
+(Later that night)
+
+I've been fiddling with the CAN bus code on and off for a week or so, but been distracted. Also, it actually scare
+me a little :).
+
+But when I started looking at the crates I'll need ([mcp2518fd](https://github.com/adom-inc/mcp2518fd)), I realised
+that I'm going to need *four* pins for it. I was missing
+[SPI0/SCK and CSn](https://github.com/FransUrbo/drive-by-wire/blob/39550e49a38d86c60b6025bbcd50883cea3a5df9/code/src/lib_resources.rs#L60-L68).
+So I had to move things around quite a bit.
+
+But now I should, finally!, be ready to start working on the CAN bus. Don't have much more distractions, unfortunately :).
 
 ## Update Sun 25 Jan 2026
 
