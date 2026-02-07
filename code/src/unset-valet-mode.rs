@@ -18,10 +18,10 @@ pub mod lib_config;
 pub mod lib_resources;
 
 use crate::lib_buttons::Button;
-use crate::lib_config::{DbwConfig, init_flash};
+use crate::lib_config::{init_flash, DbwConfig};
 use crate::lib_resources::{
-    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
-    PeriNeopixel, PeriSerial, PeriEis, PeriWatchdog, PeriCan, PeriPowerMonitor
+    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriCan, PeriEis, PeriFPScanner,
+    PeriFlash, PeriNeopixel, PeriPowerMonitor, PeriSerial, PeriWatchdog,
 };
 
 use {defmt_rtt as _, panic_probe as _};

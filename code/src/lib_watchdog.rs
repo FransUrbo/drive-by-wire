@@ -1,10 +1,7 @@
 use defmt::{error, info};
 
 use embassy_rp::watchdog::Watchdog;
-use embassy_sync::{
-    blocking_mutex::raw::CriticalSectionRawMutex,
-    channel::Channel,
-};
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel};
 use embassy_time::{Duration, Timer};
 
 use crate::lib_resources::PeriWatchdog;

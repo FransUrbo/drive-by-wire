@@ -7,8 +7,8 @@ use embassy_rp::{
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 
 // External "defines".
-use crate::Button;
 use crate::lib_resources::{PeriFlash, ADDR_OFFSET, FLASH_SIZE};
+use crate::Button;
 
 pub type FlashType = Flash<'static, FLASH, Blocking, FLASH_SIZE>;
 pub type FlashMutex = Mutex<CriticalSectionRawMutex, FlashType>;
@@ -38,7 +38,7 @@ impl DbwConfig {
                 let active_button = Button::from_integer(read_buf[0]);
                 let valet_mode = match read_buf[1] {
                     0 => false,
-                    _ => true
+                    _ => true,
                 };
 
                 Ok(DbwConfig {
@@ -55,10 +55,7 @@ impl DbwConfig {
         }
     }
 
-    pub fn write(
-        flash: &mut FlashType,
-        config: Self,
-    ) -> Result<(), Error> {
+    pub fn write(flash: &mut FlashType, config: Self) -> Result<(), Error> {
         // Convert our struct to an array, so we can loop through it easier.
         let buf: [u8; 2] = config.as_array();
 

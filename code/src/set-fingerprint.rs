@@ -63,22 +63,22 @@ async fn main(_spawner: Spawner) {
 
     // =====
     match r503.Empty().await {
-       Status::CmdExecComplete => {
-           info!("Library emptied");
-       }
-       stat => {
-           info!("Return code: '{=u8:#04x}'", stat as u8);
-       }
+        Status::CmdExecComplete => {
+            info!("Library emptied");
+        }
+        stat => {
+            info!("Return code: '{=u8:#04x}'", stat as u8);
+        }
     }
 
     // Get the first free fingerprint slot.
     match r503.TempleteNum().await {
-       Status::CmdExecComplete => {
-           info!("Library emptied");
-       }
-       stat => {
-           info!("Return code: '{=u8:#04x}'", stat as u8);
-       }
+        Status::CmdExecComplete => {
+            info!("Library emptied");
+        }
+        stat => {
+            info!("Return code: '{=u8:#04x}'", stat as u8);
+        }
     }
 
     // =====

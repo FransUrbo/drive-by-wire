@@ -11,7 +11,7 @@ use embassy_rp::{
     multicore::{spawn_core1, Stack},
     peripherals::{PIO0, UART0, UART1},
     pio::{InterruptHandler as PIOInterruptHandler, Pio},
-    uart::{Blocking, Config as UartConfig, InterruptHandler as UARTInterruptHandler, UartTx}
+    uart::{Blocking, Config as UartConfig, InterruptHandler as UARTInterruptHandler, UartTx},
 };
 use embassy_sync::mutex::Mutex;
 use embassy_time::Timer;
@@ -29,24 +29,24 @@ pub mod lib_actuator;
 pub mod lib_buttons;
 pub mod lib_can_bus;
 pub mod lib_config;
-pub mod lib_resources;
-pub mod lib_watchdog;
-pub mod lib_ups;
 pub mod lib_core1;
+pub mod lib_resources;
+pub mod lib_ups;
+pub mod lib_watchdog;
 
-use crate::lib_actuator::{CHANNEL_ACTUATOR, actuator_control};
+use crate::lib_actuator::{actuator_control, CHANNEL_ACTUATOR};
 use crate::lib_buttons::{
     read_button, Button, LedStatus, ScannerMutex, BUTTON_ENABLED, CHANNEL_D, CHANNEL_N, CHANNEL_P,
     CHANNEL_R,
 };
 use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
-use crate::lib_config::{DbwConfig, init_flash};
+use crate::lib_config::{init_flash, DbwConfig};
+use crate::lib_core1::core1_tasks;
 use crate::lib_resources::{
-    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriFPScanner, PeriFlash,
-    PeriNeopixel, PeriSerial, PeriEis, PeriWatchdog, PeriCan, PeriPowerMonitor
+    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriCan, PeriEis, PeriFPScanner,
+    PeriFlash, PeriNeopixel, PeriPowerMonitor, PeriSerial, PeriWatchdog,
 };
 use crate::lib_watchdog::{StopWatchdog, CHANNEL_WATCHDOG};
-use crate::lib_core1::core1_tasks;
 
 // DMA Channels used (of 12):
 // * Fingerprint scanner:	UART0	DMA_CH[0-1]	PIN_13, PIN_16, PIN_17
@@ -113,13 +113,7 @@ async fn main(spawner: Spawner) {
         unsafe { &mut *core::ptr::addr_of_mut!(CORE1_STACK) },
         move || {
             let executor = EXECUTOR.init(Executor::new());
-            executor.run(|spawner| {
-                spawner.spawn(unwrap!(core1_tasks(
-                    spawner,
-                    r.watchdog,
-                    r.ups
-                )))
-            });
+            executor.run(|spawner| spawner.spawn(unwrap!(core1_tasks(spawner, r.watchdog, r.ups))));
         },
     );
 

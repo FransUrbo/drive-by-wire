@@ -7,7 +7,7 @@ use embassy_sync::{
 
 // External "defines".
 use crate::lib_buttons::{Button, BUTTONS_BLOCKED, BUTTON_ENABLED};
-use crate::lib_config::{FlashMutex, DbwConfig, resonable_defaults, write_flash};
+use crate::lib_config::{resonable_defaults, write_flash, DbwConfig, FlashMutex};
 
 use actuator::Actuator;
 
