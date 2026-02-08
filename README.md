@@ -556,13 +556,13 @@ they are anyway.
 
 Fusion360 can even generate a 3D object of the PCB! Very pretty! :D
 
-![PCB - Bottom (3D)](./images/PCB%20-%20Bottom%20%283D%29.png)
-![PCB - Top (3D)](./images/PCB%20-%20Top%20%283D%29.png)
+![PCB - Bottom (3D)](./images/3D%20-%20Bottom.png)
+![PCB - Top (3D)](./images/3D%20-%20Top.png)
 
 .. and the perspective view.
 
-![PCB - Bottom (3D - Perspective)](./images/PCB%20-%20Bottom%20%283D%20-%20Perspective%29.png)
-![PCB - Top (3D - Perspective)](./images/PCB%20-%20Top%20%283D%20-%20Perspective%29.png)
+![PCB - Bottom (3D - Perspective)](./images/3D%20-%20Perspective%20-%20Bottom.png)
+![PCB - Top (3D - Perspective)](./images/3D%20-%20Perspective%20-%20Top.png)
 
 # Source code
 
