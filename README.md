@@ -176,8 +176,8 @@ Q: Can DriveByWire check CAN for certain buttons around the car
 |   6 | **1** | GPIO  4 | Debug (TX)                      | 35  |       | ADC_VREF            | Actuator Feedback - +5V                |
 |   7 | ~~1~~ | GPIO  5 | Debug (RX)                      | 34  |       | GPIO 28<br>ADC2     | Actuator Feedback - Brush              |
 |   8 |       | GND     |                                 | 33  |       | GND<br>AGND         | Actuator Feedback - GND                |
-|   9 |       | GPIO  6<br>I2C1/SDA | Power monitor (SDA) | 32  |       | GPIO 27             | Button (Switch - D)                    |
-|  10 |       | GPIO  7<br>I2C1/SCL | Power monitor (SCL) | 31  |       | GPIO 26             | Button (Switch - N)                    |
+|   9 |       | GPIO  6<br>I²C1/SDA | Power monitor (SDA) | 32  |       | GPIO 27             | Button (Switch - D)                    |
+|  10 |       | GPIO  7<br>I²C1/SCL | Power monitor (SCL) | 31  |       | GPIO 26             | Button (Switch - N)                    |
 |  11 | ~~1~~ | GPIO  8 | Button (Telltale - N)           | 30  |       | RUN                 |                                        |
 |  12 | ~~1~~ | GPIO  9 | Button (Telltale - D)           | 29  |       | GPIO 22             | EIS Relay (#3 - start) (YELLOW)        |
 |  13 |       | GND     | ~~*[GPIO 29]*~~                 | 28  |       | GND                 | ~~*[GPIO 23]*~~                        |
@@ -455,17 +455,17 @@ These aren't things needed, but maybe I'll have a need for them one day..
 | [DC-DC Buck-Mode Power Module (5.5-28V to 3.3V 2.4A)](https://thepihut.com/products/dc-dc-buck-mode-power-module-5-5-28v-to-3-3v-2-4a) | £3 |
 | [5V Buck Converter Unit (ME3116AM6G)](https://thepihut.com/products/5v-buck-converter-unit-me3116am6g) | £4 |
 | [High Precision Capacitive Fingerprint Reader](https://thepihut.com/products/high-precision-capacitive-fingerprint-reader-b) | £61 |
-| [I2C GPIO Expander](https://thepihut.com/products/adafruit-pcf8574-i2c-gpio-expander-breakout-stemma-qt-qwiic) | £5 | 8 GPIO pins
-| [I2C GPIO Expander](https://thepihut.com/products/adafruit-mcp23017-i2c-gpio-expander-breakout-stemma-qt-qwiic) | £6 | 16 GPIO pins
+| [I²C GPIO Expander](https://thepihut.com/products/adafruit-pcf8574-i2c-gpio-expander-breakout-stemma-qt-qwiic) | £5 | 8 GPIO pins
+| [I²C GPIO Expander](https://thepihut.com/products/adafruit-mcp23017-i2c-gpio-expander-breakout-stemma-qt-qwiic) | £6 | 16 GPIO pins
 | [MRK CAN Shield Arduino](https://www.pcbway.com/project/shareproject/MRK_CAN_Shield_Arduino_133f7666.html) | - |
 
 ## Small footprint controllers
 
 The Pico is for development. Makes things easier when it's in a bigger format. However, some of these below might be used for
-the actual "production" device. But to get all the GPIO needed, an I2C GPIO expander (see above) would be needed.
+the actual "production" device. But to get all the GPIO needed, an I²C GPIO expander (see above) would be needed.
 
-Some of the signals I need will probably be to fast for the I2C bus, so those would have to come in through the board GPIO,
-not the I2C GPIOs. But then, the whole setup will be bigger anyway (because of the expander), so might just stick with the
+Some of the signals I need will probably be to fast for the I²C bus, so those would have to come in through the board GPIO,
+not the I²C GPIOs. But then, the whole setup will be bigger anyway (because of the expander), so might just stick with the
 Pico anyway. Besides, the whole circuit board is (going to be) about the size of my palm anyway.
 
 | Part | Processor | Price | Note
@@ -483,7 +483,7 @@ Pico anyway. Besides, the whole circuit board is (going to be) about the size of
 ### Notes about the small footprint controllers
 
 As can be seen from the [pin layout](#pin-layout-for-raspberrypi-3-5-and-pico), I need *at least* 26, as of today (Jan 2026).
-At the moment, I have NO GPIO to spare (but two I2C) of the 28 (GPIO) pins that the RPi's have!
+At the moment, I have NO GPIO to spare (but two I²C) of the 28 (GPIO) pins that the RPi's have!
 
 But seems like the design have stabilized now. UNLESS the CAN bus adapters I'm going to have to get need more than TX/RX.
 Don't know which ones to get yet, still work in progres.
@@ -530,14 +530,31 @@ This what it looks like now. I built a box :D :D.
 
 ### CAN-bus circuit diagram
 
-This is the part of CAN-bus from the big circuit diagram. Still working on it, so not sure if it'll work.
+This is the part of CAN-bus from the big circuit diagram. Still working on it, and not sure if it works, or if I'm doing
+something dumb in software. None of the Rust crates I've tried work ([mcp2517](https://crates.io/crates/mcp2517) and
+[mcp2518fd](https://github.com/adom-inc/mcp2518fd)), they just segfault or panic :(.
 
 ![Circuit Diagram - CAN-bus](./images/Circuit%20Diagram%20-%20CAN-bus.png)
+
+Another option (which I'm now considering, since I'm running out of GPIO pins :) is to use the I²C bus (which I've successfully
+got working with [my UPS](https://thepihut.com/products/ups-module-for-raspberry-pi-pico-with-600mah-lipo-battery?variant=40195823042755)),
+is to use a [I²C to SPI bridge](https://www.nxp.com/products/interfaces/ic-spi-i3c-interface-devices/bridges/ic-bus-to-spi-bridge:SC18IS606)
+from NXP. Can't find any Rust crate for it, but Googles AI did give an example on how to use it. It is apparently drop-in compatible
+with the SC18IS602 (which don't seem to have a Rust crate either :).
+
+Texas Instruments have the [MSPM0](https://www.ti.com/lit/sd/slaaes6a/slaaes6a.pdf), and that do exist as a
+[Rust crate](https://github.com/embassy-rs/embassy/tree/main/embassy-mspm0) in the Embassy project.
 
 ### CAN-bus wiring on bread board
 
 This is the bread board for the CAN-bus. Haven't tested it, so no idea if it works. But the design DO work, a [friend
-is using it in his project](https://github.com/konne88/slk).
+is using it in his project](https://github.com/konne88/slk). Although, he's using the
+[MCP2515](https://www.mouser.co.uk/ProductDetail/Microchip-Technology/MCP2515-I-SO?qs=KwArPi4cUogGDbGnphOvtQ%3D%3D),
+which is an older, slower one, and I decided to use the
+[MCP2518FD](https://www.mouser.co.uk/ProductDetail/Microchip-Technology/MCP2518FDT-E-SL?qs=T3oQrply3y%2F7g%252BYAgK9Bdg%3D%3D).
+
+It's not actually using GPIO, it's using SPI, which require *four* leads: MOSI, MISO, CSK and CSn. I'll update
+this picture at some point.
 
 ![CAN-bus wiring on bread board](./images/CAN-bus%20adapter%20-%20Wired%20on%20Breadboard.jpg)
 
@@ -689,11 +706,11 @@ Bump version v0.4.0.
 
 ## Update Sun 18 Jan 2026
 
-I saw a need for a future I2C network (GPIO Externer most notably).
+I saw a need for a future I²C network (GPIO Externer most notably).
 
 I did clear Pin#9 and Pin#10 a few days ago for my UPS, which uses it, but maybe better to have a separate one?
-Not sure how I2C works.. So figured I'd move Pin#31 (GPIO#26) to Pin#34 (GPIO#28), to clear Pin#31 (GPIO#26, I2C/SDA)
-and Pin#32 (GPIO#27, I2C/SCL).
+Not sure how I²C works.. So figured I'd move Pin#31 (GPIO#26) to Pin#34 (GPIO#28), to clear Pin#31 (GPIO#26, I²C/SDA)
+and Pin#32 (GPIO#27, I²C/SCL).
 
 HOWEVER, in the process mucking about moving cables around on the breadboard, I accidentally pulled that one (Pin#31).
 Trying to figure out where it came from (there's cables everywere, GOING everywhere!! :), I got confused as to where
