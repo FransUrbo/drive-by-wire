@@ -4,7 +4,6 @@ use embassy_rp::{
     bind_interrupts,
     i2c::{AbortReason::NoAcknowledge, Config, Error::Abort, I2c, InterruptHandler},
 };
-use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, pubsub::PubSubChannel};
 use embassy_time::Timer;
 
 use ina219::{
@@ -14,15 +13,12 @@ use ina219::{
     SyncIna219,
 };
 
-use crate::lib_buttons::ButtonState;
+use crate::lib_buttons::{ButtonState, CHANNEL_BUTTON_STATE};
 use crate::lib_resources::{PeriPowerMonitor, UPS_ADDRESS};
 
 bind_interrupts!(struct Irqs {
     I2C1_IRQ => InterruptHandler<embassy_rp::peripherals::I2C1>;
 });
-
-pub static CHANNEL_UPS_STATE: PubSubChannel<CriticalSectionRawMutex, ButtonState, 4, 4, 4> =
-    PubSubChannel::new();
 
 #[embassy_executor::task]
 pub async fn ups_monitor(ups: PeriPowerMonitor) {
@@ -32,7 +28,7 @@ pub async fn ups_monitor(ups: PeriPowerMonitor) {
     let i2c = I2c::new_async(ups.i2c, ups.scl, ups.sda, Irqs, Config::default());
 
     // Become a publisher on the button state channel.
-    let publisher = CHANNEL_UPS_STATE.publisher().unwrap();
+    let publisher = CHANNEL_BUTTON_STATE.publisher().unwrap();
 
     // Resolution of 1A, and a shunt of 10mΩ.
     // The shunt resistor in the Pico UPS Hat B: R1/0.01Ω (10,000µΩ/10mΩ).

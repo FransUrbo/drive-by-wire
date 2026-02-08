@@ -10,7 +10,7 @@ use embassy_sync::{
     blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex},
     channel::{Channel, Receiver},
     mutex::Mutex,
-    pubsub::WaitResult,
+    pubsub::{PubSubChannel, WaitResult},
 };
 use embassy_time::{with_deadline, Duration, Instant, Timer};
 
@@ -20,7 +20,6 @@ pub type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 use crate::lib_actuator::CHANNEL_ACTUATOR;
 use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
 use crate::lib_config::{write_flash, DbwConfig, FlashMutex};
-use crate::lib_ups::CHANNEL_UPS_STATE;
 
 use actuator::GearModes;
 use debounce;
@@ -87,6 +86,9 @@ pub static CHANNEL_N: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel:
 pub static CHANNEL_R: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
 pub static CHANNEL_D: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
 
+pub static CHANNEL_BUTTON_STATE: PubSubChannel<CriticalSectionRawMutex, ButtonState, 4, 4, 4> =
+    PubSubChannel::new();
+
 // Start with the button UNSET, then change it when we know what gear the car is in.
 pub static mut BUTTON_ENABLED: Button = Button::P;
 
@@ -138,7 +140,7 @@ pub async fn read_button(
     debug!("Button::{}: Started button control task", button);
 
     // Subscribe to the UPS state channel.
-    let mut subscriber = CHANNEL_UPS_STATE.dyn_subscriber().unwrap();
+    let mut subscriber = CHANNEL_BUTTON_STATE.dyn_subscriber().unwrap();
 
     loop {
         // Block-wait for _either_ a message on the UPS state channel, _or_ a button press.
