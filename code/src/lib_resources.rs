@@ -60,13 +60,13 @@ assign_resources! {
         d_led:		PIN_9		// UART1
     },
     can: PeriCan {
-        send_pin:	PIN_19,
+        send_pin:	PIN_19,		// MOSI (Master Out Slave In)
         send_dma:	DMA_CH5,
-        recv_pin:	PIN_16,
+        recv_pin:	PIN_16,		// MISO (Master In Slave Out)
         recv_dma:	DMA_CH6,
         csn_pin:	PIN_17,
         sck_pin:	PIN_18,
-        spi:		SPI0
+        spi:		SPI0		// Serial Peripheral Interface
     },
     ups: PeriPowerMonitor {
         sda:		PIN_6,
