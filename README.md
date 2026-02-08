@@ -373,8 +373,9 @@ up a little - the Pico goes *on top* of the UPS module unfortunately.
 
 | Part | Price |
 | :--- | :---  |
+| [SC18IS606PWJ](https://www.mouser.co.uk/ProductDetail/771-SC18IS606PWJ) | £6
+| [MCP2515-E/SO](https://www.mouser.co.uk/ProductDetail/579-MCP2515-E-SO) | £5
 | [TJA1055T/1J Fault-tolerant CAN chip](https://www.mouser.co.uk/ProductDetail/771-TJA1055T-1J) | £2
-| [MCP2513FDTE/SL CAN Interface IC](https://www.mouser.co.uk/ProductDetail/579-MCP2518FDT-E-SL) | £2
 | [Resistor -  1kΩ](https://www.mouser.co.uk/ProductDetail/710-560112132038) | £0.10 * 3
 | [Capacitor - 150pF](https://www.mouser.co.uk/ProductDetail/80-C1206C151F1G) | £0.08 * 2
 | [Resonator - 16MHz/15pF](https://www.mouser.co.uk/ProductDetail/81-CSTNE16M0V530000R) | £0.30
@@ -434,8 +435,12 @@ and that chassis connector, which minimizes the size of the motherboard connecto
 | [Dupont Jump Wire F-F Jumper Breadboard Cable Lead -  6pin](https://www.ebay.co.uk/itm/275827705804?var=577580216871) | £2
 | [Dupont Jump Wire F-F Jumper Breadboard Cable Lead - 10pin](https://www.ebay.co.uk/itm/275827705804?var=577580216855) | £2
 | [Dupont Jump Wire M-M Jumper Breadboard Cable Lead - 10cm](https://www.ebay.co.uk/itm/275268807202?var=575537821821) | £8
-| [SO14 IC to Breadboard adapter](https://www.mouser.co.uk/ProductDetail/535-LCQT-SOIC14) | £4 * 2
 | [Molex MiniFit Jr connector + cable - 2x3pin, 600mm](https://www.mouser.co.uk/ProductDetail/538-215328-1063) | £6.7
+| [SOIC-14 to Breadboard adapter](https://www.mouser.co.uk/ProductDetail/535-LCQT-SOIC14) | £4 * 2
+| [SOIC-16 to Breadboard adapter](https://www.mouser.co.uk/ProductDetail/535-LCQT-SOIC8-8) | £4
+| [TSSOP-16 to Breadboard adapter](https://www.mouser.co.uk/ProductDetail/535-LCQT-TSSOP16) | £7
+
+The last three breadboard adapters are for prototyping the CAN-bus adapter.
 
 ## Other
 
