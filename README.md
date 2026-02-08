@@ -375,9 +375,7 @@ up a little - the Pico goes *on top* of the UPS module unfortunately.
 | :--- | :---  |
 | [TJA1055T/1J Fault-tolerant CAN chip](https://www.mouser.co.uk/ProductDetail/771-TJA1055T-1J) | £2
 | [MCP2513FDTE/SL CAN Interface IC](https://www.mouser.co.uk/ProductDetail/579-MCP2518FDT-E-SL) | £2
-| [DC Power Connector](https://www.mouser.co.uk/ProductDetail/502-RASM722X) | £1
-| [Resistor -  1kΩ](https://www.mouser.co.uk/ProductDetail/710-560112132038) | £0.10 * 7
-| [Resistor - 10kΩ](https://www.mouser.co.uk/ProductDetail/710-560112116005) | £0.09
+| [Resistor -  1kΩ](https://www.mouser.co.uk/ProductDetail/710-560112132038) | £0.10 * 3
 | [Capacitor - 150pF](https://www.mouser.co.uk/ProductDetail/80-C1206C151F1G) | £0.08 * 2
 | [Resonator - 16MHz/15pF](https://www.mouser.co.uk/ProductDetail/81-CSTNE16M0V530000R) | £0.30
 
