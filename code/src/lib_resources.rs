@@ -60,6 +60,9 @@ assign_resources! {
         d_led:		PIN_9		// UART1
     },
     can: PeriCan {
+        // CAN Interface ICs:
+        //   * MCP2518FDT-E/SL - Stand-alone Low Power CAN FD Controller w/SPI Interface Grade1.
+        //   * TJA1055T/1J     - High-speed CAN transceiver.
         send_pin:	PIN_19,		// MOSI (Master Out Slave In)
         send_dma:	DMA_CH5,
         recv_pin:	PIN_16,		// MISO (Master In Slave Out)
