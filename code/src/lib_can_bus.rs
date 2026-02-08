@@ -11,8 +11,8 @@ use embassy_time::Timer;
 
 use static_cell::StaticCell;
 
-use crate::lib_resources::PeriCan;
 use crate::lib_buttons::{ButtonState, CHANNEL_BUTTON_STATE};
+use crate::lib_resources::PeriCan;
 
 pub enum CANMessage {
     Starting,

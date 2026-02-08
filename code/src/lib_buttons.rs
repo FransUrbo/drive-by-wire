@@ -1,4 +1,4 @@
-use defmt::{debug, error, info, trace, unwrap, Format};
+use defmt::{debug, error, info, unwrap, Format};
 
 use embassy_executor::Spawner;
 use embassy_futures::select::{select, Either};
@@ -12,7 +12,7 @@ use embassy_sync::{
     mutex::Mutex,
     pubsub::{PubSubChannel, WaitResult},
 };
-use embassy_time::{with_deadline, Duration, Instant, Timer};
+use embassy_time::{Duration, Timer};
 
 pub type ScannerMutex = Mutex<NoopRawMutex, r503::R503<'static>>;
 
@@ -22,7 +22,6 @@ use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
 use crate::lib_config::{write_flash, DbwConfig, FlashMutex};
 
 use actuator::GearModes;
-use debounce;
 use r503;
 
 #[derive(Copy, Clone, Format, PartialEq)]
@@ -80,6 +79,33 @@ pub enum LedStatus {
     Off,
 }
 
+// https://github.com/embassy-rs/embassy/blob/main/examples/rp/src/bin/debounce.rs
+pub struct Debouncer<'a> {
+    input: Input<'a>,
+    debounce: Duration,
+}
+
+impl<'a> Debouncer<'a> {
+    pub fn new(input: Input<'a>, debounce: Duration) -> Self {
+        Self { input, debounce }
+    }
+
+    pub async fn debounce(&mut self) -> Level {
+        loop {
+            let l1 = self.input.get_level();
+
+            self.input.wait_for_any_edge().await;
+
+            Timer::after(self.debounce).await;
+
+            let l2 = self.input.get_level();
+            if l1 != l2 {
+                break l2;
+            }
+        }
+    }
+}
+
 // Setup the communication channels between the tasks.
 pub static CHANNEL_P: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
 pub static CHANNEL_N: Channel<CriticalSectionRawMutex, LedStatus, 64> = Channel::new();
@@ -127,8 +153,7 @@ pub async fn read_button(
     led_pin: Peri<'static, AnyPin>,
 ) {
     // Initialize the button listener.
-    let mut btn =
-        debounce::Debouncer::new(Input::new(btn_pin, Pull::Up), Duration::from_millis(50));
+    let mut btn = Debouncer::new(Input::new(btn_pin, Pull::Up), Duration::from_millis(100));
 
     // Spawn off a LED driver for this button.
     match button {
@@ -269,153 +294,120 @@ pub async fn read_button(
         // If this IS "us", we re-enable the buttons again after we've blinked "our" LED.
         unsafe { BUTTONS_BLOCKED = true };
 
-        // Got a valid button press. Process it..
-        let start = Instant::now();
+        // We know who WE are, so turn ON our own LED and turn off all the other LEDs.
         info!("Button::{}: Button press detected", button);
+        match button {
+            Button::P => {
+                if unsafe { button == BUTTON_ENABLED } {
+                    // Already enabled => blink *our* LED three times.
+                    debug!(
+                        "Button::{}: Already enabled, blinking LED three times",
+                        button
+                    );
 
-        // Don't really care how long a button have been pressed as,
-        // the `debounce()` will detect when it's been RELEASED.
-        match with_deadline(start + Duration::from_secs(1), btn.debounce()).await {
-            Ok(_) => {
-                trace!(
-                    "{}: Button pressed for: {}ms",
-                    button,
-                    start.elapsed().as_millis()
-                );
-                debug!(
-                    "Button::{}: Button enabled: {}; Button pressed: {}",
-                    button,
-                    unsafe { BUTTON_ENABLED },
-                    button
-                );
-
-                // We know who WE are, so turn ON our own LED and turn off all the other LEDs.
-                match button {
-                    Button::P => {
-                        if unsafe { button == BUTTON_ENABLED } {
-                            // Already enabled => blink *our* LED three times.
-                            debug!(
-                                "Button::{}: Already enabled, blinking LED three times",
-                                button
-                            );
-
-                            for _i in 0..3 {
-                                CHANNEL_P.send(LedStatus::Off).await;
-                                Timer::after_millis(500).await;
-                                CHANNEL_P.send(LedStatus::On).await;
-                                Timer::after_millis(500).await;
-                            }
-
-                            unsafe { BUTTONS_BLOCKED = false };
-                        } else {
-                            CHANNEL_P.send(LedStatus::On).await;
-                            CHANNEL_N.send(LedStatus::Off).await;
-                            CHANNEL_R.send(LedStatus::Off).await;
-                            CHANNEL_D.send(LedStatus::Off).await;
-
-                            // Trigger the actuator to switch to (P)ark.
-                            CHANNEL_ACTUATOR.send(Button::P).await;
-                        }
-
-                        continue;
+                    for _i in 0..3 {
+                        CHANNEL_P.send(LedStatus::Off).await;
+                        Timer::after_millis(500).await;
+                        CHANNEL_P.send(LedStatus::On).await;
+                        Timer::after_millis(500).await;
                     }
-                    Button::N => {
-                        if unsafe { button == BUTTON_ENABLED } {
-                            // Already enabled => blink *our* LED three times.
-                            debug!(
-                                "Button::{}: Already enabled, blinking LED three times",
-                                button
-                            );
 
-                            for _i in 0..3 {
-                                CHANNEL_N.send(LedStatus::Off).await;
-                                Timer::after_millis(500).await;
-                                CHANNEL_N.send(LedStatus::On).await;
-                                Timer::after_millis(500).await;
-                            }
+                    unsafe { BUTTONS_BLOCKED = false };
+                } else {
+                    CHANNEL_P.send(LedStatus::On).await;
+                    CHANNEL_N.send(LedStatus::Off).await;
+                    CHANNEL_R.send(LedStatus::Off).await;
+                    CHANNEL_D.send(LedStatus::Off).await;
+                    Timer::after_millis(100).await; // Give the LED some time to light up.
 
-                            unsafe { BUTTONS_BLOCKED = false };
-                        } else {
-                            CHANNEL_P.send(LedStatus::Off).await;
-                            CHANNEL_N.send(LedStatus::On).await;
-                            CHANNEL_R.send(LedStatus::Off).await;
-                            CHANNEL_D.send(LedStatus::Off).await;
-
-                            // Trigger the actuator to switch to (N)eutral.
-                            CHANNEL_ACTUATOR.send(Button::N).await;
-                        }
-
-                        continue;
-                    }
-                    Button::R => {
-                        if unsafe { button == BUTTON_ENABLED } {
-                            // Already enabled => blink *our* LED three times.
-                            debug!(
-                                "Button::{}: Already enabled, blinking LED three times",
-                                button
-                            );
-
-                            for _i in 0..3 {
-                                CHANNEL_R.send(LedStatus::Off).await;
-                                Timer::after_millis(500).await;
-                                CHANNEL_R.send(LedStatus::On).await;
-                                Timer::after_millis(500).await;
-                            }
-
-                            unsafe { BUTTONS_BLOCKED = false };
-                        } else {
-                            CHANNEL_P.send(LedStatus::Off).await;
-                            CHANNEL_N.send(LedStatus::Off).await;
-                            CHANNEL_R.send(LedStatus::On).await;
-                            CHANNEL_D.send(LedStatus::Off).await;
-
-                            // Trigger the actuator to switch to (R)everse.
-                            CHANNEL_ACTUATOR.send(Button::R).await;
-                        }
-
-                        continue;
-                    }
-                    Button::D => {
-                        if unsafe { button == BUTTON_ENABLED } {
-                            // Already enabled => blink *our* LED three times.
-                            debug!(
-                                "Button::{}: Already enabled, blinking LED three times",
-                                button
-                            );
-
-                            for _i in 0..3 {
-                                CHANNEL_D.send(LedStatus::Off).await;
-                                Timer::after_millis(500).await;
-                                CHANNEL_D.send(LedStatus::On).await;
-                                Timer::after_millis(500).await;
-                            }
-
-                            unsafe { BUTTONS_BLOCKED = false };
-                        } else {
-                            CHANNEL_P.send(LedStatus::Off).await;
-                            CHANNEL_N.send(LedStatus::Off).await;
-                            CHANNEL_R.send(LedStatus::Off).await;
-                            CHANNEL_D.send(LedStatus::On).await;
-
-                            // Trigger the actuator to switch to (D)rive.
-                            CHANNEL_ACTUATOR.send(Button::D).await;
-                        }
-
-                        continue;
-                    }
+                    // Trigger the actuator to switch to (P)ark.
+                    CHANNEL_ACTUATOR.send(Button::P).await;
                 }
             }
+            Button::N => {
+                if unsafe { button == BUTTON_ENABLED } {
+                    // Already enabled => blink *our* LED three times.
+                    debug!(
+                        "Button::{}: Already enabled, blinking LED three times",
+                        button
+                    );
 
-            // Don't allow another button for quarter second.
-            _ => Timer::after_millis(250).await,
+                    for _i in 0..3 {
+                        CHANNEL_N.send(LedStatus::Off).await;
+                        Timer::after_millis(500).await;
+                        CHANNEL_N.send(LedStatus::On).await;
+                        Timer::after_millis(500).await;
+                    }
+
+                    unsafe { BUTTONS_BLOCKED = false };
+                } else {
+                    CHANNEL_P.send(LedStatus::Off).await;
+                    CHANNEL_N.send(LedStatus::On).await;
+                    CHANNEL_R.send(LedStatus::Off).await;
+                    CHANNEL_D.send(LedStatus::Off).await;
+                    Timer::after_millis(100).await; // Give the LED some time to light up.
+
+                    // Trigger the actuator to switch to (N)eutral.
+                    CHANNEL_ACTUATOR.send(Button::N).await;
+                }
+            }
+            Button::R => {
+                if unsafe { button == BUTTON_ENABLED } {
+                    // Already enabled => blink *our* LED three times.
+                    debug!(
+                        "Button::{}: Already enabled, blinking LED three times",
+                        button
+                    );
+
+                    for _i in 0..3 {
+                        CHANNEL_R.send(LedStatus::Off).await;
+                        Timer::after_millis(500).await;
+                        CHANNEL_R.send(LedStatus::On).await;
+                        Timer::after_millis(500).await;
+                    }
+
+                    unsafe { BUTTONS_BLOCKED = false };
+                } else {
+                    CHANNEL_P.send(LedStatus::Off).await;
+                    CHANNEL_N.send(LedStatus::Off).await;
+                    CHANNEL_R.send(LedStatus::On).await;
+                    CHANNEL_D.send(LedStatus::Off).await;
+                    Timer::after_millis(100).await; // Give the LED some time to light up.
+
+                    // Trigger the actuator to switch to (R)everse.
+                    CHANNEL_ACTUATOR.send(Button::R).await;
+                }
+            }
+            Button::D => {
+                if unsafe { button == BUTTON_ENABLED } {
+                    // Already enabled => blink *our* LED three times.
+                    debug!(
+                        "Button::{}: Already enabled, blinking LED three times",
+                        button
+                    );
+
+                    for _i in 0..3 {
+                        CHANNEL_D.send(LedStatus::Off).await;
+                        Timer::after_millis(500).await;
+                        CHANNEL_D.send(LedStatus::On).await;
+                        Timer::after_millis(500).await;
+                    }
+
+                    unsafe { BUTTONS_BLOCKED = false };
+                } else {
+                    CHANNEL_P.send(LedStatus::Off).await;
+                    CHANNEL_N.send(LedStatus::Off).await;
+                    CHANNEL_R.send(LedStatus::Off).await;
+                    CHANNEL_D.send(LedStatus::On).await;
+                    Timer::after_millis(100).await; // Give the LED some time to light up.
+
+                    // Trigger the actuator to switch to (D)rive.
+                    CHANNEL_ACTUATOR.send(Button::D).await;
+                }
+            }
         }
 
-        // Wait for button release before handling another press.
-        btn.debounce().await;
-        trace!(
-            "{}: Button pressed for: {}ms",
-            button,
-            start.elapsed().as_millis()
-        );
+        // Don't allow another button for quarter second.
+        Timer::after_millis(250).await;
     }
 }
