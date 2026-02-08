@@ -113,7 +113,9 @@ async fn main(spawner: Spawner) {
         unsafe { &mut *core::ptr::addr_of_mut!(CORE1_STACK) },
         move || {
             let executor = EXECUTOR.init(Executor::new());
-            executor.run(|spawner| spawner.spawn(unwrap!(core1_tasks(spawner, r.watchdog, r.ups))));
+            executor.run(|spawner| {
+                spawner.spawn(unwrap!(core1_tasks(spawner, r.watchdog, r.ups, r.can)))
+            });
         },
     );
 
