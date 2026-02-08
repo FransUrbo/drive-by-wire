@@ -870,5 +870,5 @@ it draws "a lot" of power, will get hot.
 * [RND-ASH Mercedes hacking docs](https://github.com/rnd-ash/mercedes-hacking-docs)
 * [RND-ASH deciphering of CAN bus messages](https://github.com/rnd-ash/MBUX-Port/blob/master/203_b.txt)
 * [RND-ASH Open Vehicle Diagnostic project](https://github.com/rnd-ash/OpenVehicleDiag)
-* [Konstantin Weitz home-made roof opening device](https://github.com/konne88/slk)
+* [Konstantin Weitz home-made roof opening device](https://github.com/konne88/slk) and [his notes](https://docs.google.com/document/d/141OtcTwNPFtaFIoKDJY9kJyH0mban7Jj2b7CK_ExVMg)
 * [A Audi TT project to read speed and write to the IC via CAN](https://www.hackster.io/databus100/digital-speedometer-to-car-s-instrument-cluster-via-can-bus-66e273)
