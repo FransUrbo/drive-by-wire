@@ -21,8 +21,8 @@ pub mod lib_ups;
 use crate::lib_buttons::Button;
 use crate::lib_config::{init_flash, DbwConfig};
 use crate::lib_resources::{
-    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriCan, PeriEis, PeriFPScanner,
-    PeriFlash, PeriNeopixel, PeriPowerMonitor, PeriSerial, PeriWatchdog,
+    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriEis, PeriFPScanner,
+    PeriFlash, PeriNeopixel, PeriI2C, PeriSerial, PeriWatchdog,
 };
 
 use {defmt_rtt as _, panic_probe as _};
