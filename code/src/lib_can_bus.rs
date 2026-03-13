@@ -12,7 +12,7 @@ use embassy_time::Timer;
 use static_cell::StaticCell;
 
 use crate::lib_buttons::{ButtonState, CHANNEL_BUTTON_STATE};
-use crate::lib_resources::PeriCan;
+use crate::lib_resources::{PeriI2C, SPI_ADDRESS};
 
 pub enum CANMessage {
     Starting,
@@ -36,7 +36,7 @@ pub static CHANNEL_CANWRITE: Channel<CriticalSectionRawMutex, CANMessage, 64> = 
 type SpiBus = Mutex<CriticalSectionRawMutex, Spi<'static, SPI0, Async>>;
 
 #[embassy_executor::task]
-pub async fn can_manager(spawner: Spawner, can: PeriCan) {
+pub async fn can_manager(spawner: Spawner, can: PeriI2C) {
     let mut spi_cfg = Config::default();
     spi_cfg.frequency = 12_000_000u32; // External high-speed crystal on the pico board is 12Mhz.
 

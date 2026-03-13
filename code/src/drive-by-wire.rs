@@ -43,8 +43,8 @@ use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
 use crate::lib_config::{init_flash, DbwConfig};
 use crate::lib_core1::core1_tasks;
 use crate::lib_resources::{
-    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriCan, PeriEis, PeriFPScanner,
-    PeriFlash, PeriNeopixel, PeriPowerMonitor, PeriSerial, PeriWatchdog,
+    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriEis, PeriFPScanner,
+    PeriFlash, PeriNeopixel, PeriI2C, PeriSerial, PeriWatchdog,
 };
 use crate::lib_watchdog::{StopWatchdog, CHANNEL_WATCHDOG};
 
@@ -114,7 +114,7 @@ async fn main(spawner: Spawner) {
         move || {
             let executor = EXECUTOR.init(Executor::new());
             executor.run(|spawner| {
-                spawner.spawn(unwrap!(core1_tasks(spawner, r.watchdog, r.ups, r.can)))
+                spawner.spawn(unwrap!(core1_tasks(spawner, r.watchdog, r.i2c)))
             });
         },
     );
