@@ -14,18 +14,18 @@ use ina219::{
 };
 
 use crate::lib_buttons::{ButtonState, CHANNEL_BUTTON_STATE};
-use crate::lib_resources::{PeriPowerMonitor, UPS_ADDRESS};
+use crate::lib_resources::{PeriI2C, UPS_ADDRESS};
 
 bind_interrupts!(struct Irqs {
     I2C1_IRQ => InterruptHandler<embassy_rp::peripherals::I2C1>;
 });
 
 #[embassy_executor::task]
-pub async fn ups_monitor(ups: PeriPowerMonitor) {
+pub async fn ups_monitor(ups: PeriI2C) {
     let mut state_battery: bool = false;
     let mut state_power: bool = true;
 
-    let i2c = I2c::new_async(ups.i2c, ups.scl, ups.sda, Irqs, Config::default());
+    let i2c = I2c::new_async(ups.peri, ups.scl, ups.sda, Irqs, Config::default());
 
     // Become a publisher on the button state channel.
     let publisher = CHANNEL_BUTTON_STATE.publisher().unwrap();

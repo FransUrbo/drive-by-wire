@@ -3,7 +3,7 @@ use defmt::{info, unwrap};
 use embassy_executor::Spawner;
 
 use crate::lib_can_bus::can_manager;
-use crate::lib_resources::{PeriCan, PeriPowerMonitor, PeriWatchdog};
+use crate::lib_resources::{PeriI2C, PeriWatchdog};
 use crate::lib_ups::ups_monitor;
 use crate::lib_watchdog::feed_watchdog;
 
@@ -11,8 +11,7 @@ use crate::lib_watchdog::feed_watchdog;
 pub async fn core1_tasks(
     spawner: Spawner,
     watchdog: PeriWatchdog,
-    ups: PeriPowerMonitor,
-    can: PeriCan,
+    i2c: PeriI2C
 ) {
     info!("Spawning tasks on CORE1");
 

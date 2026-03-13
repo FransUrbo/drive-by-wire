@@ -5,7 +5,8 @@ use embassy_rp::{peripherals, Peri};
 pub const ADDR_OFFSET: u32 = 0x100000;
 pub const FLASH_SIZE: usize = 2 * 1024 * 1024;
 
-pub const UPS_ADDRESS: u8 = 0x43;
+pub const UPS_ADDRESS: u8 = 0x43; // I²C address to the UPS hat.
+pub const SPI_ADDRESS: u8 = 0x00; // I²C address to the I²C to SPI bridge. TODO
 
 #[cfg_attr(any(), rustfmt::skip)]
 assign_resources! {
@@ -27,7 +28,8 @@ assign_resources! {
         peri:		WATCHDOG
     },
     eis: PeriEis {
-        lock:		PIN_21,
+        lock:		PIN_16,
+        switch:		PIN_21,
         start:		PIN_22
     },
     flash: PeriFlash {
@@ -59,22 +61,10 @@ assign_resources! {
         d_but:		PIN_27,		// UART0
         d_led:		PIN_9		// UART1
     },
-    can: PeriCan {
-        // CAN Interface ICs:
-        //   * MCP2518FDT-E/SL - Stand-alone Low Power CAN FD Controller w/SPI Interface Grade1.
-        //   * TJA1055T/1J     - High-speed CAN transceiver.
-        send_pin:	PIN_19,		// MOSI (Master Out Slave In)
-        send_dma:	DMA_CH5,
-        recv_pin:	PIN_16,		// MISO (Master In Slave Out)
-        recv_dma:	DMA_CH6,
-        csn_pin:	PIN_17,
-        sck_pin:	PIN_18,
-        spi:		SPI0		// Serial Peripheral Interface
-    },
-    ups: PeriPowerMonitor {
+    i2c: PeriI2C {
+        peri:		I2C1,
         sda:		PIN_6,
-        scl:		PIN_7,
-        i2c:		I2C1
+        scl:		PIN_7
     }
 }
 
@@ -85,25 +75,25 @@ assign_resources! {
 // * PIN_3	PeriButtons:r_but
 // * PIN_4	PeriSerial:tx
 // * PIN_5	PeriSerial:rx		Unused
-// * PIN_6	PeriPowerMonitor:sda
-// * PIN_7	PeriPowerMonitor:scl
+// * PIN_6	PeriI2C:sda
+// * PIN_7	PeriI2C:scl
 // * PIN_8	PeriButtons:n_led
 // * PIN_9	PeriButtons:d_led
 // * PIN_10	PeriActuator:mplus
 // * PIN_11	PeriActuator:mminus
-// * PIN_12	PeriActuator:vsel	Unused
+// * PIN_12	PeriActuator:vsel
 // * PIN_13	PeriFPScanner:wakeup
 // * PIN_14	PeriButtons:p_led
 // * PIN_15	PeriNeopixel:pin
-// * PIN_16	PeriCan:recv_pin
-// * PIN_17	PeriCan:csn_pin
-// * PIN_18	PeriCan:sck_pin
-// * PIN_19	PeriCan:send_pin
+// * PIN_16	PeriEis:lock
+// * PIN_17				Unused
+// * PIN_18				Unused
+// * PIN_19				Unused
 // * PIN_20	PeriButtons:r_led
-// * PIN_21	PeriEis:PIN_21
+// * PIN_21	PeriEis:switch
 // * PIN_22	PeriEis:start
-// * PIN_23				Unknown
-// * PIN_24				Unknown
+// * PIN_23				Unused
+// * PIN_24				Unused
 // * PIN_25	PeriBuiltin:pin
 // * PIN_26	PeriButtons:n_but
 // * PIN_27	PeriButtons:d_but
@@ -115,8 +105,6 @@ assign_resources! {
 // * DMA_CH2	PeriNeopixel:dma
 // * DMA_CH3	PeriFlash:dma
 // * DMA_CH4	PeriSerial:dma
-// * DMA_CH5	PeriCan:send_dma
-// * DMA_CH6	PeriCan:recv_dma
 //
 // # UART
 // * UART0	PeriFPScanner:uart
@@ -124,8 +112,7 @@ assign_resources! {
 //
 // # Other
 // * PIO0	PeriNeopixel:pio
-// * SPI0	PeriCan:spi
 // * ADC	PeriActuator:adc
-// * I2C1	PeriPowerMonitor:i2c
+// * I2C1	PeriI2C:peri
 // * FLASH	PeriFlash:peri
 // * WATCHDOG	PeriWatchdog:peri
