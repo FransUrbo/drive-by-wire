@@ -231,7 +231,7 @@ async fn main(spawner: Spawner) {
 
     // =====
     // 10. Spawn off one button reader per button. They will then spawn off a LED controller each
-    //     so thateach button can control their "own" LED.
+    //     so that each button can control their "own" LED.
     info!("Initializing drive buttons");
     spawner.spawn(unwrap!(read_button(
         spawner,
