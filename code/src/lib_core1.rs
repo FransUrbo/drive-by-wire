@@ -18,8 +18,8 @@ pub async fn core1_tasks(
 
     #[cfg_attr(any(), rustfmt::skip)]
     {
-        spawner.spawn(unwrap!(feed_watchdog(watchdog)));	// Spawn Watchdog.
-        spawner.spawn(unwrap!(can_manager(spawner, can)));	// Spawn the CAN manager.
-        spawner.spawn(unwrap!(ups_monitor(ups)));		// Spawn the UPS monitor.
+        unwrap!(spawner.spawn(feed_watchdog(watchdog)));	// Spawn Watchdog.
+        unwrap!(spawner.spawn(can_manager(spawner, can)));	// Spawn the CAN manager.
+        unwrap!(spawner.spawn(ups_monitor(ups)));		// Spawn the UPS monitor.
     }
 }

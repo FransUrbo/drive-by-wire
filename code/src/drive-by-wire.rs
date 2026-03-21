@@ -114,7 +114,7 @@ async fn main(spawner: Spawner) {
         move || {
             let executor = EXECUTOR.init(Executor::new());
             executor.run(|spawner| {
-                spawner.spawn(unwrap!(core1_tasks(spawner, r.watchdog, r.ups, r.can)))
+                unwrap!(spawner.spawn(core1_tasks(spawner, r.watchdog, r.ups, r.can)))
             });
         },
     );
@@ -165,7 +165,7 @@ async fn main(spawner: Spawner) {
     }
 
     // Actuator works. Spawn off the actuator control task.
-    spawner.spawn(unwrap!(actuator_control(
+    unwrap!(spawner.spawn(actuator_control(
         CHANNEL_ACTUATOR.receiver(),
         &flash,
         actuator
@@ -233,7 +233,7 @@ async fn main(spawner: Spawner) {
     // 10. Spawn off one button reader per button. They will then spawn off a LED controller each
     //     so that each button can control their "own" LED.
     info!("Initializing drive buttons");
-    spawner.spawn(unwrap!(read_button(
+    unwrap!(spawner.spawn(read_button(
         spawner,
         &flash,
         fp_scanner,
@@ -241,7 +241,7 @@ async fn main(spawner: Spawner) {
         r.buttons.p_but.into(),
         r.buttons.p_led.into()
     ))); // button/P
-    spawner.spawn(unwrap!(read_button(
+    unwrap!(spawner.spawn(read_button(
         spawner,
         &flash,
         fp_scanner,
@@ -249,7 +249,7 @@ async fn main(spawner: Spawner) {
         r.buttons.r_but.into(),
         r.buttons.r_led.into()
     ))); // button/R
-    spawner.spawn(unwrap!(read_button(
+    unwrap!(spawner.spawn(read_button(
         spawner,
         &flash,
         fp_scanner,
@@ -257,7 +257,7 @@ async fn main(spawner: Spawner) {
         r.buttons.n_but.into(),
         r.buttons.n_led.into()
     ))); // button/N
-    spawner.spawn(unwrap!(read_button(
+    unwrap!(spawner.spawn(read_button(
         spawner,
         &flash,
         fp_scanner,

@@ -157,10 +157,10 @@ pub async fn read_button(
 
     // Spawn off a LED driver for this button.
     match button {
-        Button::P => spawner.spawn(unwrap!(set_led(CHANNEL_P.receiver(), led_pin, button))),
-        Button::N => spawner.spawn(unwrap!(set_led(CHANNEL_N.receiver(), led_pin, button))),
-        Button::R => spawner.spawn(unwrap!(set_led(CHANNEL_R.receiver(), led_pin, button))),
-        Button::D => spawner.spawn(unwrap!(set_led(CHANNEL_D.receiver(), led_pin, button))),
+        Button::P => unwrap!(spawner.spawn(set_led(CHANNEL_P.receiver(), led_pin, button))),
+        Button::N => unwrap!(spawner.spawn(set_led(CHANNEL_N.receiver(), led_pin, button))),
+        Button::R => unwrap!(spawner.spawn(set_led(CHANNEL_R.receiver(), led_pin, button))),
+        Button::D => unwrap!(spawner.spawn(set_led(CHANNEL_D.receiver(), led_pin, button))),
     };
     debug!("Button::{}: Started button control task", button);
 

@@ -55,8 +55,8 @@ pub async fn can_manager(spawner: Spawner, can: PeriCan) {
     // TODO: Do I need two pins for this - one for the writer and one for the reader?
     let _cs = Output::new(can.csn_pin, Level::High);
 
-    spawner.spawn(unwrap!(read_can(spi))); // Spawn the CAN reader.
-    spawner.spawn(unwrap!(write_can(spi))); // Spawn the CAN writer.
+    unwrap!(spawner.spawn(read_can(spi))); // Spawn the CAN reader.
+    unwrap!(spawner.spawn(write_can(spi))); // Spawn the CAN writer.
 }
 
 // Write messages to CAN-bus.
