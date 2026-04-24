@@ -41,6 +41,7 @@ assign_resources! {
         mplus:		PIN_10,
         mminus:		PIN_11,
         vsel:		PIN_12,
+        vsel_stat:	PIN_17,
         pot:		PIN_28
     },
     fpscan: PeriFPScanner {
@@ -86,7 +87,7 @@ assign_resources! {
 // * PIN_14	PeriButtons:p_led
 // * PIN_15	PeriNeopixel:pin
 // * PIN_16	PeriEis:lock
-// * PIN_17				Unused
+// * PIN_17	PeriActuator:vsel_stat
 // * PIN_18				Unused
 // * PIN_19				Unused
 // * PIN_20	PeriButtons:r_led
