@@ -9,10 +9,19 @@
 5. Set default toolchains: `rustup default stable`
 6. Install `cargo-outdated` to check for updated dependencies.
 
+# Update all external dependency refererences.
+
+1. `cargo update`
+
 # Build apps
 
 1. `cargo build --verbose --profile dev`
    Available profiles: dev, release, release-dev
+
+* Recommended full command line:
+  ```
+  cargo update && cargo build 2>&1 | tee logs/build.log ; less logs/build.log
+  ```
 
 # Write image to Pico
 
