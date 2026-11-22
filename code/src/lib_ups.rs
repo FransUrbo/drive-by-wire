@@ -1,9 +1,6 @@
 use defmt::{debug, info, warn};
 
-use embassy_rp::{
-    bind_interrupts,
-    i2c::{AbortReason::NoAcknowledge, Config, Error::Abort, I2c, InterruptHandler},
-};
+use embassy_rp::i2c::{AbortReason::NoAcknowledge, Config, Error::Abort, I2c};
 use embassy_time::Timer;
 
 use ina219::{
@@ -14,18 +11,14 @@ use ina219::{
 };
 
 use crate::lib_buttons::{ButtonState, CHANNEL_BUTTON_STATE};
-use crate::lib_resources::{PeriPowerMonitor, UPS_ADDRESS};
-
-bind_interrupts!(struct Irqs {
-    I2C1_IRQ => InterruptHandler<embassy_rp::peripherals::I2C1>;
-});
+use crate::lib_resources::*;
 
 #[embassy_executor::task]
-pub async fn ups_monitor(ups: PeriPowerMonitor) {
+pub async fn ups_monitor(ups: PeriPowerMonitor, irqs: Irqs) {
     let mut state_battery: bool = false;
     let mut state_power: bool = true;
 
-    let i2c = I2c::new_async(ups.i2c, ups.scl, ups.sda, Irqs, Config::default());
+    let i2c = I2c::new_async(ups.i2c, ups.scl, ups.sda, irqs, Config::default());
 
     // Become a publisher on the button state channel.
     let publisher = CHANNEL_BUTTON_STATE.publisher().unwrap();

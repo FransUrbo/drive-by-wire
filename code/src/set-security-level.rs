@@ -4,12 +4,7 @@
 use defmt::{debug, error, info};
 
 use embassy_executor::Spawner;
-use embassy_rp::{
-    bind_interrupts,
-    peripherals::{PIO0, UART0},
-    pio::{InterruptHandler as PIOInterruptHandler, Pio},
-    uart::InterruptHandler as UARTInterruptHandler,
-};
+use embassy_rp::pio::Pio;
 
 use {defmt_rtt as _, panic_probe as _};
 
@@ -18,11 +13,6 @@ use ws2812::{Colour, Ws2812};
 
 pub mod lib_resources;
 use crate::lib_resources::*;
-
-bind_interrupts!(pub struct Irqs {
-    PIO0_IRQ_0 => PIOInterruptHandler<PIO0>;	// NeoPixel
-    UART0_IRQ  => UARTInterruptHandler<UART0>;	// Fingerprint scanner
-});
 
 // ================================================================================
 
@@ -49,7 +39,7 @@ async fn main(_spawner: Spawner) {
     let Pio {
         mut common, sm0, ..
     } = Pio::new(r.neopixel.pio, Irqs);
-    let mut ws2812 = Ws2812::new(&mut common, sm0, r.neopixel.dma, r.neopixel.pin);
+    let mut ws2812 = Ws2812::new(&mut common, sm0, r.neopixel.dma, Irqs, r.neopixel.pin);
     info!("NeoPixel LED initialized");
 
     // =====

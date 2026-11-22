@@ -19,7 +19,7 @@ categories = [
 [dependencies]
 defmt = "1.0.1"
 defmt-rtt = "1.1.0"
-defmt-serial = "0.10.0"
+defmt-serial = "0.11.0"
 cortex-m-rt = "0.7.0"
 panic-probe = { version = "1.0.0", features = ["print-defmt"] }
 portable-atomic = { version = "1.10.0", features = ["critical-section"] }
@@ -38,7 +38,7 @@ branch = "update-deps2"
 
 [dependencies.actuator]
 git = "https://github.com/FransUrbo/rust-libs-actuator.git"
-version = "0.3.9"
+branch = "update-deps2"
 
 [dependencies.ina219]
 version = "0.2.1"
