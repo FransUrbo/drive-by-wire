@@ -46,6 +46,7 @@ This is to introduce drive-by-wire buttons for Mercedes-Benz. Specifically, it i
      - [Big Status LED](#big-status-led)
      - [Actuator LEDs](#actuator-leds)
 5. [Updates](#updates)
+   - [Update Fri 27 Nov 2026](#update-fri-27-nov-2026)
    - [Update Sat 7 Feb 2026](#update-sat-7-feb-2026)
    - [Update Sun 25 Jan 2026](#update-sun-25-jan-2026)
    - [Update Sun 18 Jan 2026](#update-sun-18-jan-2026)
@@ -674,6 +675,34 @@ They're also in the circuit diagram, but weather I actually use that in practice
 unit will be hidden away, so that won't be visible anyway.
 
 # Updates
+
+## Update Fri 27 Nov 2026
+
+Nice summer of driving is over, and it's back at this project again.
+
+I started changing the way I design this earlier in the spring, but never got to anything concrete. The design
+became way to big to handle in one design, so I decided to split this up into it's concrete parts, that I call
+modules:
+
+    * MCU
+    * Power
+    * CAN-Bus
+    * CAN-Controller
+    * Connectors
+    * Actuator Controller
+
+This allows me to design, test and potentially build descrete modules, that together builds the Drive-by-Wire.
+
+The last few days, I've finished this off (although all parts still needs to be properly vetted and tested), and
+put (imported) them into one design. I've also created a new PCB from this. It's still early progress, but it looks
+good so far.
+
+![The new schematic layout](./images/new-schematic%2BPCB/DriveByWire%5C%20%5C%28Separated%5C%29.png)
+![PCB Bottom side](./images%2Fnew-schematic%2BPCB%2FScreenshot%202026-11-27%20at%2017.21.32.png)
+![PCB Top side](./images%2Fnew-schematic%2BPCB%2FScreenshot%202026-11-27%20at%2017.22.01.png)
+![PCB Side view](./images%2Fnew-schematic%2BPCB%2FScreenshot%202026-11-27%20at%2017.22.24.png)
+
+At the moment, I'm not including the individual modules, they need work before they're ready.
 
 ## Update Sat 7 Feb 2026
 
