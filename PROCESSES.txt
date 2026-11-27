@@ -1,0 +1,20 @@
+These are the processes running in the code, and what core
+they're running on.
+
+CORE0
+  * Actuator Controller
+  * Button Reader - P
+  * Button Reader - R
+  * Button Reader - N
+  * Button Reader - D
+  * Button LED - P
+  * Button LED - R
+  * Button LED - N
+  * Button LED - D
+
+CORE1
+  * Watchdog
+  * CAN manager
+    * CAN Reader
+    * CAN Writer
+  * UPS Monitor
