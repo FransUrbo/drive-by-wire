@@ -680,9 +680,9 @@ unit will be hidden away, so that won't be visible anyway.
 
 Nice summer of driving is over, and it's back at this project again.
 
-I started changing the way I design this earlier in the spring, but never got to anything concrete. The design
-became way to big to handle in one design, so I decided to split this up into it's concrete parts, that I call
-modules:
+### I started changing the way I design this earlier in the spring
+but never got to anything concrete. The design became way to big to handle in one design, so I decided to split
+this up into it's concrete parts, that I call modules:
 
     * MCU
     * Power
@@ -704,13 +704,66 @@ good so far.
 
 At the moment, I'm not including the individual modules, they need work before they're ready.
 
-On the code side, I've created some PRs to update to latest version of Embassy etc that's been updated since
-I last worked on this in the spring for this and my external modules that's required:
+### On the code side
+I've created some PRs to update to latest version of Embassy etc that's been updated since I last worked on this
+in the spring for this and my external modules that's required:
 
 * [drive-by-wire](https://github.com/FransUrbo/drive-by-wire/pull/8)
 * [rust-libs-ws2812](https://github.com/FransUrbo/rust-libs-ws2812/pull/3)
 * [rust-libs-r503](https://github.com/FransUrbo/rust-libs-r503/pull/3)
 * [rust-libs-actuator](https://github.com/FransUrbo/rust-libs-actuator/pull/3)
+
+#### Additional changes since Feb 7 and today
+Sun Feb 8 2026
+    * Rename the button state channel.
+      I'll need it to disable buttons from the CAN bus manager as well.
+      So it's not a _UPS_ state channel, it's a _button_ state channel.
+    * Code comments added in the `PeriCan` struct.
+      I'm not sure what's what when it comes to CANs, so I've added some
+      comments to help me when I need it.
+    * Bare-bones CAN bus implementation.
+      It doesn't actually do anything, but it should hopefully be a start.
+    * Document what chips for the CAN bus I'm using in the resources lib.
+    * Rename the 3D images from Fusion.
+      Got a bit tricky to know what's what when I wanted to update the
+      PCB images.
+    * Cleanup and simplify the button reader.
+      SOOOO much we don't need, and was just in the way. Also, remove the
+      `debounce` library and move that little code snippet here.
+      It was stolen from the Embassy project anyway :D.
+    * Add a link to Konstantin's notes about his device.
+    * Add some notes about maybe using I²C->SPI->CAN instead of SPI->CAN.
+      WOULD save me a few pins :). Might also be simpler to implement in code.
+      + Change `I2C` to `I²C` across the doc.
+    * Update the part list for the CAN bus adapter.
+    * I've decided to redesign my CAN-bus adapter.
+      Think I was a bit to clever for my own good there :). So I'm going
+      back to Konstantins original design, but I'll try to be *a little*
+      clever, and put it on an I²C bus instead. I have plenty of those,
+      but very few GPIO - I'll basically lose four (!) GPIO by using ONE
+      SPI. Don't need the speed, so I²C should be enough.
+      + Also added some breadboard adapters I'll need for this.
+
+Tue Feb 10 2026
+    * Add a file to try to make sense of going from I²C to CAN.
+      Three chips:
+        1) SC18IS606 (I²C to SPI bridge)
+        2) MCP2515 (CAN Bus Module)
+        3) TJA1055 (CAN transceiver).
+
+Sat Feb 14 2026
+    * Add some information, circuit diagram and pictures of the new CAN design.
+
+Sat Mar 7 2026
+    * Document my redesign of the whole thing.
+      .. with ICs instead of the Pico module, more CAN network support and
+      using the newer RP2354B instead of the older, smaller and slower RP2040.
+    * Update the Redesign doc, with more pictures.
+
+Sat Mar 21 2026
+    * Spelling error in comment fixed.
+    * Change the way `unwrap!()` is used.
+      Apparently, it now needs to be "outside" of the spawner!
 
 ## Update Sat 7 Feb 2026
 
