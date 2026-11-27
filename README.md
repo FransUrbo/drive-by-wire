@@ -704,6 +704,14 @@ good so far.
 
 At the moment, I'm not including the individual modules, they need work before they're ready.
 
+On the code side, I've created some PRs to update to latest version of Embassy etc that's been updated since
+I last worked on this in the spring for this and my external modules that's required:
+
+    * [drive-by-wire](https://github.com/FransUrbo/drive-by-wire/pull/8)
+    * [rust-libs-ws2812](https://github.com/FransUrbo/rust-libs-ws2812/pull/3)
+    * [rust-libs-r503](https://github.com/FransUrbo/rust-libs-r503/pull/3)
+    * [rust-libs-actuator](https://github.com/FransUrbo/rust-libs-actuator/pull/3)
+
 ## Update Sat 7 Feb 2026
 
 * Implement a UPS handler, that will stop processing button presses if/when on battery.
