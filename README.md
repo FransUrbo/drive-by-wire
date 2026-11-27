@@ -697,7 +697,7 @@ The last few days, I've finished this off (although all parts still needs to be 
 put (imported) them into one design. I've also created a new PCB from this. It's still early progress, but it looks
 good so far.
 
-![The new schematic layout](./images/new-schematic%2BPCB/DriveByWire%5C%20%5C%28Separated%5C%29.png)
+![The new schematic layout](./images/new-schematic%2BPCB/DriveByWire%20%28Separated%29.png)
 ![PCB Bottom side](./images%2Fnew-schematic%2BPCB%2FScreenshot%202026-11-27%20at%2017.21.32.png)
 ![PCB Top side](./images%2Fnew-schematic%2BPCB%2FScreenshot%202026-11-27%20at%2017.22.01.png)
 ![PCB Side view](./images%2Fnew-schematic%2BPCB%2FScreenshot%202026-11-27%20at%2017.22.24.png)
