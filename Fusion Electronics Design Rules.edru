@@ -36,8 +36,8 @@
  <rulecategory type="Keepout Clearance" manualdrc="yes" livedrc="yes"/>
  <rulecategory type="Copper Clearance" manualdrc="yes" livedrc="yes"/>
  <rule type="Minimum Copper Width" enabled="yes" priority="0" onescope="classes=5" value="12mil" preferredvalue="12mil" check_polywidth="no" name="Power-High"/>
- <rule type="Minimum Copper Width" enabled="yes" priority="1" onescope="classes=4,1" value="10mil" preferredvalue="10mil" check_polywidth="no" name="Power-Medium"/>
- <rule type="Minimum Copper Width" enabled="yes" priority="2" onescope="classes=3" value="8mil" preferredvalue="8mil" check_polywidth="no" name="Power-Low"/>
+ <rule type="Minimum Copper Width" enabled="yes" priority="1" onescope="classes=4" value="10mil" preferredvalue="10mil" check_polywidth="no" name="Power-Medium"/>
+ <rule type="Minimum Copper Width" enabled="yes" priority="2" onescope="classes=3,1" value="8mil" preferredvalue="8mil" check_polywidth="no" name="Power-Low"/>
  <rule type="Minimum Copper Width" enabled="yes" priority="3" onescope="classes=2" value="3mil" preferredvalue="3mil" check_polywidth="no" name="Signal"/>
  <rule type="Minimum Copper Width" builtin_ruleid="14" enabled="yes" priority="4" value="6mil" preferredvalue="6mil" check_polywidth="no" name="minimum-copper-width-1"/>
  <rule type="Stencil" builtin_ruleid="35" enabled="yes" priority="0" onescope="is_smd" parameter_type="calculated" absolute="0mil" percentage="0" minimum="0mil" maximum="0mil" auto_resize="no" name="Stencil Opening"/>
