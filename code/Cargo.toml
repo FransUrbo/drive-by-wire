@@ -1,6 +1,6 @@
 [package]
 name = "drive-by-wire"
-version = "0.4.4"
+version = "0.4.5-pre"
 description = "Provide Drive-by-Wire buttons for the Mercedes-Benz SLK55 AMG 2010 (R171)"
 readme = "README.md"
 edition = "2021"
@@ -19,7 +19,7 @@ categories = [
 [dependencies]
 defmt = "1.0.1"
 defmt-rtt = "1.1.0"
-defmt-serial = "0.10.0"
+defmt-serial = "0.14.0"
 cortex-m-rt = "0.7.0"
 panic-probe = { version = "1.0.0", features = ["print-defmt"] }
 portable-atomic = { version = "1.10.0", features = ["critical-section"] }
@@ -30,23 +30,23 @@ num-traits = { version = "0.2.19", default-features = false, features = ["libm"]
 
 [dependencies.ws2812]
 git = "https://github.com/FransUrbo/rust-libs-ws2812.git"
-version = "1.0.3"
+branch = "update-deps2"
 
 [dependencies.r503]
 git = "https://github.com/FransUrbo/rust-libs-r503.git"
-version = "1.0.4"
+branch = "update-deps2"
 
 [dependencies.actuator]
 git = "https://github.com/FransUrbo/rust-libs-actuator.git"
-version = "0.3.9"
+branch = "update-deps2"
 
 [dependencies.ina219]
 version = "0.2.1"
 features = ["async", "no_transaction", "paranoid", "defmt"]
 
 [dependencies.embassy-executor]
-features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt"]
-version = "0.9.1"
+features = ["platform-cortex-m", "executor-thread", "executor-interrupt", "defmt"]
+version = "0.10.0"
 
 [dependencies.embassy-time]
 features = ["defmt", "defmt-timestamp-uptime"]
@@ -54,7 +54,7 @@ version = "0.5.1"
 
 [dependencies.embassy-rp]
 features = ["defmt", "unstable-pac", "time-driver", "critical-section-impl", "rp2040"]
-version = "0.9.0"
+version = "0.10.0"
 
 [dependencies.embassy-sync]
 features = ["defmt"]

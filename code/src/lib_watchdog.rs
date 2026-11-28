@@ -30,7 +30,7 @@ pub async fn feed_watchdog(doggy: PeriWatchdog) {
             }
             _ => {
                 Timer::after_millis(750).await;
-                watchdog.feed();
+                watchdog.feed(Duration::from_millis(1_000));
                 continue;
             }
         }

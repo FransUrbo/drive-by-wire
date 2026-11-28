@@ -6,7 +6,6 @@
 use defmt::info;
 
 use embassy_executor::Spawner;
-use embassy_rp::{adc::InterruptHandler, bind_interrupts};
 use embassy_time::Timer;
 
 use actuator::Actuator;
@@ -15,10 +14,6 @@ pub mod lib_resources;
 use crate::lib_resources::*;
 
 use {defmt_rtt as _, panic_probe as _};
-
-bind_interrupts!(struct Irqs {
-    ADC_IRQ_FIFO => InterruptHandler;			// Actuator potentiometer
-});
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {

@@ -12,7 +12,7 @@ use embassy_time::Timer;
 use static_cell::StaticCell;
 
 use crate::lib_buttons::{ButtonState, CHANNEL_BUTTON_STATE};
-use crate::lib_resources::PeriCan;
+use crate::lib_resources::*;
 
 pub enum CANMessage {
     Starting,
@@ -36,7 +36,7 @@ pub static CHANNEL_CANWRITE: Channel<CriticalSectionRawMutex, CANMessage, 64> = 
 type SpiBus = Mutex<CriticalSectionRawMutex, Spi<'static, SPI0, Async>>;
 
 #[embassy_executor::task]
-pub async fn can_manager(spawner: Spawner, can: PeriCan) {
+pub async fn can_manager(spawner: Spawner, can: PeriCan, irqs: Irqs) {
     let mut spi_cfg = Config::default();
     spi_cfg.frequency = 12_000_000u32; // External high-speed crystal on the pico board is 12Mhz.
 
@@ -47,6 +47,7 @@ pub async fn can_manager(spawner: Spawner, can: PeriCan) {
         can.recv_pin,
         can.send_dma,
         can.recv_dma,
+        irqs,
         spi_cfg,
     );
     static SPI_BUS: StaticCell<SpiBus> = StaticCell::new();
@@ -55,8 +56,8 @@ pub async fn can_manager(spawner: Spawner, can: PeriCan) {
     // TODO: Do I need two pins for this - one for the writer and one for the reader?
     let _cs = Output::new(can.csn_pin, Level::High);
 
-    unwrap!(spawner.spawn(read_can(spi))); // Spawn the CAN reader.
-    unwrap!(spawner.spawn(write_can(spi))); // Spawn the CAN writer.
+    spawner.spawn(unwrap!(read_can(spi))); // Spawn the CAN reader.
+    spawner.spawn(unwrap!(write_can(spi))); // Spawn the CAN writer.
 }
 
 // Write messages to CAN-bus.

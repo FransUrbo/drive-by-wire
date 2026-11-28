@@ -1,11 +1,45 @@
 use assign_resources::assign_resources;
-use embassy_rp::{peripherals, Peri};
+use embassy_rp::{
+    bind_interrupts,
+    peripherals,
+    Peri,
+    adc::InterruptHandler as ADCInterruptHandler,
+    dma::InterruptHandler as DMAInterruptHandler,
+    i2c::InterruptHandler as I2CInterruptHandler,
+    pio::InterruptHandler as PIOInterruptHandler,
+    uart::InterruptHandler as UARTInterruptHandler,
+    peripherals::{DMA_CH0, DMA_CH1, DMA_CH2, DMA_CH3, DMA_CH4, DMA_CH5, DMA_CH6, DMA_CH7, I2C1, PIO0, UART0, UART1},
+};
 
 // Offset from the flash start, NOT absolute address.
 pub const ADDR_OFFSET: u32 = 0x100000;
 pub const FLASH_SIZE: usize = 2 * 1024 * 1024;
 
 pub const UPS_ADDRESS: u8 = 0x43;
+
+// DMA Channels used (of 12):
+// * Fingerprint scanner:	UART0	DMA_CH[0-1]	PIN_13, PIN_16, PIN_17
+// * NeoPixel:			PIO0	DMA_CH2		PIN_15
+// * Flash:			FLASH	DMA_CH3		-
+// * Serial logging:		UART1	DMA_CH4		PIN_4
+bind_interrupts!(pub struct Irqs {
+    // Fingerprint scanner/CH0, Fingerprint scanner/CH1, NeoPixel/CH2.
+    DMA_IRQ_0    =>
+        DMAInterruptHandler<DMA_CH0>,
+        DMAInterruptHandler<DMA_CH1>,
+        DMAInterruptHandler<DMA_CH2>,
+        DMAInterruptHandler<DMA_CH3>,
+        DMAInterruptHandler<DMA_CH4>,
+        DMAInterruptHandler<DMA_CH5>,
+        DMAInterruptHandler<DMA_CH6>,
+        DMAInterruptHandler<DMA_CH7>;
+
+    PIO0_IRQ_0   => PIOInterruptHandler<PIO0>;		// NeoPixel
+    UART0_IRQ    => UARTInterruptHandler<UART0>;	// Fingerprint scanner
+    UART1_IRQ    => UARTInterruptHandler<UART1>;	// Serial logging
+    ADC_IRQ_FIFO => ADCInterruptHandler;		// Actuator potentiometer
+    I2C1_IRQ     => I2CInterruptHandler<I2C1>;
+});
 
 #[cfg_attr(any(), rustfmt::skip)]
 assign_resources! {

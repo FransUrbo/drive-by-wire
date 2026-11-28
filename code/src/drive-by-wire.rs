@@ -5,13 +5,10 @@ use defmt::{debug, error, info, unwrap};
 
 use embassy_executor::{Executor, Spawner};
 use embassy_rp::{
-    adc::InterruptHandler as ADCInterruptHandler,
-    bind_interrupts,
     gpio::{Level, Output},
     multicore::{spawn_core1, Stack},
-    peripherals::{PIO0, UART0, UART1},
-    pio::{InterruptHandler as PIOInterruptHandler, Pio},
-    uart::{Blocking, Config as UartConfig, InterruptHandler as UARTInterruptHandler, UartTx},
+    pio::Pio,
+    uart::{Blocking, Config as UartConfig, UartTx},
 };
 use embassy_sync::mutex::Mutex;
 use embassy_time::Timer;
@@ -42,23 +39,8 @@ use crate::lib_buttons::{
 use crate::lib_can_bus::{CANMessage, CHANNEL_CANWRITE};
 use crate::lib_config::{init_flash, DbwConfig};
 use crate::lib_core1::core1_tasks;
-use crate::lib_resources::{
-    AssignedResources, PeriActuator, PeriBuiltin, PeriButtons, PeriCan, PeriEis, PeriFPScanner,
-    PeriFlash, PeriNeopixel, PeriPowerMonitor, PeriSerial, PeriWatchdog,
-};
+use crate::lib_resources::*;
 use crate::lib_watchdog::{StopWatchdog, CHANNEL_WATCHDOG};
-
-// DMA Channels used (of 12):
-// * Fingerprint scanner:	UART0	DMA_CH[0-1]	PIN_13, PIN_16, PIN_17
-// * NeoPixel:			PIO0	DMA_CH2		PIN_15
-// * Flash:			FLASH	DMA_CH3		-
-// * Serial logging:		UART1	DMA_CH4		PIN_4
-bind_interrupts!(struct Irqs {
-    PIO0_IRQ_0   => PIOInterruptHandler<PIO0>;		// NeoPixel
-    UART0_IRQ    => UARTInterruptHandler<UART0>;	// Fingerprint scanner
-    UART1_IRQ    => UARTInterruptHandler<UART1>;	// Serial logging
-    ADC_IRQ_FIFO => ADCInterruptHandler;		// Actuator potentiometer
-});
 
 static mut CORE1_STACK: Stack<4096> = Stack::new();
 static EXECUTOR: StaticCell<Executor> = StaticCell::new();
@@ -72,10 +54,9 @@ async fn main(spawner: Spawner) {
 
     // =====
     //  1. Initialize the serial UART for debug/log output.
-    let uart = UartTx::new(
+    let uart = UartTx::new_blocking(
         r.serial.uart,
         r.serial.tx,
-        r.serial.dma,
         UartConfig::default(),
     ); // => 115200/8N1 (UART1)
     static SERIAL: StaticCell<UartTx<'static, Blocking>> = StaticCell::new();
@@ -98,7 +79,7 @@ async fn main(spawner: Spawner) {
     let Pio {
         mut common, sm0, ..
     } = Pio::new(r.neopixel.pio, Irqs);
-    let mut neopixel = Ws2812::new(&mut common, sm0, r.neopixel.dma, r.neopixel.pin);
+    let mut neopixel = Ws2812::new(&mut common, sm0, r.neopixel.dma, Irqs, r.neopixel.pin);
     info!("NeoPixel LED initialized");
     neopixel.set_colour(Colour::ORANGE).await;
 
@@ -114,7 +95,9 @@ async fn main(spawner: Spawner) {
         move || {
             let executor = EXECUTOR.init(Executor::new());
             executor.run(|spawner| {
-                unwrap!(spawner.spawn(core1_tasks(spawner, r.watchdog, r.ups, r.can)))
+                spawner.spawn(unwrap!(core1_tasks(
+                    spawner, r.watchdog, r.ups, r.can, Irqs
+                )))
             });
         },
     );
@@ -165,7 +148,7 @@ async fn main(spawner: Spawner) {
     }
 
     // Actuator works. Spawn off the actuator control task.
-    unwrap!(spawner.spawn(actuator_control(
+    spawner.spawn(unwrap!(actuator_control(
         CHANNEL_ACTUATOR.receiver(),
         &flash,
         actuator
@@ -233,7 +216,7 @@ async fn main(spawner: Spawner) {
     // 10. Spawn off one button reader per button. They will then spawn off a LED controller each
     //     so that each button can control their "own" LED.
     info!("Initializing drive buttons");
-    unwrap!(spawner.spawn(read_button(
+    spawner.spawn(unwrap!(read_button(
         spawner,
         &flash,
         fp_scanner,
@@ -241,7 +224,7 @@ async fn main(spawner: Spawner) {
         r.buttons.p_but.into(),
         r.buttons.p_led.into()
     ))); // button/P
-    unwrap!(spawner.spawn(read_button(
+    spawner.spawn(unwrap!(read_button(
         spawner,
         &flash,
         fp_scanner,
@@ -249,7 +232,7 @@ async fn main(spawner: Spawner) {
         r.buttons.r_but.into(),
         r.buttons.r_led.into()
     ))); // button/R
-    unwrap!(spawner.spawn(read_button(
+    spawner.spawn(unwrap!(read_button(
         spawner,
         &flash,
         fp_scanner,
@@ -257,7 +240,7 @@ async fn main(spawner: Spawner) {
         r.buttons.n_but.into(),
         r.buttons.n_led.into()
     ))); // button/N
-    unwrap!(spawner.spawn(read_button(
+    spawner.spawn(unwrap!(read_button(
         spawner,
         &flash,
         fp_scanner,

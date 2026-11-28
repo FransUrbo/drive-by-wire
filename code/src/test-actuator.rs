@@ -7,12 +7,7 @@ use defmt::{debug, info};
 use {defmt_serial as _, panic_probe as _};
 
 use embassy_executor::Spawner;
-use embassy_rp::{
-    adc::InterruptHandler as ADCInterruptHandler,
-    bind_interrupts,
-    peripherals::UART1,
-    uart::{Blocking, Config as UartConfig, InterruptHandler as UARTInterruptHandler, UartTx},
-};
+use embassy_rp::uart::{Blocking, Config as UartConfig, UartTx};
 use embassy_time::Timer;
 
 use static_cell::StaticCell;
@@ -32,21 +27,15 @@ pub mod lib_ups;
 use crate::lib_buttons::Button;
 use crate::lib_resources::*;
 
-bind_interrupts!(struct Irqs {
-    UART1_IRQ    => UARTInterruptHandler<UART1>;	// Serial logging
-    ADC_IRQ_FIFO => ADCInterruptHandler;		// Actuator potentiometer
-});
-
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
     let r = split_resources! {p};
 
     // Initialize the serial UART for debug/log output.
-    let uart = UartTx::new(
+    let uart = UartTx::new_blocking(
         r.serial.uart,
         r.serial.tx,
-        r.serial.dma,
         UartConfig::default(),
     ); // => 115200/8N1 (UART1)
     static SERIAL: StaticCell<UartTx<'_, Blocking>> = StaticCell::new();
